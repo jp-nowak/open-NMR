@@ -1,14 +1,10 @@
 from readingfids import *
-# widmo = 0
-# apploop
-# if openfilevent: open(fid)
-
 
 class Widmo:
     def __init__(self):
-        # czy to fid
-        # jaki rodzaj fidu
-        # metoda wczytania fidu i generowania widma
+        # is it fid
+        # type of fid
+        # method of reading fid
         self.piki = None
         self.widmo = None
         pass
