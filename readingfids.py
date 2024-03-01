@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Feb 28 17:52:09 2024
-
-@author: Jan
-"""
 import struct
 import collections
 import os
@@ -123,24 +117,24 @@ def read_agilent_fid(file_content):
                 ptr += el_size
             fids.append(fid)
             print("fid end:", ptr)
-            
+    print("koniec")       
     return headers, fids
 
+if __name__ == "__main__":
+    nmr_file_path = "fid"
+    with open(nmr_file_path, "rb") as file:
+        file_content = file.read()
 
-nmr_file_path = "C:/Users/Jan/Desktop/Python/nmr/JN-096c-korelacje-PROTON_01.fid/fid"
-with open(nmr_file_path, "rb") as file:
-    file_content = file.read()
+    headers, fids = read_agilent_fid(file_content)
 
-headers, fids = read_agilent_fid(file_content)
+    ft_rl = np.fft.fft(np.real(fids[0]))
+    ft_im = np.fft.fft(np.imag(fids[0]))
+    print("ft")
+    # simplified spectrum not suitable for anything, 
+    # though good for display prototyping
+    pow_spectr = [(i*i + j*j) for i, j in zip(
+        np.real(ft_rl[:len(ft_rl)//2]), np.imag(ft_im[:len(ft_im)//2]))]
 
-ft_rl = np.fft.fft(np.real(fids[0]))
-ft_im = np.fft.fft(np.imag(fids[0]))
-
-# simplified spectrum not suitable for anything, 
-# though good for display prototyping
-pow_spectr = [(i*i + j*j) for i, j in zip(
-    np.real(ft_rl[:len(ft_rl)//2]), np.imag(ft_im[:len(ft_im)//2]))]
-
-fig, ax = plt.subplots(dpi = 1200)
-ax.plot(pow_spectr, linewidth=0.2, color='red')
-fig.savefig("spektrum.png")
+    fig, ax = plt.subplots(dpi = 1200)
+    ax.plot(pow_spectr, linewidth=0.2, color='red')
+    fig.savefig("spektrum.png")
