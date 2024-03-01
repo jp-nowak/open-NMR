@@ -1,10 +1,7 @@
 import struct
 import collections
-import os
 import numpy as np
-import itertools
 import matplotlib.pyplot as plt
-import math
 
 # definition of named tuple class used to store information from file header
 
@@ -61,6 +58,12 @@ DataBlockHead = collections.namedtuple("DataBlockHead",
 # /* tilt drift correction */
 # };
 # number - number of header in block
+
+def fid_file_type(file_content):
+    return "agilent"
+
+
+
 
 def read_agilent_fid(file_content):
     """
