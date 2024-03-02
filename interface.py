@@ -11,11 +11,12 @@ def fast_data(data, width, height):
     #normalize
     ymax = max(data[:,1])
     ymin = min(data[:,1])
-    print(data[:,1].shape)
-    print(ymax, ymin)
     data[:,1] = (data[:,1]-ymin)/(ymax-ymin)
-    # this is downsampling data to pixels
-    downsampled  = data * (width, height)
+    #downsampling
+    pointperpixel = 10
+    sample = max(len(data)//(pointperpixel*width),1)
+    downsampled  = data*(width, height)
+    downsampled = downsampled[::sample]
     # for i in range(len(downsampled)):
     #     pt = downsampled.pop(0)
     #     if result: 
@@ -30,8 +31,7 @@ class spectrum_painter(QWidget):
         #geometry
         self.data = data
         self.margins = margins
-        
-        
+        self.resampled = []
 
     def paintEvent(self, event):
         #settings
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     # just simple noise function for testing, np.array for speed
     points = 16000
     x = np.linspace(0, 1, points)
-    y = [noise.pnoise1(x*100) for x in x]
+    y = [noise.pnoise1(x*10) for x in x]
     data = np.column_stack((x, y))
     #main app
     app = QApplication(sys.argv)
