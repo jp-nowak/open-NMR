@@ -1,0 +1,590 @@
+     acqmode Acquisition mode (P)  43
+	 acqstatus Acquisition status (P) 44
+	 actionid Current study queue node id (P) . 46
+	 activestudy Active study name (P).. 47
+	 aig Absolute-intensity group (P). 52
+	 alfa Set alfa delay before acquisition (P) . 53
+	 alock Automatic lock control (P)  53
+	 ampmode Independent control of amplifier mode (P) 54
+	 amptype Amplifier type (P) .. 54
+	 ap “All” parameters display control (P)  57
+	 appmode Application mode (P) 60
+	 apptype Application type (P) .. 60
+	 array Parameter order and precedence (P) . 61
+	 arraydim Dimension of experiment (P) 61
+	 at Acquisition time (P).. 63
+	 atune ProTune Present (P) .. 65
+	 audiofilter Audio filter board type (P). 67
+	 auto Automation mode active (P) . 69
+	 autodir Automation directory absolute path (P).. 71
+	 autoname Prefix for automation data file (P) . 74
+	 awc Additive weighting const. in directly detected dimension (P). 78
+	 awc1 Additive weighting const. in 1st indirectly detected dimension (P) . 78
+	 awc2 Additive weighting const. in 2nd indirectly detected dimension (P) 78
+	 axis Axis label for displays and plots (P) . 79
+	 axisf Axis label for FID displays and plots (P) .. 80
+	 bioref Bio-NMR Referencing (P). 84
+	 bs Block size (P) 86
+	 calibflag Correct systematic errors in DOSY experiments (P) 90
+	 cattn Coarse attenuator type (P).. 91
+	 celem Completed FID elements (P)  93
+	 cf Current FID (P)  94
+	 chiliConf Control flag set by ecc_on and ecc_off (P) 96
+	 cla Calculated transition number (P)  96
+	 clamp Calculated transition amplitude (P) .. 97
+	 clfreq Calculated transition frequency (P) .. 98
+	 clindex Index of experimental frequency of a transition (P) . 98
+	 Console System console type (P) 103
+	 cp Cycle phase (P) . 108
+	 cr Cursor position in directly detected dimension (P) .111
+	 cr1 Cursor position in 1st indirectly detected dimension (P)..111
+	 cr2 Cursor position in 2nd indirectly detected dimension (P) .. 112
+	 crf Current time-domain cursor position (P) . 113
+	 crmode Current state of the cursors in df, ds, or dconi programs (P) . 114
+	 ct Completed transients (P).. 115
+	 curexp Current experiment directory (P) . 116
+	 curscan Scan currently in progress (P) 116
+	 curwin Current window (P)  116
+	 cutoff Data truncation limit (P) .. 116
+	 d0 Overhead delay between FIDs (P) .. 123
+	 d1 First delay (P). 124
+	 d2 Incremented delay in 1st indirectly detected dimension (P) .. 124
+	 d3 Incremented delay for 2nd indirectly detected dimension (P) .. 124
+	 d4 Incremented delay for 3rd indirectly detected dimension (P) 125
+	 DAC_to_G Store gradient calibration value in DOSY sequences (P)  125
+	 daslp Increment for t1 dependent first-order phase correction (P).. 126
+	 date Date (P) . 126
+	 dcg Drift correction group (P)  128
+	 dconi Control display selection for the dconi program (P).. 131
+	 dcrmv Remove dc offsets from FIDs in special cases (P) . 132
+	 ddrcr Direct digital receiver coefficient ratio (P) . 133
+	 ddrpm Set ddr precession mode (P) .. 134
+	 ddrtc Set ddr time constant (P).. 134
+	 decasynctype Select the type of decoupler asynchronous mode (P)  135
+	 deccwarnings Control reporting of DECC warnings from PSG (P) . 136
+	 def_osfilt Default value of osfilt parameter (P) . 136
+	 defaultdir Default directory for Files menu system (P).. 136
+	 delta Cursor difference in directly detected dimension (P)  138
+	 delta1 Cursor difference in 1st indirectly detected dimension (P)  139
+	 delta2 Cursor difference in 2nd indirectly detected dimension (P) .. 139
+	 deltaf Difference of two time-domain cursors (P)  139
+	 dfmode Current state of display of imaginary part of a FID (P) 142
+	 dfrq Transmitter frequency of first decoupler (P) . 142
+	 dfrq2 Transmitter frequency of second decoupler (P)  142
+	 dfrq3 Transmitter frequency of third decoupler (P)  142
+	 dfrq4 Transmitter frequency of fourth decoupler (P) . 143
+	 dg Control dg parameter group display (P) .. 146
+	 dg1 Control dg1 parameter group display (P)  146
+	 dg2 Control dg2 parameter group display (P)  147
+	 dglc Control dglc parameter group display (P) 148
+	 dgs Control dgs parameter group display (P) . 148
+	 dhp Decoupler high-power control with class C amplifier (P) .. 149
+	 dlp Decoupler low-power control with class C amplifier (P)  154
+	 dm Decoupler mode for first decoupler (P)  154
+	 dm2 Decoupler mode for second decoupler (P) . 154
+	 dm3 Decoupler mode for third decoupler (P) .. 155
+	 dm4 Decoupler mode for fourth decoupler (P) 155
+	 dmf Decoupler modulation frequency for first decoupler (P) . 155
+	 dmf2 Decoupler modulation frequency for second decoupler (P) .. 156
+	 dmf3 Decoupler modulation frequency for third decoupler (P) 156
+	 dmf4 Decoupler modulation frequency for fourth decoupler (P)  156
+	 dmg Data display mode in directly detected dimension (P) . 158
+	 dmg1 Data display mode in 1st indirectly detected dimension (P) . 159
+	 dmg2 Data display mode in 2nd indirectly detected dimension (P)  159
+	 dmgf Absolute-value display of FID data or spectrum in acqi (P) . 159
+	 dmm Decoupler modulation mode for first decoupler (P) .. 160
+	 dmm2 Decoupler modulation mode for second decoupler (P)  160
+	 dmm3 Decoupler modulation mode for third decoupler (P). 161
+	 dmm4 Decoupler modulation mode for fourth decoupler (P).. 161
+	 dn Nucleus for first decoupler (P).. 161
+	 dn2 Nucleus for second decoupler (P)  162
+	 dn3 Nucleus for third decoupler (P)  162
+	 dn4 Nucleus for fourth decoupler (P) . 162
+	 dof Frequency offset for first decoupler (P) 164
+	 dof2 Frequency offset for second decoupler (P) . 164
+	 dof3 Frequency offset for third decoupler (P).. 165
+	 dof4 Frequency offset for fourth decoupler (P) .. 165
+	 dosyfrq Larmor frequency of phase encoded nucleus in DOSY (P) 166
+	 dosygamma Gyromagnetic constant of phase encoded nucleus in DOSY (P)  167
+	 dosytimecubed Gyromagnetic constant of phase encoded nucleus in DOSY (P)  167
+	 dotflag Display FID as connected dots (P) . 167
+	 downsamp Downsampling factor applied after digital filtering (P) 168
+	 dp Double precision (P) .. 168
+	 dpwr Power level for first decoupler with  ar amplifier (P) . 174
+	 dpwr2 Power level for second decoupler with  ar amplifier (P) .. 174
+	 dpwr3 Power level for third decoupler with  ar amplifier (P) 175
+	 dpwr4 Power level for fourth decoupler amplifier (P). 175
+	 dpwrf First decoupler fine power (P) .. 176
+	 dpwrf2 Second decoupler fine power (P). 176
+	 dpwrf3 Third decoupler fine power (P). 176
+	 dpwrm First decoupler  ar modulator power (P)  177
+	 dpwrm2 Second decoupler  ar modulator power (P) . 177
+	 dpwrm3 Third decoupler  ar modulator power (P) . 177
+	 dres Tip-angle resolution for first decoupler (P)  178
+	 dres2 Tip-angle resolution for second decoupler (P).. 179
+	 dres3 Tip-angle resolution for third decoupler (P) .. 179
+	 dres4 Tip-angle resolution for fourth decoupler (P)  179
+	 dscoef Digital filter coefficients for downsampling (P) .. 182
+	 dseq Decoupler sequence for first decoupler (P)  183
+	 dseq2 Decoupler sequence for second decoupler (P).. 183
+	 dseq3 Decoupler sequence for third decoupler (P) .. 183
+	 dseq4 Decoupler sequence for fourth decoupler (P)  184
+	 dsfb Digital filter bandwidth for downsampling (P). 184
+	 dslsfrq Bandpass filter offset for downsampling (P) . 185
+	 dsp Type of DSP for data acquisition (P) . 188
+	 dsptype Type of DSP (P)  189
+	 dtrig Delay to wait for another trigger or acquire a spectrum (P) .. 197
+	 dutyc Duty cycle for homodecoupling (optional) (P). 197
+	 email Email address (P)  201
+	 errloglen Number of  s in error message display (P) 203
+	 execplot Execute plotting macro (P) . 204
+	 execprep Execute prepare macro (P).. 205
+	 execprescan Execute prescan macro (P) . 205
+	 execproc Execute processing macro (P).. 205
+	 execprocess Execute processing macro (P) 205
+	 execsetup Execute setup macro (P) .. 205
+	 f1coef Coefficient to construct F1 interferogram (P) 215
+	 f2coef Coefficient to construct F2 interferogram (P) 216
+	 fattn Fine attenuator (P) .. 216
+	 fb Filter bandwidth (P)  216
+	 fiddc3d 3D time-domain dc correction (P) .. 218
+	 fifolpsize FIFO loop size (P) 221
+	 file File name of parameter set (P) .. 221
+	 filtfile File of FIR digital filter coefficients (P) .. 222
+	 fn Fourier number in directly detected dimension (P)  227
+	 fn1 Fourier number in 1st indirectly detected dimension (P)  227
+	 fn2 Fourier number in 2nd indirectly detected dimension (P) .. 227
+	 fn2D Fourier number to build up 2D DOSY display in freq. domain (P) 227
+	 fpmult First point multiplier for np FID data (P)  230
+	 fpmult1 First point multiplier for ni interferogram data (P). 231
+	 fpmult2 First point multiplier for ni2 interferogram data (P).. 231
+	 fsq Frequency-shifted quadrature detection (P) 232
+	 gain Receiver gain (P) . 247
+	 gcal Gradient calibration constant (P) . 249
+	 gcoil Current gradient coil (P) .. 249
+	 gdiff Diffusion gradient level (P)  250
+	 gf Gaussian function in directly detected dimension (P) .. 257
+	 gf1 Gaussian function in 1st indirectly detected dimension (P) .. 257
+	 gf2 Gaussian function in 2nd indirectly detected dimension (P) . 257
+	 gflow Flow encoding gradient level (P). 257
+	 gfs Gaussian shift const. in directly detected dimension (P) . 257
+	 gfs1 Gaussian shift const. in 1st indirectly detected dimension (P) . 258
+	 gfs2 Gaussian shift const. in 2nd indirectly detected dimension (P)  258
+	 globalauto Automation directory name (P)  260
+	 gmapspin Enable or disable spinning during gradient shimming (P) . 261
+	 gmap_findtof Gradient shimming flag to first find tof (P)  263
+	 gmap_z1z4 Gradient shimming flag to first shim z1-z4 (P)  263
+	 gmax Maximum gradient strength (P)  264
+	 gpat–gpat3 Gradient shape (P) .. 266
+	 gradientdisable Disable PFG gradients (P) .. 266
+	 gradientshaping Activate shaping on the gradient pulses (P) 266
+	 gradstepsz Gradient step size (P) . 266
+	 gradtype Gradients for X, Y, and Z axes (P).. 267
+	 grayctr Gray level window adjustment (P) . 268
+	 graysl Gray level slope (contrast) adjustment (P) . 268
+	 gspoil Spoiler gradient level (P) . 269
+	 gsspat Slice-select gradient shape (P) .. 269
+	 gtotlimit Gradient total limit (P) .. 270
+	 gtrim Trim gradient level (P).. 270
+	 gxmax,gymax,gzmax Maximum gradient strength for each axis (P) .. 270
+	 gzlvl Pulsed field gradient strength (P). 270
+	 gzsize Number of z-axis shims used by gradient shimming (P) . 270
+	 gzwin Spectral width percentage used for gradient shimming (P)  271
+	 h1freq Proton frequency of spectrometer (P)  275
+	 hdmf Modulation frequency for homonuclear decoupling (P).. 278
+	 hdof Frequency offset for homodecoupling (P) .. 279
+	 hdpwr Power level for homodecoupling (P) . 279
+	 hdpwrf Homodecoupling fine power (optional) (P) 280
+	 hdres Sets the tip angle resolution (P)  280
+	 hdseq Waveform filename for band selective decoupling (P). 281
+	 hdwshim Hardware shimming (P) 281
+	 hdwshimlist List of shims for hardware shimming (P)  281
+	 hipwrampenable High Power Amplifier Enable (P) . 283
+	 ho Horizontal offset (P) .. 284
+	 homo Homodecoupling control for the observe channel (P) .. 285
+	 homorof1 Delay before turning on homo decoupling rf (P). 285
+	 homorof2 Delay after blanking the amp and setting T/R switch to recv (P) 286
+	 homorof3 Delay between setting T/R to receive and gating the recvr on (P) . 286
+	 Hprescan Proton prescan (P))  287
+	 hs Homospoil pulses (P). 287
+	 hsrotor Display rotor speed for solids operation (P) .. 289
+	 hst Homospoil time (P). 289
+	 htbitrev Hadamard bit reversal flag (P).. 289
+	 htbw1 Hadamard pulse excitation bandwidth in ni (P) 289
+	 htcal1 RF calibration flag for Hadamard waveforms in ni (P)  290
+	 htfrq1 Hadamard frequency list in ni (P) 290
+	 htofs1 Hadamard offset in ni (P). 290
+	 htpwr1 Power level for RF calibration of Hadamard waveforms in ni (P) . 290
+	 htss1 Stepsize for Hadamard waveforms in ni (P)  291
+	 hzmm Scaling factor for plots (P).. 291
+	 il Interleave arrayed and 2D experiments (P)  294
+	 in Lock and spin interlock (P). 295
+	 index2 Projection or 3D plane index selected (P) .. 296
+	 ins Integral normalization scale (P)  297
+	 ins2 2D volume value (P) .. 297
+	 insref Fourier number scaled value of an integral (P). 297
+	 ins2ref Fourier number scaled volume of a peak (P) . 297
+	 intmod Integral display mode (P). 299
+	 io Integral offset (P) . 299
+	 is Integral scale (P) .. 299
+	 iterate Parameters to be iterated (P) .. 302
+	 jcurwin Work space numbers of all viewports (P) .. 303
+	 jviewport Work space numbers of the current viewports (P). 305
+	 jviewportlabel Work space labels for all viewport buttons (P)  305
+	 jviewports Viewport layout (P) 306
+	 lastlk Last lock solvent used (P)  312
+	 lastmenu Menu to display when Return button is selected (P) . 313
+	 latch Frequency synthesizer latching (P). 313
+	 lb   broadening in directly detected dimension (P) .. 313
+	 lb1   broadening in 1st indirectly detected dimension (P) .. 313
+	 lb2   broadening in 2nd indirectly detected dimension (P). 314
+	 lcpeak Peak number (P) 315
+	 legrelay Independent control of magnet leg relay (P) . 316
+	 liamp Amplitudes of integral reset points (P) . 316
+	 lifrq Frequencies of integral reset points (P)  317
+	 liqbear Liquids Bearing Air Level (P) .. 317
+	 lkof Track changes in lock frequency (P) . 317
+	 ll2dmode Control display of peaks picked by ll2d (P) .. 321
+	 llamp List of   amplitudes (P) .. 321
+	 llfrq List of   frequencies (P).. 321
+	 load Load status of displayed shims (P) . 322
+	 loc Location of sample in tray (P) .. 323
+	 lockacqtc Lock loop time constant during acquisition (P) 323
+	 lockfreq Lock frequency (P) . 324
+	 lockgain Lock gain (P) . 325
+	 lockphase Lock phase (P) .. 325
+	 lockpower Lock power (P) . 325
+	 locktc Lock time constant (P) .. 325
+	 logate Transmitter local oscillator gate (P) 325
+	 lp First-order phase in directly detected dimension (P) . 328
+	 lp1 First-order phase in 1st indirectly detected dimension (P) . 328
+	 lp2 First-order phase in 2nd indirectly detected dimension (P)  329
+	 lpalg LP algorithm in np dimension (P) 329
+	 lpalg1 LP algorithm in ni dimension (P)  330
+	 lpalg2 LP algorithm in ni2 dimension (P) . 330
+	 lpext LP data extension in np dimension (P) . 330
+	 lpext1 LP data extension in ni dimension (P) .. 330
+	 lpext2 LP data extension in ni2 dimension (P)  331
+	 lpfilt LP coefficients to calculate in np dimension (P) . 331
+	 lpfilt1 LP coefficients to calculate in ni dimension (P) .. 331
+	 lpfilt2 LP coefficients to calculate in ni2 dimension (P)  331
+	 lpnupts LP number of data points in np dimension (P) . 331
+	 lpnupts1 LP number of data points in ni dimension (P) .. 332
+	 lpnupts2 LP number of data points in ni2 dimension (P)  332
+	 lpopt LP algorithm data extension in np dimension (P) 332
+	 lpopt1 LP algorithm data extension in ni dimension (P)  333
+	 lpopt2 LP algorithm data extension in ni2 dimension (P) . 333
+	 lpprint LP print output for np dimension (P). 333
+	 lpprint1 LP print output for ni dimension (P).. 334
+	 lpprint2 LP print output for ni2 dimension (P) 334
+	 lptrace LP output spectrum in np dimension (P) . 335
+	 lptrace1 LP output spectrum in ni dimension (P) .. 335
+	 lptrace2 LP output spectrum in ni2 dimension (P)  335
+	 lsfid Number of complex points to left-shift the np FID (P)  336
+	 lsfid1 Number of complex points to left-shift ni interferogram (P). 336
+	 lsfid2 Number of complex points to left-shift ni2 interferogram (P).. 337
+	 lsfrq Frequency shift of the fn spectrum (P) . 337
+	 lsfrq1 Frequency shift of the fn1 spectrum (P) .. 337
+	 lsfrq2 Frequency shift of the fn2 spectrum (P) .. 338
+	 lvl Zero-order base  correction (P) .. 338
+	 lvltlt Control sensitivity of lvl and tlt adjustments (P) . 338
+	 macro Macro name (P)  342
+	 manualpath Path to user’s manual directory (P). 349
+	 mapwin List of experiment numbers (P)  349
+	 masvt Type of variable temperature system (P) . 351
+	 maxattench1-4 Maximum limit for attenuator setting for rf channel 1-4 (P)  352
+	 maxpen Maximum number of pens to use (P). 352
+	 method Autoshim method (P). 353
+	 mlabel Menu label (P) .. 358
+	 mrfb Set the filter bandwidths for multiple receivers (P)  361
+	 mrgain Set the gain for multiple receivers (P) .. 362
+	 mstring Menu string (P) . 362
+	 mxconst Maximum scaling constant (P) . 363
+	 n1,n2,n3 Name storage for macros (P) . 365
+	 nfni Number of increments in 1st indirectly detected dimension (P) . 367
+	 ni2 Number of increments in 2nd indirectly detected dimension (P)  367
+	 ni3 Number of increments in 3rd indirectly detected dimension (P) . 368
+	 niter Number of iterations (P) .. 368
+	 nimax Maximum limit of ni (P)  368
+	 notebook Notebook name (P) . 372
+	 np Number of data points (P) 373
+	 npoint Number of points for fp peak search (P).. 373
+	 nt Number of transients (P).. 373
+	 ntrig Number of trigger signals to wait before acquisition (P). 374
+	 ntype3d Specify whether f 1 or f 2 display expected to be N-type (P) .. 374
+	 numrcvrs Number of receivers in the system (P).. 374
+	 numrfch Number of rf channels (P) .. 375
+	 operator Operator name (P).. 378
+	 oscoef Digital filter coefficients for over sampling (P) 379
+	 osfb Digital filter bandwidth for oversampling (P) .. 379
+	 osfilt Oversampling filter for real-time DSP (P).. 380
+	 oslsfrq Bandpass filter offset for oversampling (P)  380
+	 overrange Frequency synthesizer overrange (P). 380
+	 oversamp Oversampling factor for acquisition (P) .. 381
+	 owner Operating system account owner (P)  382
+	 p1 First pulse width (P) 387
+	 p1pat Shape of excitation pulse (P) . 387
+	 pad Preacquisition delay (P)  390
+	 page Name of page (P) . 392
+	 panellevel Display level for VnmrJ interface pages (P).. 392
+	 parmax Parameter maximum values (P)  397
+	 parmin Parameter minimum values (P). 398
+	 parstep Parameter step size values (P) .. 398
+	 parversion Version of parameter set (P) 399
+	 path3d Path to currently displayed 2D planes from a 3D data set (P) .. 399
+	 pfgon Pulsed field gradient amplifiers on/off control (P) . 407
+	  1: phase Phase selection (P) .. 412
+	  1: phase1 Phase of first pulse (P) .. 412
+	  1: phase2 Phase selection for 3D acquisition (P) .. 412
+	  1: phase3 Phase selection for 4D acquisition (P) .. 413
+	  1: phasing Control update region during interactive phasing (P) 413
+	  1: phfid Zero-order phasing constant for the np FID (P) .. 413
+	  1: phfid1 Zero-order phasing constant for ni interferogram (P) 414
+	  1: phfid2 Zero-order phasing constant for ni2 interferogram (P). 414
+	  1: pin Pneumatics Router Interlock ((P)  415
+	  1: plane Currently displayed 3D plane type (P) . 418
+	  1: plockport Port number to use to lock out multiple ProTune processes (P).. 425
+	  1: plotter Plotter device (P) . 428
+	  1: plt2Darg Plot 2D arguments (P).. 430
+	  1: pltmod Plotter display mode (P) .. 430
+	  1: pmode Processing mode for 2D data (P) . 432
+	  1: pp Decoupler pulse length (P) . 433
+	  1: ppmm Resolution on printers and plotters (P) . 435
+	  1: prealfa Specify a delay for longer ring down (P). 436
+	  1: prescan Study queue prescan (P).. 437
+	  1: printer Printer device (P) . 438
+	  1: printfile Path to the print-to-file image (P)  438
+	  1: printformat Format of saved-to-file image (P) 438
+	  1: printlayout Layout of printed image (P) 438
+	  1: printregion Screen region to be printed (P) . 439
+	  1: printsize Size of printed image (P) . 439
+	  1: printsend Defines where image will print (P). 439
+	  1: probe Probe type (P)  439
+	  1: probeConnect Specify which nucleus can be acquired on each RF channel (P). 439
+	  1: probe_protection Probe protection control (P) 440
+	  1: proc Type of processing on np FID (P) 440
+	  1: proc1 Type of processing on ni interferogram (P)  441
+	  1: proc2 Type of processing on ni2 interferogram (P) . 442
+	  1: pshr PostScript High Resolution plotting control (P) .. 449
+	  1: pslabel Pulse sequence label (P) .. 449
+	  1: pslw PostScript   Width control (P) 450
+	  1: ptspec3d Region-selective 3D processing (P) 451
+	  1: ptsval PTS frequency synthesizer value (P) . 452
+	  1: pw Pulse width (P).. 454
+	  1: pw90 90° pulse width (P) . 454
+	  1: pwpat Shape of refocusing pulse (P)  455
+	  1: pxbss Bloch-Siegert shift correction during Pbox pulse generation (P)  457
+	  1: pxrep Flag to set the level of Pbox reports (P) 457
+	  1: qcomp Longer dead time for longer ring down (P)  461
+	  1: r1-r7 Real-value storage for macros (P) .. 465
+	  1: rcvrwt Weighting for different receivers (P) . 466
+	  1: reffrq Reference frequency of reference   (P) .. 475
+	  1: reffrq1 Reference freq. of reference   in 1st indirect dimension (P)  476
+	  1: reffrq2 Reference freq. of reference   in 2nd indirect dimension (P).. 476
+	  1: refpos Position of reference frequency (P)  476
+	  1: refpos1 Position of reference frequency in 1st indirect dimension (P).. 477
+	  1: refpos2 Position of reference frequency in 2nd indirect dimension (P)  477
+	  1: refsource1 Center frequency in 1st indirect dimension (P)  477
+	  1: refsource2 Center frequency in 2nd indirect dimension (P) .. 477
+	  1: reqparcheck Flag which enables/disables required parameters (P)  479
+	  1: reqparlist List of required parameters (P) . 480
+	  1: rev System software revision level (P) . 483
+	  1: revdate System software preparation date (P)  483
+	  1: rfband RF band in use (P) .. 483
+	  1: rfchannel Independent control of rf channel selection (P) 484
+	  1: rfchtype Type of rf channel (P)  485
+	  1: rfl Reference peak position in directly detected dimension (P).. 487
+	  1: rfl1 Reference peak position in 1st indirectly detected dimension (P).. 487
+	  1: rfl2 Reference peak position in 2nd indirectly detected dimension (P) 487
+	  1: rfp Reference peak frequency in directly detected dimension (P) . 487
+	  1: rfp1 Reference peak freq. in 1st indirectly detected dimension (P) . 488
+	  1: rfp2 Reference peak freq. in 2nd indirectly detected dimension (P)  488
+	  1: rftype Type of rf generation (P).. 489
+	  1: rfwg RF waveform generator (P)  489
+	  1: rof1 Receiver gating time preceding pulse (P)  493
+	  1: rof2 Receiver gating time following pulse (P)  493
+	  1: rof3 Receiver gating time following T/R switch (P)  494
+	  1: rotorsync Rotor synchronization (P)  494
+	  1: rp Zero-order phase in directly detected dimension (P). 494
+	  1: rp1 Zero-order phase in 1st indirectly detected dimension (P) . 495
+	  1: rp2 Zero-order phase in 2nd indirectly detected dimension (P) 495
+	  1: samplename Sample name (P) .. 505
+	  1: savefile Base file name for saving files (P) .. 505
+	  1: saveglobal Save selected parameters from global tree (P).. 505
+	  1: sb Sinebell constant in directly detected dimension (P). 506
+	  1: sb1 Sinebell constant in 1st indirectly detected dimension (P) . 506
+	  1: sb2 Sinebell constant in 2nd indirectly detected dimension (P) 506
+	  1: sbs Sinebell shift in directly detected dimension (P) . 506
+	  1: sbs1 Sinebell shift in 1st indirectly detected dimension (P) . 507
+	  1: sbs2 Sinebell shift in 2nd indirectly detected dimension (P)  507
+	  1: sc Start of chart (P) 507
+	  1: sc2 Start of chart in second direction (P) . 508
+	  1: scalesw Scale spectral width in directly detected dimension (P) .. 508
+	  1: scalesw1 Scale spectral width in 1st indirectly detected dimension (P) .. 509
+	  1: scalesw2 Scale spectral width in 2nd indirectly detected dimension (P) . 509
+	  1: seqfil Pulse sequence name (P).. 513
+	  1: sf Start of FID (P) . 536
+	  1: sf1 Start of interferogram in 1st indirectly detected dimension (P) 536
+	  1: sf2 Start of interferogram in 2nd indirectly detected dimension (P) . 536
+	  1: sfrq Transmitter frequency of observe nucleus (P) .. 537
+	  1: shimset Type of shim set (P)  538
+	  1: shownumx Show x position of number (P) . 540
+	  1: shownumy Show y position of number (P) . 541
+	  1: showprotunegui show the graphical interface while tuning (P) .. 541
+	  1: showrfmon Show RF Monitor Button in Hardware Bar (P)  542
+	  1: slfreq Measured   frequencies (P) .. 544
+	  1: slw Spin simulation  width (P)  544
+	  1: smaxf Maximum frequency of any transition (P).. 544
+	  1: sminf Minimum frequency of any transition (P) .. 545
+	  1: smsport Sample Management System serial port connection (P) . 545
+	  1: sn Signal-to-noise ratio (P) 545
+	  1: solvent Lock solvent (P) 546
+	  1: sp Start of plot in directly detected dimension (P)  547
+	  1: sp1 Start of plot in 1st indirectly detected dimension (P)  547
+	  1: sp2 Start of plot in 2nd indirectly detected dimension (P) .. 547
+	  1: specdc3d 3D spectral dc correction (P) . 548
+	  1: spin Sample spin rate (P)  549
+	  1: spintype Spinner Type ((P) . 553
+	  1: sqdir Study queue directory (P)  556
+	  1: sqmode Study queue mode (P) .. 556
+	  1: sqname Study queue parameter template (P) .. 557
+	  1: srate Spinning rate for magic angle spinning (P)  558
+	  1: ss Steady-state transients (P) 559
+	  1: ssfilter Full bandwidth of digital filter to yield a filtered FID (P) .. 560
+	  1: sslsfrq Center of solvent-suppressed region of spectrum (P)  560
+	  1: ssntaps Number of coefficients in digital filter (P) . 560
+	  1: ssorder Order of polynomial to fit digitally filtered FID (P).. 561
+	  1: stackmode Stacking control for processing arrayed 1D spectra (P) .. 562
+	  1: sth Minimum intensity threshold (P) . 563
+	  1: strtext Starting point for LP data extension in np dimension (P) 564
+	  1: strtext1 Starting point for LP data extension in ni dimension (P). 564
+	  1: strtext2 Starting point for LP data extension in ni2 dimension (P).. 564
+	  1: strtlp Starting point for LP calculation in np dimension (P) .. 564
+	  1: strtlp1 Starting point for LP calculation in ni dimension (P)  565
+	  1: strtlp2 Starting point for LP calculation in ni2 dimension (P) . 565
+	  1: studyid Study identification (P) . 565
+	  1: studypar Study parameters (P). 565
+	  1: studystatus Study status (P)  566
+	  1: studytime Study time (P) .. 566
+	  1: svfdir Directory for non-study data (P) .. 570
+	  1: svfname Filename parameter template for non-study data ((P) .. 572
+	  1: svs Spin simulation vertical scale (P)  573
+	  1: sw Spectral width in directly detected dimension (P) .. 574
+	  1: sw1 Spectral width in 1st indirectly detected dimension (P) .. 574
+	  1: sw2 Spectral width in 2nd indirectly detected dimension (P) . 575
+	  1: sw3 Spectral width in 3rd indirectly detected dimension (P).. 575
+	  1: sysgcoil System gradient coil (P) 575
+	  1: system System type (P) . 575
+	  1: systemdir VnmrJ system directory (P)  576
+	  1: tape Control tape options of files program (P)  581
+	  1: tchan RF channel number used for tuning (P).. 581
+	  1: temp Sample temperature (P)  582
+	  1: testacquire Test acquire mode (P) .. 583
+	  1: th Threshold (P) . 586
+	  1: th2d Threshold for integrating peaks in 2D spectra (P) .. 586
+	  1: tin Temperature interlock (P)  587
+	  1: tlt First-order base  correction (P) .. 588
+	  1: tn Nucleus for observe transmitter (P)  588
+	  1: tof Frequency offset for observe transmitter (P) . 590
+	  1: tpwr Observe transmitter power level with  ar amplifiers (P) 590
+	  1: tpwrf Observe transmitter fine power (P). 591
+	  1: tpwrm Observe transmitter  ar modulator power (P) . 591
+	  1: trace Mode for n-dimensional data display (P)  591
+	  1: traymax Sample changer tray slots (P)  592
+	  1: tugain Receiver gain used in tuning (P).. 593
+	  1: tunematch Default match target, in percent of optimum (P) . 594
+	  1: tunemethod Method to use for tuning (P).. 594
+	  1: tuneResult Message indicating how well the tuning succeeded (P) .. 595
+	  1: tunesw Width of the tuning sweep in Hz (P).. 595
+	  1: tupwr Transmitter power used in tuning (P)  595
+	  1: userdir VnmrJ user directory (P).. 601
+	  1: vf Vertical scale of FID (P) .. 606
+	  1: vo Vertical offset (P) . 612
+	  1: vp Vertical position of spectrum (P) . 612
+	  1: vpf Current vertical position of FID (P) 612
+	  1: vpfi Current vertical position of imaginary FID (P)  613
+	  1: vs Vertical scale (P) .. 613
+	  1: vs2d Vertical scale for 2D displays (P)  614
+	  1: vsproj Vertical scale for projections and traces (P) 616
+	  1: vtairflow Variable Temperature Air Flow (P). 616
+	  1: vtairlimits Variable Temperature Air Flow Limits (P) . 616
+	  1: vtc Variable temperature cutoff point (P)  617
+	  1: vtcomplvl Variable temperature compensation for gradient shimming (P) .. 617
+	  1: vttype Variable temperature controller present (P)  617
+	  1: vtwait Variable temperature wait time (P) . 618
+	  1: waltz WALTZ decoupling present (P)  620
+	  1: wbs When block size (P)  621
+	  1: wc Width of chart (P)  621
+	  1: wc2 Width of chart in second direction (P) .. 621
+	  1: wcmax Maximum width of chart (P) . 622
+	  1: wc2max Maximum width of chart in second direction (P)  622
+	  1: wdone Specify action when experiment is done (P)  622
+	  1: werr When error (P) .. 623
+	  1: wet Flag to turn on or off wet solvent suppression ((P)  624
+	  1: wetpeaks Number of peaks for wet solvent suppression (P) . 625
+	  1: wetshape Shape for pwwet pulses (P)  625
+	  1: wexp When experiment completes (P).. 626
+	  1: wf Width of FID (P) .. 626
+	  1: wf1 Width of interferogram in 1st indirectly detected dimension (P)  627
+	  1: wf2 Width of interferogram in 2nd indirectly detected dimension (P) .. 627
+	  1: wnt When number of transients (P) . 631
+	  1: wp Width of plot in directly detected dimension (P) . 631
+	  1: wp1 Width of plot in 1st indirectly detected dimension (P) . 631
+	  1: wp2 Width of plot in 2nd indirectly detected dimension (P) 632
+	  1: wrtp Command string executed after rtp command (P) .. 635
+	  1: wshim Conditions when shimming is performed (P)  635
+	  1: wtfile User-defined weighting in directly detected dimension (P) .. 636
+	  1: wtfile1 User-defined weighting in 1st indirectly detected dimension (P) 636
+	  1: wtfile2 User-defined weighting in 2nd indirectly detected dimension (P) . 636
+	  1: wtune Specify when to tune (P).. 638
+	  1: wtunedone What to do after ProTune tuning is done (P) . 639
+	  1: wysiwyg Set plot display or full display (P) .. 639
+	  1: x0 X-zero position of HP pen plotter or Postscript device (P)  642
+	  1: x1 X1 shim gradient (P).. 642
+	  1: x2y2 X2Y2 shim gradient (P)  642
+	  1: x3 X3 shim gradient (P).. 642
+	  1: x4 X4 shim gradient (P).. 642
+	  1: xdiag Threshold for excluding diagonal peaks when peak picking (P) . 643
+	  1: xpol Cross-polarization (P)  649
+	  1: xy XY shim gradient (P) . 650
+	  1: xz XZ shim gradient (P) . 650
+	  1: xz2 XZ2 shim gradient (P) .. 650
+	  1: y0 Y-zero position of HP pen plotter or Postscript device (P). 651
+	  1: y1 Y1 shim gradient (P).. 651
+	  1: y3 Y3 shim gradient (P).. 651
+	  1: y4 Y4 shim gradient (P).. 651
+	  1: yz YZ shim gradient (P) . 651
+	  1: yz2 YZ2 shim gradient (P) .. 652
+	  1: z0 Z0 field position (P)  654
+	  1: z1 Z1 shim gradient (P) .. 654
+	  1: z1c Z1C shim gradient (P) 654
+	  1: z2 Z2 shim gradient (P) .. 654
+	  1: z2c Z2C shim gradient (P) 655
+	  1: z2x2y2 Z2X2Y2 shim gradient (P) . 655
+	  1: z2x3 Z2X3 shim gradient (P)  655
+	  1: z2xy Z2XY shim gradient (P) .. 655
+	  1: z2y3 Z2Y3 shim gradient (P)  655
+	  1: z3 Z3 shim gradient (P) .. 655
+	  1: z3c Z3C shim gradient (P) 655
+	  1: z3x Z3X shim gradient (P) .. 655
+	  1: z3x2y2 Z3X2Y2 shim gradient (P) . 656
+	  1: z3x3 Z3X3 shim gradient (P)  656
+	  1: z3xy Z3XY shim gradient (P) .. 656
+	  1: z3y Z3Y shim gradient (P) .. 656
+	  1: z3y3 Z3Y3 shim gradient (P)  656
+	  1: z4 Z4 shim gradient (P) .. 656
+	  1: z4c Z4C shim gradient (P) 656
+	  1: z4x Z4X shim gradient (P) .. 656
+	  1: z4x2y2 Z4X2Y2 shim gradient (P) . 657
+	  1: z4xy Z4XY shim gradient (P) .. 657
+	  1: z4y Z4Y shim gradient (P) .. 657
+	  1: z5 Z5 shim gradient (P) .. 657
+	  1: z5x Z5X shim gradient (P) .. 657
+	  1: z5y Z5Y shim gradient (P) .. 657
+	  1: z6 Z6 shim gradient (P) .. 657
+	  1: z7 Z7 shim gradient (P) .. 657
+	  1: z8 Z8 shim gradient (P) .. 658
+	  1: zx2y2 ZX2Y2 shim gradient (P)  658
+	  1: zx3 ZX3 shim gradient (P) .. 658
+	  1: zxy ZXY shim gradient (P) . 658
+	  1: zy3 ZY3 shim gradient (P) .. 658

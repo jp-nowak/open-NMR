@@ -60,10 +60,34 @@ DataBlockHead = collections.namedtuple("DataBlockHead",
 # number - number of header in block
 
 def fid_file_type(file_content):
+    #TO BE DONE
     return "agilent"
 
+def open_experiment_folder_agilent(path):
+    path += "\\"
+    fid_path = path + "fid"
+    procpar_path = path + "procpar"
+    with open(fid_path, "rb") as file:
+        fid_content = file.read()
+    procpar_lines = []
+    with open(procpar_path, "r") as file:
+        for line in file:
+            procpar_lines.append(line)
+    
+    return fid_content, procpar_lines
 
-
+def read_agilent_procpar(procpar_lines):
+    params = dict()
+    key = "error"
+    params[key] = []
+    for line in procpar_lines:
+        words = line.split()
+        if words[0][0].isalpha():
+            key = words[0]
+            params[key] = [words[1:]]
+        else:
+            params[key].append(words)
+    return params
 
 def read_agilent_fid(file_content):
     """
@@ -92,6 +116,7 @@ def read_agilent_fid(file_content):
     header0 = DataFileHead(*struct.unpack(">llllllhhl", file_content[ptr:ptr+32]))
     headers = [header0]
     ptr += 32
+    #TO BE REDONE FOR OTHER EL TYPES
     el_specifier = ">ff"
     el_type = np.csingle
     el_size = 2 * header0.ebytes if el_type == np.csingle else header0.ebytes
@@ -124,20 +149,10 @@ def read_agilent_fid(file_content):
     return headers, fids
 
 if __name__ == "__main__":
-    nmr_file_path = "fid"
-    with open(nmr_file_path, "rb") as file:
-        file_content = file.read()
+    #testing
+    path = "./example_fids/agilent_example1H.fid"
+    fid_content, procpar_lines = open_experiment_folder_agilent(path)
+    procpar = read_agilent_procpar(procpar_lines)
+    headers, fids = read_agilent_fid(fid_content)
 
-    headers, fids = read_agilent_fid(file_content)
-
-    ft_rl = np.fft.fft(np.real(fids[0]))
-    ft_im = np.fft.fft(np.imag(fids[0]))
-    print("ft")
-    # simplified spectrum not suitable for anything, 
-    # though good for display prototyping
-    pow_spectr = [(i*i + j*j) for i, j in zip(
-        np.real(ft_rl[:len(ft_rl)//2]), np.imag(ft_im[:len(ft_im)//2]))]
-
-    fig, ax = plt.subplots(dpi = 1200)
-    ax.plot(pow_spectr, linewidth=0.2, color='red')
-    fig.savefig("spektrum.png")
+    
