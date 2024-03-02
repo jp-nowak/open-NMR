@@ -4,38 +4,45 @@ from PyQt6.QtGui import QPainter, QColor, QPixmap, QPolygon
 from PyQt6.QtCore import QPoint
 import numpy as np
 import noise
-from scipy.interpolate import interp1d
 from math import floor
-import matplotlib.pyplot as plt
 
 def fast_data(data, width, height):
+    # this is very primitive and fast
+    # the value closest to a pixel is chosen
     result = []
     ymax = max(data[:,1])
     ymin = min(data[:,1])
     print(ymin, ymax)
     for i in range(width):
-        index = floor(len(data)*i/width)
-        x, y = data[floor(len(data)*i/width), :]
+        y = data[floor(len(data)*i/width), :][1]
         y = floor((y-ymin)/(ymax-ymin)*height)
         result.append((i,int(y)))
     return result
 
 class spectrum_painter(QWidget):
-    def __init__(self, size, margins, data):
+    def __init__(self, margins, data):
         super().__init__()
         #geometry
+        self.data = data
         self.margins = margins
+        
+        
+
+    def paintEvent(self, event):
+        rect = self.rect()
+        size = {
+            'w' : rect.topRight().x()-rect.topLeft().x(),
+            'h' : rect.bottomLeft().y()-rect.topRight().y()
+            }
         self.painter_size = {
-            'w' : size['w']-margins['right']-margins['left'], 
-            'h' : size['h']-margins['top']-margins['bottom']
+            'w' : size['w']-self.margins['right']-self.margins['left'], 
+            'h' : size['h']-self.margins['top']-self.margins['bottom']
         }
         self.resampled = fast_data(data, self.painter_size['w'], self.painter_size['h'])
-
-
-    
-    def paintEvent(self, event):
         painter = QPainter(self)
         painter.translate(self.margins['left'], self.margins['top'])
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        print(event)
         #painter.setPen(QColor(0, 0, 255))  # color
         painter.drawRect(0, 0, self.painter_size['w'], self.painter_size['h'])
         painter.drawPolyline(QPolygon([QPoint(x,y) for (x,y) in self.resampled]))
@@ -48,7 +55,7 @@ class window(QMainWindow):
         margins = {'top':80, 'left':80, 'bottom':10, 'right':10}
         self.setGeometry(200, 200, size['w'], size['h']) #placement, windowsize
         self.setWindowTitle("Open NMR")
-        self.central_widget = spectrum_painter(size, margins, data) 
+        self.central_widget = spectrum_painter(margins, data)
         self.setCentralWidget(self.central_widget)
 
 
@@ -58,9 +65,6 @@ if __name__ == "__main__":
     x = np.linspace(0, 1, points)
     y = [noise.pnoise1(x*100) for x in x]
     data = np.column_stack((x, y))
-    fig, ax = plt.subplots()
-    ax.plot(x,y)
-    plt.show()
     #main app
     app = QApplication(sys.argv)
     window = window(data)
