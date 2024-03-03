@@ -3,6 +3,9 @@ import collections
 import numpy as np
 import matplotlib.pyplot as plt
 
+#CONSTANT
+DEUTERIUM_EPSILON = 0.1535069
+
 # definition of named tuple class used to store information from file header
 
 DataFileHead = collections.namedtuple("DataFileHead", 
@@ -89,6 +92,34 @@ def read_agilent_procpar(procpar_lines):
             params[key].append(words)
     return params
 
+def info_agilent(params):
+    info = dict()
+    params_keywords = {
+        "solvent" : "solvent",
+        "lock_frequency" : "lockfreq_", #[MHz]
+        "samplename" : "samplename",
+        "spectrometer_frequency" : "h1freq", #[MHz]
+        "experiment" : "pslabel",
+        "experiment_type" : "apptype",
+        "nucleus" : "tn",
+        "spectral_width" : "sw", #[Hz]
+        "studyowner" : "studyowner",
+        "operator" : "operator",
+        "data" : "time_saved", # string "yyyymmddThhmmss"
+        }
+    for i, j in params_keywords.items():
+        try:
+            value = params[j][1][1]
+            value = float(value) if value.replace('.','',1).isdigit() else value[1:-1]
+        except KeyError:
+            value = None
+        info[i] = value
+        
+    if not info["spectrometer_frequency"]:
+        info["spectrometer_frequency"] = round(info["lock_frequency"]/DEUTERIUM_EPSILON)
+        
+    return info
+
 def read_agilent_fid(file_content):
     """
     Function used to read data from agilent type .fid file
@@ -152,7 +183,8 @@ if __name__ == "__main__":
     #testing
     path = "./example_fids/agilent_example1H.fid"
     fid_content, procpar_lines = open_experiment_folder_agilent(path)
-    procpar = read_agilent_procpar(procpar_lines)
+    params = read_agilent_procpar(procpar_lines)
+    info = info_agilent(params)
     headers, fids = read_agilent_fid(fid_content)
 
     
