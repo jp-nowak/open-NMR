@@ -2,6 +2,7 @@ import struct
 import collections
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 #CONSTANT
 DEUTERIUM_EPSILON = 0.1535069
@@ -67,9 +68,8 @@ def fid_file_type(file_content):
     return "agilent"
 
 def open_experiment_folder_agilent(path):
-    path += "\\"
-    fid_path = path + "fid"
-    procpar_path = path + "procpar"
+    fid_path = os.path.join(path, "fid")
+    procpar_path = os.path.join(path,"procpar")
     with open(fid_path, "rb") as file:
         fid_content = file.read()
     procpar_lines = []
