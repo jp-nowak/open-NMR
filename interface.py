@@ -1,10 +1,8 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
-from PyQt6.QtGui import QPainter, QColor, QPixmap, QPolygon, QPen
-from PyQt6.QtCore import QPointF, Qt
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton
+from PyQt6.QtGui import QPainter
+from PyQt6.QtCore import QPointF
 import numpy as np
-import noise
-from math import floor
 from spectrum import Spectrum_1D
 
 def open_fid(nmr_file_path):
@@ -24,7 +22,7 @@ def fast_data(data, width, height):
     ymin = min(data[:,1])
     data[:,1] = -(data[:,1]-ymin)/(ymax-ymin)+1
     #downsampling, bad method, we need one for nmr spectra specifically
-    pointperpixel = 10
+    pointperpixel = 100
     sample = max(len(data)//(pointperpixel*width),1)
     resampled = data*(width, height)
     resampled = resampled[::sample]
@@ -69,10 +67,17 @@ class spectrum_painter(QWidget):
 class window(QMainWindow):
     def __init__(self, experiments):
         super().__init__()
-        
-        # widnow size, position, margins
+        central_widget = QWidget()
+        layout = QVBoxLayout(central_widget)
+
+        self.button = QPushButton("Open File")
+        layout.addWidget(self.button)
+        self.button = QPushButton("Find Peaks")
+        layout.addWidget(self.button)
+
+        # widnow size, position, margins, etc
         size = {'w':800,'h':400}
-        margins = {'top':80, 'left':80, 'bottom':10, 'right':10}
+        margins = {'top':10, 'left':10, 'bottom':10, 'right':10}
         self.setGeometry(200, 200, size['w'], size['h']) 
         
         # opening spectrum, in the future on event
@@ -83,12 +88,14 @@ class window(QMainWindow):
             experiments.append(open_fid(nmr_file_path))
             title+= ' - ' + nmr_file_path
         
+        # modifying in relation to spectrum
         self.setWindowTitle(title)
         data = fix_spectrum(experiments[0].spectrum)
-        
-        #drawing things
-        self.central_widget = spectrum_painter(margins, data)
-        self.setCentralWidget(self.central_widget)
+
+        self.painter_widget = spectrum_painter(margins, data)
+        layout.addWidget(self.painter_widget)
+
+        self.setCentralWidget(central_widget)
 
 if __name__ == "__main__":
     #main app
