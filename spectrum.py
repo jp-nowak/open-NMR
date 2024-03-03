@@ -36,8 +36,10 @@ class Spectrum_1D:
             self.spectrum = spectrum
         
     @classmethod
-    def create_from_file(cls, path, ftype):
-        #to be considered: open() exceptions handling
+    def create_from_file(cls, path):
+        #to be considered: open() exceptions 
+        
+        ftype = readingfids.fid_file_type(path)
         if ftype == "agilent":
             fid_content, procpar_lines = readingfids.open_experiment_folder_agilent(path)
             procpar = readingfids.read_agilent_procpar(procpar_lines)
@@ -59,6 +61,6 @@ class Spectrum_1D:
     
 if __name__ == "__main__":
     path = "./example_fids/agilent_example1H.fid"
-    widmo = Spectrum_1D.create_from_file(path, "agilent")
+    widmo = Spectrum_1D.create_from_file(path)
     
     
