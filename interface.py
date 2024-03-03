@@ -5,13 +5,6 @@ from PyQt6.QtCore import QPointF
 import numpy as np
 from spectrum import Spectrum_1D
 
-def open_fid(nmr_file_path):
-    #this is something that class should do
-    with open(nmr_file_path, "rb") as file:
-        file_content = file.read()
-    exp = Spectrum_1D.create_from_file(file_content, "agilent")
-    return exp
-
 def fix_spectrum(spect):
     data = np.column_stack((np.linspace(0,1,len(spect)), spect))
     return data
@@ -84,8 +77,8 @@ class window(QMainWindow):
         experiments = []
         title = "Open NMR"
         if 'event':
-            nmr_file_path = "fid"
-            experiments.append(open_fid(nmr_file_path))
+            nmr_file_path = "./example_fids/agilent_example1H.fid"
+            experiments.append(Spectrum_1D.create_from_file(nmr_file_path))
             title+= ' - ' + nmr_file_path
         
         # modifying in relation to spectrum
