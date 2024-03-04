@@ -164,29 +164,22 @@ def read_agilent_fid(file_content):
     bl_el_number = header0.np // 2 if el_type == np.csingle else header0.np
     fids = []
     def read_element(element):
-        #print(element)
-        rl, im = element
-        #print(rl)
-        result = rl + im*1j
+        # i am not really sure which part is real in fid
+        b, a = element
+        result = a + b*1j
         return result
         
     for i1 in range(header0.nblocks):
-        print("block number:", i1, end="  ")
         for i2 in range(header0.nbheaders):
             headers.append(DataBlockHead(*struct.unpack(">hhhhlffff", file_content[ptr:ptr+28]), i2))
             ptr += 28
-            print("header in block: ", i2)
         for i3 in range(header0.ntraces):
             fid = np.zeros(bl_el_number, dtype = el_type)
-            print("trace in block:", i3)
-            print("fid start:", ptr)
             for i4 in range(bl_el_number):
                 #print(struct.unpack(el_specifier, file_content[ptr:ptr+el_size]))
                 fid[i4] = read_element(struct.unpack(el_specifier, file_content[ptr:ptr+el_size]))
                 ptr += el_size
-            fids.append(fid)
-            print("fid end:", ptr)
-    print("koniec")       
+            fids.append(fid)     
     return headers, fids
 
 if __name__ == "__main__":

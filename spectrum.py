@@ -31,7 +31,7 @@ class Spectrum_1D:
         # self.spectrum shall contain ready-to-draw spectrum as its y-values, 
         # information about x-values shall be contained in info (spectrum is usually uniformly sampled)
         if not spectrum:
-            self.spectrum = self.generate_power_mode_spectrum()
+            self.spectrum = self.generate_absorption_mode_spectrum()
         else:
             self.spectrum = spectrum
         
@@ -58,6 +58,24 @@ class Spectrum_1D:
         pow_spectr = [(i*i + j*j) for i, j in zip(
             np.real(ft_rl[:len(ft_rl)//2]), np.imag(ft_im[:len(ft_im)//2]))]
         return pow_spectr
+    
+    def generate_absorption_mode_spectrum(self):
+        # first prototype
+        ft_rl = np.fft.fft(np.real(self._fid))
+        rl_ft_rl = np.real(ft_rl)
+        ft_im = np.fft.fft(np.imag(self._fid))
+        im_ft_im = np.imag(ft_im)
+        length = len(rl_ft_rl)
+        
+        spectrum_left = [i-j for i,j in zip(rl_ft_rl[:length//2], im_ft_im[:length//2])]
+        spectrum_left = spectrum_left[::-1]
+        
+        spectrum_rigth = [i+j for i,j in zip(rl_ft_rl[:length//2], im_ft_im[:length//2])]
+
+        # consider other half of fid
+
+        
+        return spectrum_left + spectrum_rigth
     
 if __name__ == "__main__":
     path = "./example_fids/agilent_example1H.fid"
