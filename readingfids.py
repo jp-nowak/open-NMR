@@ -96,28 +96,38 @@ def info_agilent(params):
     info = dict()
     params_keywords = {
         "solvent" : "solvent",
-        "lock_frequency" : "lockfreq_", #[MHz]
+        "lock_freq" : "lockfreq_", # [MHz] lock (deuterium) frequency of spectrometer
         "samplename" : "samplename",
-        "spectrometer_frequency" : "h1freq", #[MHz]
+        "spectrometer_freq" : "h1freq", # [MHz] proton frequency of spectrometer
         "experiment" : "pslabel",
         "experiment_type" : "apptype",
-        "nucleus" : "tn",
-        "spectral_width" : "sw", #[Hz]
+        "nucleus" : "tn", # observed nucleus An np H1, C13 etc.
+        "spectral_width" : "sw", # [Hz]
         "studyowner" : "studyowner",
         "operator" : "operator",
         "data" : "time_saved", # string "yyyymmddThhmmss"
+        "obs_nucl_freq" : "sfrq", # [MHz]
+        "plot_begin" : "sp", # [Hz] beginning of plot
+        "points_number" : "np"# number of data points
         }
+    
+    # import of directrly stated params
     for i, j in params_keywords.items():
         try:
             value = params[j][1][1]
-            value = float(value) if value.replace('.','',1).isdigit() else value[1:-1]
+            value = float(value) if value.replace('.','',1).replace('-','',1).isdigit() else value[1:-1]
         except KeyError:
             value = None
         info[i] = value
         
-    if not info["spectrometer_frequency"]:
-        info["spectrometer_frequency"] = round(info["lock_frequency"]/DEUTERIUM_EPSILON)
+    # derived params
+    if not info["spectrometer_freq"]:
+        info["spectrometer_freq"] = round(info["lock_freq"]/DEUTERIUM_EPSILON)
         
+    info["plot_end"] = info["plot_begin"] + info["spectral_width"] # [Hz]
+    info["plot_begin_ppm"] = info["plot_begin"] / info["spectrometer_freq"]
+    info["plot_end_ppm"] = info["plot_end"] / info["spectrometer_freq"]
+    
     return info
 
 def read_agilent_fid(file_content):
