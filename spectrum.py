@@ -15,14 +15,12 @@ class Spectrum_1D:
     # class instantion should be created via classmethod create_from_file(path, file_type)
     # instantions for testing with specific data may be created directly
     
-    def __init__(self, procpar, headers, info, fid, spectrum=None):
+    def __init__(self, ft_rl, ft_im, info, path, spectrum=None):
         # init shall not be format-specific
         
         # private variables
-        self._headers = headers # list of headers starting with file header then block ones
-        self._fid = fid[0] # free induction decay data
-        self._procpar = procpar # dictionary of processing parameters in raw form, 
-        # it may be deleted later if deemed to memory consuming
+        self._ft_rl = ft_rl
+        self._ft_im = ft_im
         
         # public variables
         self.info = info # shall contain info about spectrum which may be displayed,
@@ -30,11 +28,13 @@ class Spectrum_1D:
         
         # self.spectrum shall contain ready-to-draw spectrum as its y-values, 
         # information about x-values shall be contained in info (spectrum is usually uniformly sampled)
-        if not spectrum:
+        if spectrum is None:
             self.spectrum = self.generate_absorption_mode_spectrum()
         else:
             self.spectrum = spectrum
-        
+            
+        # string containing path to file from which object was created
+        self.path = path
     @classmethod
     def create_from_file(cls, path):
         #to be considered: open() exceptions 
@@ -48,23 +48,25 @@ class Spectrum_1D:
         else:
             raise NotImplementedError
         
-        return cls(procpar, headers, info, fid)
+        ft_rl = np.fft.fft(np.real(fid[0]))
+        ft_im = np.fft.fft(np.imag(fid[0]))
+        
+        return cls(ft_rl, ft_im, info, path)
+    
     
     def generate_power_mode_spectrum(self):
-        ft_rl = np.fft.fft(np.real(self._fid))
-        ft_im = np.fft.fft(np.imag(self._fid))
         # simplified spectrum not suitable for anything, 
         # though good for display prototyping
         pow_spectr = [(i*i + j*j) for i, j in zip(
-            np.real(ft_rl[:len(ft_rl)//2]), np.imag(ft_im[:len(ft_im)//2]))]
+            np.real(self._ft_rl[:len(self._ft_rl)//2]), np.imag(self._ft_im[:len(self._ft_im)//2]))]
         return pow_spectr
     
     def generate_absorption_mode_spectrum(self):
         # first prototype
-        ft_rl = np.fft.fft(np.real(self._fid))
-        rl_ft_rl = np.real(ft_rl)
-        ft_im = np.fft.fft(np.imag(self._fid))
-        im_ft_im = np.imag(ft_im)
+
+        rl_ft_rl = np.real(self._ft_rl)
+
+        im_ft_im = np.imag(self._ft_im)
         length = len(rl_ft_rl)
         
         spectrum_left = [i-j for i,j in zip(rl_ft_rl[:length//2], im_ft_im[:length//2])]
@@ -75,7 +77,7 @@ class Spectrum_1D:
         # consider other half of fid
 
         
-        return spectrum_left + spectrum_rigth
+        return np.array(spectrum_left + spectrum_rigth)
     
 if __name__ == "__main__":
     path = "./example_fids/agilent_example1H.fid"
