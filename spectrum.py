@@ -15,19 +15,20 @@ class Spectrum_1D:
     # class instantion should be created via classmethod create_from_file(path, file_type)
     # instantions for testing with specific data may be created directly
     
-    def __init__(self, ft_rl, ft_im, info, path, spectrum=None):
+    def __init__(self, fid, info, path, spectrum=None):
         # init shall not be format-specific
         
         # private variables
-        self._ft_rl = ft_rl
-        self._ft_im = ft_im
+        self._fid = fid
         
         # public variables
         self.info = info # shall contain info about spectrum which may be displayed,
         # such us experiment type, date, samplename, etc.
-        
+        self.zero_order_phase_corr = 0
         # self.spectrum shall contain ready-to-draw spectrum as its y-values, 
         # information about x-values shall be contained in info (spectrum is usually uniformly sampled)
+        
+        self.corr_zero_order_phase(0.1*np.pi)
         if spectrum is None:
             self.spectrum = self.generate_absorption_mode_spectrum()
         else:
@@ -48,25 +49,27 @@ class Spectrum_1D:
         else:
             raise NotImplementedError
         
-        ft_rl = np.fft.fft(np.real(fid[0]))
-        ft_im = np.fft.fft(np.imag(fid[0]))
+
         
-        return cls(ft_rl, ft_im, info, path)
+        return cls(fid[0], info, path)
     
     
     def generate_power_mode_spectrum(self):
         # simplified spectrum not suitable for anything, 
         # though good for display prototyping
+        ft_rl = np.fft.fft(np.real(self._fid))
+        ft_im = np.fft.fft(np.imag(self._fid))
         pow_spectr = [(i*i + j*j) for i, j in zip(
-            np.real(self._ft_rl[:len(self._ft_rl)//2]), np.imag(self._ft_im[:len(self._ft_im)//2]))]
+            np.real(ft_rl[:len(ft_rl)//2]), np.imag(ft_im[:len(ft_im)//2]))]
         return pow_spectr
     
     def generate_absorption_mode_spectrum(self):
         # first prototype
+        ft_rl = np.fft.fft(np.real(self._fid))
+        ft_im = np.fft.fft(np.imag(self._fid))
+        rl_ft_rl = np.real(ft_rl)
 
-        rl_ft_rl = np.real(self._ft_rl)
-
-        im_ft_im = np.imag(self._ft_im)
+        im_ft_im = np.imag(ft_im)
         length = len(rl_ft_rl)
         
         spectrum_left = [i-j for i,j in zip(rl_ft_rl[:length//2], im_ft_im[:length//2])]
@@ -79,6 +82,14 @@ class Spectrum_1D:
         
         return np.array(spectrum_left + spectrum_rigth)
     
+    def corr_zero_order_phase(self, angle):
+        # angle is an number of radians by which to "turn" phase. 2 pi is identity.
+        self.zero_order_phase_corr += angle
+        self._fid = self._fid*np.exp(angle*1j)
+        
+    
+        
+        
 if __name__ == "__main__":
     path = "./example_fids/agilent_example1H.fid"
     widmo = Spectrum_1D.create_from_file(path)
