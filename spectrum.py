@@ -30,11 +30,14 @@ class Spectrum_1D:
         
         
         optimal_zero_order_phase_correction = self.opt_zero_order_phase_corr(0, 0.0001)
+
         self.corr_zero_order_phase(optimal_zero_order_phase_correction)
+        print("optimal", optimal_zero_order_phase_correction)
         if spectrum is None:
             self.spectrum = self.generate_absorption_mode_spectrum()
         else:
             self.spectrum = spectrum
+            
 
         
         
@@ -102,7 +105,12 @@ class Spectrum_1D:
             spectrum = [i-j for i,j in zip(rl_ft_rl[:length//2], im_ft_im[:length//2])]
             spectrum = spectrum[::-1]
             spectrum = spectrum + [i+j for i,j in zip(rl_ft_rl[:length//2], im_ft_im[:length//2])]
-            maximum = sum(spectrum)
+            maximum = 0
+            for i in spectrum:
+                if i > 0:
+                    maximum += i
+                else:
+                    maximum += 2*i
             return maximum
         angle = start
         maximum = spectrum_sum()
@@ -113,9 +121,8 @@ class Spectrum_1D:
             fid = fid*np.exp(step*1j*np.pi)
             current = spectrum_sum()
             angle += step
-            improved = False
+            print(angle, current)
             if current > maximum:
-                improved = True
                 maximum = current
             else:
                 angle -= step
@@ -124,11 +131,6 @@ class Spectrum_1D:
             if step < precision:
                 break
             
-        if improved == False:
-            #TODO counter clockwise correction
-            pass
-        
-        
         return angle
                 
             
@@ -136,7 +138,6 @@ class Spectrum_1D:
         
         
 if __name__ == "__main__":
-    path = "./example_fids/agilent_example1H.fid"
-    widmo = Spectrum_1D.create_from_file(path)
+    pass
     
     
