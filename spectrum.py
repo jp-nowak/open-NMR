@@ -28,12 +28,16 @@ class Spectrum_1D:
         # self.spectrum shall contain ready-to-draw spectrum as its y-values, 
         # information about x-values shall be contained in info (spectrum is usually uniformly sampled)
         
-        self.corr_zero_order_phase(0.1*np.pi)
+        
+        optimal_zero_order_phase_correction = self.opt_zero_order_phase_corr(0, 0.0001)
+        self.corr_zero_order_phase(optimal_zero_order_phase_correction)
         if spectrum is None:
             self.spectrum = self.generate_absorption_mode_spectrum()
         else:
             self.spectrum = spectrum
-            
+
+        
+        
         # string containing path to file from which object was created
         self.path = path
     @classmethod
@@ -83,11 +87,52 @@ class Spectrum_1D:
         return np.array(spectrum_left + spectrum_rigth)
     
     def corr_zero_order_phase(self, angle):
-        # angle is an number of radians by which to "turn" phase. 2 pi is identity.
+        # angle is an number of pi*radian by which to "turn" phase. 2 is identity.
+        # angle = 2 -> turn by 2 pi radians -> 360 degree
         self.zero_order_phase_corr += angle
-        self._fid = self._fid*np.exp(angle*1j)
+        self._fid = self._fid*np.exp(angle*1j*np.pi)
         
-    
+    def opt_zero_order_phase_corr(self, start, precision):
+        fid = self._fid.copy()
+        def spectrum_sum():
+            nonlocal fid
+            rl_ft_rl = np.real(np.fft.fft(np.real(fid)))
+            im_ft_im = np.imag(np.fft.fft(np.imag(fid)))
+            length = len(rl_ft_rl)
+            spectrum = [i-j for i,j in zip(rl_ft_rl[:length//2], im_ft_im[:length//2])]
+            spectrum = spectrum[::-1]
+            spectrum = spectrum + [i+j for i,j in zip(rl_ft_rl[:length//2], im_ft_im[:length//2])]
+            maximum = sum(spectrum)
+            return maximum
+        angle = start
+        maximum = spectrum_sum()
+        step = 1
+        i = 0
+        while True:
+            i += 1
+            fid = fid*np.exp(step*1j*np.pi)
+            current = spectrum_sum()
+            angle += step
+            improved = False
+            if current > maximum:
+                improved = True
+                maximum = current
+            else:
+                angle -= step
+                fid = fid*np.exp(-step*1j*np.pi)
+                step /= 10
+            if step < precision:
+                break
+            
+        if improved == False:
+            #TODO counter clockwise correction
+            pass
+        
+        
+        return angle
+                
+            
+            
         
         
 if __name__ == "__main__":
