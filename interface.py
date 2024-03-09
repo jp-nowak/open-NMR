@@ -36,7 +36,7 @@ class spectrum_painter(QWidget):
         self.data = data
         self.resampled = []
         self.info = info
-        self.axpars = {'dlen': 5, 'pixperinc': 50,
+        self.axis_pars = {'dlen': 5, 'pixperinc': 50,
                        'incperppm': 2, 'ax_padding': 30, 'spect_padding': 50}
         # deln is a length of delimiter in pixels
         # incperppm: multiples - 2 => 0.5 is the minimum increment
@@ -77,16 +77,16 @@ class spectrum_painter(QWidget):
         # drawing plot
         fragm = (0, 1)
         self.resampled = data_prep(self.data.copy(
-        ), self.p_size['w'], self.p_size['h']-self.axpars['spect_padding'], self.rang)
+        ), self.p_size['w'], self.p_size['h']-self.axis_pars['spect_padding'], self.rang)
         self.resampled = [QPointF(i[0], i[1]) for i in self.resampled]
         painter.drawPolyline(QPolygonF(self.resampled))
 
         # drawing axis delimiters, adjusts automatically
         # parameters
-        ax_pos = self.p_size['h']-self.axpars['ax_padding']
+        ax_pos = self.p_size['h']-self.axis_pars['ax_padding']
         width = self.info['plot_end_ppm']-self.info['plot_begin_ppm']
-        incr = math.ceil(self.axpars['incperppm']*width/(self.p_size['w'] //
-                         self.axpars['pixperinc']))/self.axpars['incperppm']
+        incr = math.ceil(self.axis_pars['incperppm']*width/(self.p_size['w'] //
+                         self.axis_pars['pixperinc']))/self.axis_pars['incperppm']
 
         # axis line
         painter.drawLine(QPointF(0.0, ax_pos),
@@ -95,7 +95,7 @@ class spectrum_painter(QWidget):
         del_pos_list = [(i*incr+width % incr) /
                         width for i in range(int(width//incr))]
         del_text_list = [str(round((self.info['plot_end_ppm']-i*width) *
-                             self.axpars['incperppm'])/self.axpars['incperppm']) for i in del_pos_list]
+                             self.axis_pars['incperppm'])/self.axis_pars['incperppm']) for i in del_pos_list]
         # if last delimiter is too close to edge
         if (1-del_pos_list[-1])*self.p_size['w'] < 10:
             del_pos_list.pop(-1)
@@ -108,15 +108,15 @@ class spectrum_painter(QWidget):
             del_pos = del_pos_list[i]
             del_text = del_text_list[i]
             top_del = QPointF(
-                del_pos*self.p_size['w'], ax_pos+self.axpars['dlen'])
+                del_pos*self.p_size['w'], ax_pos+self.axis_pars['dlen'])
             bot_del = QPointF(
-                del_pos*self.p_size['w'], ax_pos-self.axpars['dlen'])
+                del_pos*self.p_size['w'], ax_pos-self.axis_pars['dlen'])
             painter.drawLine(top_del, bot_del)
             # paramters for text
             font_metrics = QFontMetrics(self.textfont)
             text_width = font_metrics.horizontalAdvance(del_text)
             num_pos = QPointF(
-                del_pos*self.p_size['w']-0.5*text_width, ax_pos+4*self.axpars['dlen'])
+                del_pos*self.p_size['w']-0.5*text_width, ax_pos+4*self.axis_pars['dlen'])
             painter.drawText(num_pos, del_text)
 
         painter.end()
