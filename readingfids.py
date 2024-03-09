@@ -125,8 +125,8 @@ def info_agilent(params):
         info["spectrometer_freq"] = round(info["lock_freq"]/DEUTERIUM_EPSILON)
         
     info["plot_end"] = info["plot_begin"] + info["spectral_width"] # [Hz]
-    info["plot_begin_ppm"] = info["plot_begin"] / info["spectrometer_freq"]
-    info["plot_end_ppm"] = info["plot_end"] / info["spectrometer_freq"]
+    info["plot_begin_ppm"] = info["plot_begin"] / info["obs_nucl_freq"]
+    info["plot_end_ppm"] = info["plot_end"] / info["obs_nucl_freq"]
     
     return info
 
