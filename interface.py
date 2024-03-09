@@ -6,8 +6,8 @@ import numpy as np
 from spectrum import Spectrum_1D
 import math
 
-def data_prep(data, width, height, range):
-    data = data[round(len(data)*range[0]):round(len(data)*range[1])]
+def data_prep(data, width, height, rang):
+    data = data[round(len(data)*rang[0]):round(len(data)*rang[1])]
     data = np.column_stack((np.linspace(0,1,len(data)), data))
     #normalize
     ymax = max(data[:,1])
@@ -29,6 +29,10 @@ class spectrum_painter(QWidget):
         self.data = data
         self.resampled = []
         self.info = info
+        self.axpars = {'dlen': 5, 'pixperinc': 50, 'incperppm': 2, 'ax_padding': 30, 'spect_padding': 50}
+        self.rang = (0,1)
+        #deln is a length of delimiter in pixels
+        #incperppm: multiples - 2 => 0.5 is the minimum increment
         print(info)
 
     def paintEvent(self, event):
@@ -44,7 +48,7 @@ class spectrum_painter(QWidget):
             }
         #drawing plot
         fragm = (0,1)
-        self.resampled = data_prep(self.data.copy(), self.p_size['w'], 0.8*self.p_size['h'], fragm)
+        self.resampled = data_prep(self.data.copy(), self.p_size['w'], self.p_size['h']-self.axpars['spect_padding'], self.rang)
         for i in range(len(self.resampled)-1):
             p1 = QPointF(self.resampled[i][0], self.resampled[i][1])
             p2 = QPointF(self.resampled[i+1][0], self.resampled[i+1][1])
@@ -52,17 +56,14 @@ class spectrum_painter(QWidget):
         
         # drawing axis delimiters, adjusts automatically
         # parameters
-        ax_padding = self.p_size['h']-30
-        del_length = 5
-        pix_per_incr = 50
-        incr_per_ppm = 2 #and multiples - 2 => 0.5 is the minimum increment
+        ax_pos = self.p_size['h']-self.axpars['ax_padding']
         width = self.info['plot_end_ppm']-self.info['plot_begin_ppm']
-        incr = math.ceil(incr_per_ppm*width/(self.p_size['w']//pix_per_incr))/incr_per_ppm
+        incr = math.ceil(self.axpars['incperppm']*width/(self.p_size['w']//self.axpars['pixperinc']))/self.axpars['incperppm']
         # axis line
-        painter.drawLine(QPointF(0.0, ax_padding), QPointF(self.p_size['w'], ax_padding))
+        painter.drawLine(QPointF(0.0,ax_pos), QPointF(self.p_size['w'], ax_pos))
         # increments lists
         del_pos_list = [(i*incr+width%incr)/width for i in range(int(width//incr))]
-        del_text_list = [str(round((self.info['plot_end_ppm']-i*width)*incr_per_ppm)/incr_per_ppm) for i in del_pos_list]
+        del_text_list = [str(round((self.info['plot_end_ppm']-i*width)*self.axpars['incperppm'])/self.axpars['incperppm']) for i in del_pos_list]
         # if last delimiter is too close to edge
         if (1-del_pos_list[-1])*self.p_size['w']<10: 
             del_pos_list.pop(-1)
@@ -71,10 +72,10 @@ class spectrum_painter(QWidget):
         for i in range(len(del_pos_list)):
             del_pos = del_pos_list[i]
             del_text = del_text_list[i]
-            top_del = QPointF(del_pos*self.p_size['w'],ax_padding+del_length)
-            bot_del = QPointF(del_pos*self.p_size['w'],ax_padding-del_length)
+            top_del = QPointF(del_pos*self.p_size['w'],ax_pos+self.axpars['dlen'])
+            bot_del = QPointF(del_pos*self.p_size['w'],ax_pos-self.axpars['dlen'])
             painter.drawLine(top_del, bot_del)
-            num_pos = QPointF(del_pos*self.p_size['w'],ax_padding+4*del_length)
+            num_pos = QPointF(del_pos*self.p_size['w'],ax_pos+4*self.axpars['dlen'])
             painter.drawText(num_pos, del_text)
         
         painter.end()
