@@ -1,7 +1,7 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton
-from PyQt6.QtGui import QPainter, QPolygonF
-from PyQt6.QtCore import QPointF
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton
+from PyQt6.QtGui import QPainter, QPolygonF, QFontMetrics, QFont
+from PyQt6.QtCore import QPointF, pyqtSignal, QPoint
 import numpy as np
 from spectrum import Spectrum_1D
 import math
@@ -23,21 +23,47 @@ def data_prep(data, width, height, rang):
     return resampled
 
 class spectrum_painter(QWidget):
+    #dragging
+    dragStarted = pyqtSignal(QPoint)
+    dragEnded = pyqtSignal(QPoint)
+
     def __init__(self, data, info):
         super().__init__()
-        #geometry
+        #geometry and settings
+        self.textfont = QFont('Times', 10)
         self.data = data
         self.resampled = []
         self.info = info
         self.axpars = {'dlen': 5, 'pixperinc': 50, 'incperppm': 2, 'ax_padding': 30, 'spect_padding': 50}
-        self.rang = (0,1)
         #deln is a length of delimiter in pixels
         #incperppm: multiples - 2 => 0.5 is the minimum increment
-        print(info)
+        self.rang = (0,1)
+        
+        #dragging
+        self.dragging = False
+        self.startPos = QPoint()
+        self.endPos = QPoint()
+        
+
+    def mousePressEvent(self, event):
+        if self.dragging:
+            self.startPos = event.pos()
+            self.dragStarted.emit(self.startPos)
+
+    def mouseMoveEvent(self, event):
+        if self.dragging:
+            self.endPos = event.pos()
+
+    def mouseReleaseEvent(self, event):
+        if self.dragging:
+            self.endPos = event.pos()
+            self.dragEnded.emit(self.endPos)
 
     def paintEvent(self, event):
+        print(self.startPos, self.endPos)
         # settings
         painter = QPainter(self)
+        painter.setFont(self.textfont)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
         # updating window size
@@ -57,6 +83,7 @@ class spectrum_painter(QWidget):
         ax_pos = self.p_size['h']-self.axpars['ax_padding']
         width = self.info['plot_end_ppm']-self.info['plot_begin_ppm']
         incr = math.ceil(self.axpars['incperppm']*width/(self.p_size['w']//self.axpars['pixperinc']))/self.axpars['incperppm']
+        
         # axis line
         painter.drawLine(QPointF(0.0,ax_pos), QPointF(self.p_size['w'], ax_pos))
         # increments lists
@@ -66,6 +93,9 @@ class spectrum_painter(QWidget):
         if (1-del_pos_list[-1])*self.p_size['w']<10: 
             del_pos_list.pop(-1)
             del_text_list.pop(-1)
+        if del_pos_list[0]*self.p_size['w']<10: 
+            del_pos_list.pop(0)
+            del_text_list.pop(0)
         # draw delimiters
         for i in range(len(del_pos_list)):
             del_pos = del_pos_list[i]
@@ -73,7 +103,10 @@ class spectrum_painter(QWidget):
             top_del = QPointF(del_pos*self.p_size['w'],ax_pos+self.axpars['dlen'])
             bot_del = QPointF(del_pos*self.p_size['w'],ax_pos-self.axpars['dlen'])
             painter.drawLine(top_del, bot_del)
-            num_pos = QPointF(del_pos*self.p_size['w'],ax_pos+4*self.axpars['dlen'])
+            #paramters for text
+            font_metrics = QFontMetrics(self.textfont)
+            text_width = font_metrics.horizontalAdvance(del_text)
+            num_pos = QPointF(del_pos*self.p_size['w']-0.5*text_width,ax_pos+4*self.axpars['dlen'])
             painter.drawText(num_pos, del_text)
         
         painter.end()
@@ -81,13 +114,14 @@ class spectrum_painter(QWidget):
 class window(QMainWindow):
     def __init__(self, experiments):
         super().__init__()
-        central_widget = QWidget()
-        layout = QVBoxLayout(central_widget)
-
-        self.button = QPushButton("Open File")
-        layout.addWidget(self.button)
-        self.button = QPushButton("Find Peaks")
-        layout.addWidget(self.button)
+        
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(QPushButton("Open File"))
+        button_layout.addWidget(QPushButton("Find Peaks"))
+        self.zoom_button = QPushButton("Zoom")
+        self.zoom_button.setCheckable(True)
+        self.zoom_button.toggled.connect(self.toggle_dragging)
+        button_layout.addWidget(self.zoom_button)
 
         # widnow size, position, margins, etc
         size = {'w':800,'h':400}
@@ -105,9 +139,23 @@ class window(QMainWindow):
         self.setWindowTitle(title)
         spec = experiments[0]
         self.painter_widget = spectrum_painter(spec.spectrum, spec.info)
-        layout.addWidget(self.painter_widget)
-
+        
+        main_layout = QVBoxLayout()
+        main_layout.addLayout(button_layout)
+        main_layout.addWidget(self.painter_widget)
+        central_widget = QWidget()
+        central_widget.setLayout(main_layout)
         self.setCentralWidget(central_widget)
+        
+        self.painter_widget.mouseReleaseEvent = self.mouse_release_event_handler #dragging
+
+    def toggle_dragging(self, checked):
+        self.painter_widget.dragging = checked
+
+    def mouse_release_event_handler(self, event):
+        if self.zoom_button.isChecked():
+            self.zoom_button.setChecked(False)
+        
 
 if __name__ == "__main__":
     #main app
