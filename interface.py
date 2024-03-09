@@ -133,6 +133,7 @@ class window(QMainWindow):
         self.zoom_button.setCheckable(True)
         self.zoom_button.toggled.connect(self.toggle_dragging)
         button_layout.addWidget(self.zoom_button)
+        button_layout.addWidget(QPushButton("Reset Zoom"))
 
         # widnow size, position, margins, etc
         size = {'w': 800, 'h': 400}
