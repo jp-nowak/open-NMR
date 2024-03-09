@@ -5,29 +5,30 @@ from PyQt6.QtCore import QPointF
 import numpy as np
 from spectrum import Spectrum_1D
 
-def fix_spectrum(spect):
-    data = np.column_stack((np.linspace(0,1,len(spect)), spect))
-    return data
-
-def fast_data(data, width, height):
+def data_prep(data, width, height, range):
+    data = data[round(len(data)*range[0]):round(len(data)*range[1])]
+    data = np.column_stack((np.linspace(0,1,len(data)), data))
     #normalize
     ymax = max(data[:,1])
     ymin = min(data[:,1])
     data[:,1] = -(data[:,1]-ymin)/(ymax-ymin)+1
     #downsampling, bad method, we need one for nmr spectra specifically
-    pointperpixel = 100
+    pointperpixel = 4
     sample = max(len(data)//(pointperpixel*width),1)
-    resampled = data*(width, height)
-    resampled = resampled[::sample]
+    
+    #scaling to image size
+    resampled = data[::sample]
+    resampled = resampled*(width, height)
     return resampled
 
 class spectrum_painter(QWidget):
-    def __init__(self, margins, data):
+    def __init__(self, data, info):
         super().__init__()
         #geometry
         self.data = data
-        self.margins = margins
         self.resampled = []
+        self.info = info
+        print(info)
 
     def paintEvent(self, event):
         # settings
@@ -36,25 +37,28 @@ class spectrum_painter(QWidget):
 
         # updating window size
         rect = self.rect()
-        size = {
+        self.p_size = {
             'w' : rect.topRight().x()-rect.topLeft().x(),
             'h' : rect.bottomLeft().y()-rect.topRight().y()
             }
-        self.painter_size = {
-            'w' : size['w']-self.margins['right']-self.margins['left'], 
-            'h' : size['h']-self.margins['top']-self.margins['bottom']
-        }
-        painter.translate(self.margins['left'], self.margins['top'])
-
-
         #drawing plot
-        painter.drawRect(0, 0, self.painter_size['w'], self.painter_size['h'])
-        self.resampled = fast_data(self.data.copy(), self.painter_size['w'], self.painter_size['h'])
+        fragm = (0,1)
+        self.resampled = data_prep(self.data.copy(), self.p_size['w'], 0.8*self.p_size['h'], fragm)
         for i in range(len(self.resampled)-1):
             p1 = QPointF(self.resampled[i][0], self.resampled[i][1])
             p2 = QPointF(self.resampled[i+1][0], self.resampled[i+1][1])
             painter.drawLine(p1,p2)
         
+        #drawing range
+        bot_padding = 0.9*self.p_size['h']
+        tup_size = 5
+        painter.drawLine(QPointF(0.0, bot_padding), QPointF(self.p_size['w'], bot_padding))
+        width = self.info['plot_end_ppm']-self.info['plot_begin_ppm']
+        delimiter_tup = [(float(i)+self.info['plot_begin_ppm']%1)/width for i in range(int(width//1))]
+        for incr in delimiter_tup:
+            top_del = QPointF(incr*self.p_size['w'],bot_padding+tup_size)
+            bot_del = QPointF(incr*self.p_size['w'],bot_padding-tup_size)
+            painter.drawLine(top_del, bot_del)
         painter.end()
 
 class window(QMainWindow):
@@ -70,7 +74,6 @@ class window(QMainWindow):
 
         # widnow size, position, margins, etc
         size = {'w':800,'h':400}
-        margins = {'top':10, 'left':10, 'bottom':10, 'right':10}
         self.setGeometry(200, 200, size['w'], size['h']) 
         
         # opening spectrum, in the future on event
@@ -83,9 +86,8 @@ class window(QMainWindow):
         
         # modifying in relation to spectrum
         self.setWindowTitle(title)
-        data = fix_spectrum(experiments[0].spectrum)
-
-        self.painter_widget = spectrum_painter(margins, data)
+        spec = experiments[0]
+        self.painter_widget = spectrum_painter(spec.spectrum, spec.info)
         layout.addWidget(self.painter_widget)
 
         self.setCentralWidget(central_widget)
