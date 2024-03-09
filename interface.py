@@ -1,6 +1,6 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QPushButton
-from PyQt6.QtGui import QPainter
+from PyQt6.QtGui import QPainter, QPolygonF
 from PyQt6.QtCore import QPointF
 import numpy as np
 from spectrum import Spectrum_1D
@@ -14,7 +14,7 @@ def data_prep(data, width, height, rang):
     ymin = min(data[:,1])
     data[:,1] = -(data[:,1]-ymin)/(ymax-ymin)+1
     #downsampling, bad method, we need one for nmr spectra specifically
-    pointperpixel = 4
+    pointperpixel = 100
     sample = max(len(data)//(pointperpixel*width),1)
     
     #scaling to image size
@@ -49,10 +49,8 @@ class spectrum_painter(QWidget):
         #drawing plot
         fragm = (0,1)
         self.resampled = data_prep(self.data.copy(), self.p_size['w'], self.p_size['h']-self.axpars['spect_padding'], self.rang)
-        for i in range(len(self.resampled)-1):
-            p1 = QPointF(self.resampled[i][0], self.resampled[i][1])
-            p2 = QPointF(self.resampled[i+1][0], self.resampled[i+1][1])
-            painter.drawLine(p1,p2)
+        self.resampled = [QPointF(i[0], i[1]) for i in self.resampled]
+        painter.drawPolyline(QPolygonF(self.resampled))
         
         # drawing axis delimiters, adjusts automatically
         # parameters
