@@ -59,9 +59,8 @@ def data_prep(data, width, height, rang):
     sample = max(len(data)//(pointperpixel*width), 1)
 
     # scaling to image size
-    resampled = data[::sample]
-    resampled = resampled*(width, height)
-    return resampled
+    data = data[::sample]*(width, height)
+    return data
 
 
 class spectrum_painter(QWidget):
@@ -78,7 +77,7 @@ class spectrum_painter(QWidget):
         self.resampled = []
         self.info = info
         self.axis_pars = {'dlen': 5, 'pixperinc': 50,
-                          'incperppm': 2, 'ax_padding': 30, 'spect_padding': 50,
+                          'incperppm': 10, 'ax_padding': 30, 'spect_padding': 50,
                           'end_ppm': self.info['plot_end_ppm'],
                           'begin_ppm': self.info['plot_begin_ppm']}
         # deln is a length of delimiter in pixels
@@ -99,19 +98,21 @@ class spectrum_painter(QWidget):
             self.endPos = event.pos().x()/self.p_size['w']
 
     def mouseReleaseEvent(self, event):
-
+        #adjusting rang
         zoomrang = [self.endPos, self.startPos]
         zoomrang.sort()
-        print(self.rang, zoomrang)
-        print(self.rang[0]+(1-self.rang[0])*zoomrang[0])
         self.rang = [self.rang[0]+(self.rang[1]-self.rang[0])*zoomrang[0],
                      self.rang[0]+(self.rang[1]-self.rang[0])*zoomrang[1]
                      ]
         self.rang.sort()
-        print(self.rang)
         if self.zoom_button.isChecked():
             self.zoom_button.setChecked(False)
-        print('drag ended')
+        #adjusting axis
+        width = self.info['plot_end_ppm']-self.info['plot_begin_ppm']
+        self.axis_pars['end_ppm'] = self.info['plot_end_ppm']-width*self.rang[0]
+        self.axis_pars['begin_ppm'] = self.info['plot_begin_ppm']+width*(1-self.rang[1])
+        self.update()
+
 
     def paintEvent(self, event):
 
@@ -147,11 +148,15 @@ class window(QMainWindow):
         button_layout = QHBoxLayout()
         button_layout.addWidget(QPushButton("Open File"))
         button_layout.addWidget(QPushButton("Find Peaks"))
+        
         self.zoom_button = QPushButton("Zoom")
         self.zoom_button.setCheckable(True)
         self.zoom_button.toggled.connect(self.toggle_dragging)
         button_layout.addWidget(self.zoom_button)
-        button_layout.addWidget(QPushButton("Reset Zoom"))
+        
+        self.zoom_reset_button = QPushButton("Reset Zoom")
+        self.zoom_reset_button.clicked.connect(self.reset_zoom)
+        button_layout.addWidget(self.zoom_reset_button)
 
         # widnow size, position, margins, etc
         size = {'w': 800, 'h': 400}
@@ -180,6 +185,14 @@ class window(QMainWindow):
 
     def toggle_dragging(self, checked):
         self.painter_widget.dragging = True
+    
+    def reset_zoom(self):
+        self.painter_widget.rang = [0,1]
+        self.painter_widget.startPos = 0
+        self.painter_widget.endPos = 1
+        self.painter_widget.axis_pars['begin_ppm'] = self.painter_widget.info['plot_begin_ppm']
+        self.painter_widget.axis_pars['end_ppm'] = self.painter_widget.info['plot_end_ppm']
+        self.painter_widget.update()
 
 
 if __name__ == "__main__":
