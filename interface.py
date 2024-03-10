@@ -1,10 +1,50 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton
-from PyQt6.QtGui import QPainter, QPolygonF, QFontMetrics, QFont
+from PyQt6.QtGui import QMouseEvent, QPainter, QPolygonF, QFontMetrics, QFont
 from PyQt6.QtCore import QPointF, pyqtSignal, QPoint
 import numpy as np
 from spectrum import Spectrum_1D
 import math
+
+
+def axis_generator(painter, p_size, axis_pars, textfont):
+    # drawing axis delimiters, adjusts automatically
+    # parameters
+    ax_pos = p_size['h']-axis_pars['ax_padding']
+    width = axis_pars['end_ppm']-axis_pars['begin_ppm']
+    incr = math.ceil(axis_pars['incperppm']*width/(p_size['w'] //
+                                                   axis_pars['pixperinc']))/axis_pars['incperppm']
+
+    # axis line
+    painter.drawLine(QPointF(0.0, ax_pos),
+                     QPointF(p_size['w'], ax_pos))
+    # increments lists
+    del_pos_list = [(i*incr+width % incr) /
+                    width for i in range(int(width//incr))]
+    del_text_list = [str(round((axis_pars['end_ppm']-i*width) *
+                               axis_pars['incperppm'])/axis_pars['incperppm']) for i in del_pos_list]
+    # if last delimiter is too close to edge
+    if (1-del_pos_list[-1])*p_size['w'] < 10:
+        del_pos_list.pop(-1)
+        del_text_list.pop(-1)
+    if del_pos_list[0]*p_size['w'] < 10:
+        del_pos_list.pop(0)
+        del_text_list.pop(0)
+    # draw delimiters
+    for i in range(len(del_pos_list)):
+        del_pos = del_pos_list[i]
+        del_text = del_text_list[i]
+        top_del = QPointF(
+            del_pos*p_size['w'], ax_pos+axis_pars['dlen'])
+        bot_del = QPointF(
+            del_pos*p_size['w'], ax_pos-axis_pars['dlen'])
+        painter.drawLine(top_del, bot_del)
+        # paramters for text
+        font_metrics = QFontMetrics(textfont)
+        text_width = font_metrics.horizontalAdvance(del_text)
+        num_pos = QPointF(
+            del_pos*p_size['w']-0.5*text_width, ax_pos+4*axis_pars['dlen'])
+        painter.drawText(num_pos, del_text)
 
 
 def data_prep(data, width, height, rang):
@@ -26,43 +66,55 @@ def data_prep(data, width, height, rang):
 
 class spectrum_painter(QWidget):
     # dragging
-    dragStarted = pyqtSignal(QPoint)
-    dragEnded = pyqtSignal(QPoint)
+    # dragStarted = pyqtSignal(0.0)
+    # dragEnded = pyqtSignal(0.0)
 
-    def __init__(self, data, info):
+    def __init__(self, data, info, zoom_button):
         super().__init__()
+        self.zoom_button = zoom_button
         # geometry and settings
         self.textfont = QFont('Times', 10)
         self.data = data
         self.resampled = []
         self.info = info
         self.axis_pars = {'dlen': 5, 'pixperinc': 50,
-                       'incperppm': 2, 'ax_padding': 30, 'spect_padding': 50}
+                          'incperppm': 2, 'ax_padding': 30, 'spect_padding': 50,
+                          'end_ppm': self.info['plot_end_ppm'],
+                          'begin_ppm': self.info['plot_begin_ppm']}
         # deln is a length of delimiter in pixels
         # incperppm: multiples - 2 => 0.5 is the minimum increment
-        self.rang = (0, 1)
+        self.rang = [0, 1]
 
         # dragging
         self.dragging = False
-        self.startPos = QPoint()
-        self.endPos = QPoint()
+        self.startPos = 0
+        self.endPos = 1
 
     def mousePressEvent(self, event):
         if self.dragging:
-            self.startPos = event.pos()
-            self.dragStarted.emit(self.startPos)
+            self.startPos = event.pos().x()/self.p_size['w']
 
     def mouseMoveEvent(self, event):
         if self.dragging:
-            self.endPos = event.pos()
+            self.endPos = event.pos().x()/self.p_size['w']
 
     def mouseReleaseEvent(self, event):
-        if self.dragging:
-            self.endPos = event.pos()
-            self.dragEnded.emit(self.endPos)
+
+        zoomrang = [self.endPos, self.startPos]
+        zoomrang.sort()
+        print(self.rang, zoomrang)
+        print(self.rang[0]+(1-self.rang[0])*zoomrang[0])
+        self.rang = [self.rang[0]+(self.rang[1]-self.rang[0])*zoomrang[0],
+                     self.rang[0]+(self.rang[1]-self.rang[0])*zoomrang[1]
+                     ]
+        self.rang.sort()
+        print(self.rang)
+        if self.zoom_button.isChecked():
+            self.zoom_button.setChecked(False)
+        print('drag ended')
 
     def paintEvent(self, event):
-        print(self.startPos, self.endPos)
+
         # settings
         painter = QPainter(self)
         painter.setFont(self.textfont)
@@ -75,49 +127,15 @@ class spectrum_painter(QWidget):
             'h': rect.bottomLeft().y()-rect.topRight().y()
         }
         # drawing plot
-        fragm = (0, 1)
-        self.resampled = data_prep(self.data.copy(
-        ), self.p_size['w'], self.p_size['h']-self.axis_pars['spect_padding'], self.rang)
+        self.resampled = data_prep(self.data.copy(),
+                                   self.p_size['w'],
+                                   self.p_size['h'] -
+                                   self.axis_pars['spect_padding'],
+                                   self.rang)
         self.resampled = [QPointF(i[0], i[1]) for i in self.resampled]
         painter.drawPolyline(QPolygonF(self.resampled))
 
-        # drawing axis delimiters, adjusts automatically
-        # parameters
-        ax_pos = self.p_size['h']-self.axis_pars['ax_padding']
-        width = self.info['plot_end_ppm']-self.info['plot_begin_ppm']
-        incr = math.ceil(self.axis_pars['incperppm']*width/(self.p_size['w'] //
-                         self.axis_pars['pixperinc']))/self.axis_pars['incperppm']
-
-        # axis line
-        painter.drawLine(QPointF(0.0, ax_pos),
-                         QPointF(self.p_size['w'], ax_pos))
-        # increments lists
-        del_pos_list = [(i*incr+width % incr) /
-                        width for i in range(int(width//incr))]
-        del_text_list = [str(round((self.info['plot_end_ppm']-i*width) *
-                             self.axis_pars['incperppm'])/self.axis_pars['incperppm']) for i in del_pos_list]
-        # if last delimiter is too close to edge
-        if (1-del_pos_list[-1])*self.p_size['w'] < 10:
-            del_pos_list.pop(-1)
-            del_text_list.pop(-1)
-        if del_pos_list[0]*self.p_size['w'] < 10:
-            del_pos_list.pop(0)
-            del_text_list.pop(0)
-        # draw delimiters
-        for i in range(len(del_pos_list)):
-            del_pos = del_pos_list[i]
-            del_text = del_text_list[i]
-            top_del = QPointF(
-                del_pos*self.p_size['w'], ax_pos+self.axis_pars['dlen'])
-            bot_del = QPointF(
-                del_pos*self.p_size['w'], ax_pos-self.axis_pars['dlen'])
-            painter.drawLine(top_del, bot_del)
-            # paramters for text
-            font_metrics = QFontMetrics(self.textfont)
-            text_width = font_metrics.horizontalAdvance(del_text)
-            num_pos = QPointF(
-                del_pos*self.p_size['w']-0.5*text_width, ax_pos+4*self.axis_pars['dlen'])
-            painter.drawText(num_pos, del_text)
+        axis_generator(painter, self.p_size, self.axis_pars, self.textfont)
 
         painter.end()
 
@@ -150,7 +168,8 @@ class window(QMainWindow):
         # modifying in relation to spectrum
         self.setWindowTitle(title)
         spec = experiments[0]
-        self.painter_widget = spectrum_painter(spec.spectrum, spec.info)
+        self.painter_widget = spectrum_painter(
+            spec.spectrum, spec.info, self.zoom_button)
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(button_layout)
@@ -159,14 +178,8 @@ class window(QMainWindow):
         central_widget.setLayout(main_layout)
         self.setCentralWidget(central_widget)
 
-        self.painter_widget.mouseReleaseEvent = self.mouse_release_event_handler  # dragging
-
     def toggle_dragging(self, checked):
-        self.painter_widget.dragging = checked
-
-    def mouse_release_event_handler(self, event):
-        if self.zoom_button.isChecked():
-            self.zoom_button.setChecked(False)
+        self.painter_widget.dragging = True
 
 
 if __name__ == "__main__":
