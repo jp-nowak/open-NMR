@@ -18,8 +18,16 @@ def axis_generator(painter, p_size, axis_pars, textfont):
     # axis line
     painter.drawLine(QPointF(0.0, ax_pos),
                      QPointF(p_size['w'], ax_pos))
+
     # increments lists
-    del_pos_list = [(i*incr+width % incr) /
+    del_pos_list = []
+    if axis_pars['end_ppm']>0 and axis_pars['begin_ppm']<0:
+        del_pos_list = [axis_pars['end_ppm']/width-incr/width*i for i in range(math.ceil(axis_pars['end_ppm']/incr))]
+        negative_extension = [axis_pars['end_ppm']/width+incr/width*i for i in range(math.ceil(-axis_pars['begin_ppm']/incr))]
+        del_pos_list.extend(negative_extension)
+        del_pos_list = sorted(set(del_pos_list))
+    else:
+        del_pos_list = [(i*incr+width % incr) /
                     width for i in range(int(width//incr))]
     del_text_list = [str(round((axis_pars['end_ppm']-i*width) *
                                axis_pars['incperppm'])/axis_pars['incperppm']) for i in del_pos_list]
@@ -30,6 +38,7 @@ def axis_generator(painter, p_size, axis_pars, textfont):
     if del_pos_list[0]*p_size['w'] < 10:
         del_pos_list.pop(0)
         del_text_list.pop(0)
+
     # draw delimiters
     for i in range(len(del_pos_list)):
         del_pos = del_pos_list[i]
@@ -77,7 +86,7 @@ class spectrum_painter(QWidget):
         self.resampled = []
         self.info = info
         self.axis_pars = {'dlen': 5, 'pixperinc': 50,
-                          'incperppm': 10, 'ax_padding': 30, 'spect_padding': 50,
+                          'incperppm': 5, 'ax_padding': 30, 'spect_padding': 50,
                           'end_ppm': self.info['plot_end_ppm'],
                           'begin_ppm': self.info['plot_begin_ppm']}
         # deln is a length of delimiter in pixels
@@ -98,7 +107,7 @@ class spectrum_painter(QWidget):
             self.endPos = event.pos().x()/self.p_size['w']
 
     def mouseReleaseEvent(self, event):
-        #adjusting rang
+        # adjusting rang
         zoomrang = [self.endPos, self.startPos]
         zoomrang.sort()
         self.rang = [self.rang[0]+(self.rang[1]-self.rang[0])*zoomrang[0],
@@ -107,12 +116,11 @@ class spectrum_painter(QWidget):
         self.rang.sort()
         if self.zoom_button.isChecked():
             self.zoom_button.setChecked(False)
-        #adjusting axis
+        # adjusting axis
         width = self.info['plot_end_ppm']-self.info['plot_begin_ppm']
-        self.axis_pars['end_ppm'] = self.info['plot_end_ppm']-width*self.rang[0]
-        self.axis_pars['begin_ppm'] = self.info['plot_begin_ppm']+width*(1-self.rang[1])
+        self.axis_pars['end_ppm'] = self.info['plot_end_ppm'] - width*self.rang[0]
+        self.axis_pars['begin_ppm'] = self.info['plot_begin_ppm'] + width*(1-self.rang[1])
         self.update()
-
 
     def paintEvent(self, event):
 
@@ -148,12 +156,12 @@ class window(QMainWindow):
         button_layout = QHBoxLayout()
         button_layout.addWidget(QPushButton("Open File"))
         button_layout.addWidget(QPushButton("Find Peaks"))
-        
+
         self.zoom_button = QPushButton("Zoom")
         self.zoom_button.setCheckable(True)
         self.zoom_button.toggled.connect(self.toggle_dragging)
         button_layout.addWidget(self.zoom_button)
-        
+
         self.zoom_reset_button = QPushButton("Reset Zoom")
         self.zoom_reset_button.clicked.connect(self.reset_zoom)
         button_layout.addWidget(self.zoom_reset_button)
@@ -185,9 +193,9 @@ class window(QMainWindow):
 
     def toggle_dragging(self, checked):
         self.painter_widget.dragging = True
-    
+
     def reset_zoom(self):
-        self.painter_widget.rang = [0,1]
+        self.painter_widget.rang = [0, 1]
         self.painter_widget.startPos = 0
         self.painter_widget.endPos = 1
         self.painter_widget.axis_pars['begin_ppm'] = self.painter_widget.info['plot_begin_ppm']
