@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog
 from PyQt6.QtGui import QMouseEvent, QPainter, QPolygonF, QFontMetrics, QFont
 from PyQt6.QtCore import QPointF, pyqtSignal, QPoint
 import numpy as np
@@ -149,12 +149,15 @@ class spectrum_painter(QWidget):
         painter.end()
 
 
-class window(QMainWindow):
-    def __init__(self, experiments):
+class openNMR(QMainWindow):
+    def __init__(self):
         super().__init__()
 
         button_layout = QHBoxLayout()
-        button_layout.addWidget(QPushButton("Open File"))
+        self.file_button = QPushButton("Open File")
+        self.file_button.clicked.connect(self.openFile)
+        button_layout.addWidget(self.file_button)
+
         button_layout.addWidget(QPushButton("Find Peaks"))
 
         self.zoom_button = QPushButton("Zoom")
@@ -202,11 +205,18 @@ class window(QMainWindow):
         self.painter_widget.axis_pars['end_ppm'] = self.painter_widget.info['plot_end_ppm']
         self.painter_widget.update()
 
+    def openFile(self):
+        file_dialog = QFileDialog(self)
+        file_dialog.setWindowTitle('Choose a file')
+        file_dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+        if file_dialog.exec():
+            selected_file = file_dialog.selectedFiles()
+            print("Selected file:", selected_file[0])  # Just for demonstration, you can handle the file as needed
+
 
 if __name__ == "__main__":
     # main app
-    experiments = []
     app = QApplication(sys.argv)
-    window = window(experiments)
+    window = openNMR()
     window.show()
     sys.exit(app.exec())
