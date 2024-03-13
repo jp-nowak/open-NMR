@@ -105,7 +105,7 @@ def info_agilent(params):
         "spectral_width" : "sw", # [Hz]
         "studyowner" : "studyowner",
         "operator" : "operator",
-        "data" : "time_saved", # string "yyyymmddThhmmss"
+        "date" : "time_saved", # string "yyyymmddThhmmss"
         "obs_nucl_freq" : "sfrq", # [MHz]
         "plot_begin" : "sp", # [Hz] beginning of plot
         "points_number" : "np"# number of data points
@@ -182,12 +182,49 @@ def read_agilent_fid(file_content):
             fids.append(fid)     
     return headers, fids
 
-if __name__ == "__main__":
-    #testing
-    path = "./example_fids/agilent_example1H.fid"
-    fid_content, procpar_lines = open_experiment_folder_agilent(path)
-    params = read_agilent_procpar(procpar_lines)
-    info = info_agilent(params)
-    headers, fids = read_agilent_fid(fid_content)
+# if __name__ == "__main__":
+#     # testing of agilent files reading
+#     path = "./example_fids/agilent_example1H.fid"
+#     fid_content, procpar_lines = open_experiment_folder_agilent(path)
+#     params = read_agilent_procpar(procpar_lines)
+#     info = info_agilent(params)
+#     headers, fids = read_agilent_fid(fid_content)
 
-    
+def read_bruker_acqus(acqus_lines):
+    params = dict()
+    key = "error"
+    params[key] = []
+    for line in acqus_lines:
+        words = line.split()
+        if words[0][0:2] == "##":
+            key = words[0][2:-1]
+            params[key] = [words[1:]]
+        else:
+            params[key].append(words)
+    return params
+
+def bruker_info(params):
+    info = dict()
+    params_keywords = {
+        "solvent" : "$SOLVENT",
+        "spectral_width" : "$SW_h",
+        "spectral_width_ppm" : "$SW",
+        "nucleus" : "$NUC1",
+        "spectral_center" : "$OC1",
+        "obs_nucl_freq" : "$BF1",
+        "byte_order" : "$BYTORDA",
+        "date" : "$DATE", # uknown format - unix?
+        "number_of_scans" : "$NS",
+        }
+    raise NotImplementedError
+
+
+
+if __name__ == "__main__":
+    # testing of bruker files reading
+    path = "D:/projekt nmr/open-NMR/example_fids/1H/acqus"
+    lines = []
+    with open(path, "r") as file:
+        for line in file:
+            lines.append(line)
+    params = read_bruker_acqus(lines)
