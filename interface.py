@@ -1,6 +1,6 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog
-from PyQt6.QtGui import QMouseEvent, QPainter, QPolygonF, QFontMetrics, QFont
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStyleFactory
+from PyQt6.QtGui import QMouseEvent, QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase
 from PyQt6.QtCore import QPointF, pyqtSignal, QPoint
 import numpy as np
 from spectrum import Spectrum_1D
@@ -220,8 +220,13 @@ class openNMR(QMainWindow):
 
 
 if __name__ == "__main__":
-    # main app
     app = QApplication(sys.argv)
+    app.setStyle('Fusion')
+    QFontDatabase.addApplicationFont("styling/titillium.ttf")
+    with open("styling/styles.qss", "r") as f:
+            style = f.read()
+            app.setStyleSheet(style)
+    # main app
     window = openNMR()
     window.show()
     sys.exit(app.exec())
