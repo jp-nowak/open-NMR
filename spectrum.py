@@ -16,53 +16,53 @@ class Spectrum_1D:
     # instantions for testing with specific data may be created directly
     
     def __init__(self, fid, info, path, spectrum=None):
-        # init shall not be format-specific
+        # init shall only create instance atributes
         
         # private variables
         
-        # raw fid a np.array of complex32
+        # np.array of complex32 - raw fid
         self._fid = fid
         
-        # value used to calculate relative integral values as following:
+        # float - value used to calculate relative integral values as following:
         # relative_value = real_value/self._integral_rel_one
         self._integral_rel_one = None
         
-        # minimal y-value for signal to be considered non zero in integration etc.
+        # float - minimal y-value for signal to be considered non zero in integration etc.
         self._signal_treshold = None
         
         #--------------------------------------
         # public variables
-        self.info = info # shall contain info about spectrum which may be displayed,
-        # such us experiment type, date, samplename, etc.
         
-        # stores information about applied zero order phase correction [pi rad]
-        self.zero_order_phase_corr = 0
+        # string containing path to file from which object was created
+        self.path = path
+        
+        # dictionary - shall contain info about spectrum
+        # its guaranteed keys are listed at the end of file
+        self.info = info 
         
         # list of calculated integrals, in format:
         # (integral_begin, integral_end, real_value, relative value)
         self.integral_list = []
         
-        
+        # float - stores information about applied zero order phase correction [pi rad]
+        self.zero_order_phase_corr = 0        
         optimal_zero_order_phase_correction = self.opt_zero_order_phase_corr(0, 0.0001)
         self.corr_zero_order_phase(optimal_zero_order_phase_correction)
 
-        
-        # self.spectrum shall contain ready-to-draw spectrum as its y-values, 
+        # np.array of float - self.spectrum shall contain ready-to-draw spectrum as its y-values, 
         # information about x-values shall be contained in info (spectrum is usually uniformly sampled)
         if spectrum is None:
             self.spectrum = self.generate_absorption_mode_spectrum()
         else:
             self.spectrum = spectrum
             
+        #--------------------------------------
+        # setting values of private variables declared earlier
+        
         # value to be decided - placeholder currently
-        
         self._signal_treshold = np.average(self.spectrum)/2
-        
-
-        
-        
-        # string containing path to file from which object was created
-        self.path = path
+    
+    
     @classmethod
     def create_from_file(cls, path):
         #to be considered: open() exceptions 
@@ -90,6 +90,7 @@ class Spectrum_1D:
             np.real(ft_rl[:len(ft_rl)//2]), np.imag(ft_im[:len(ft_im)//2]))]
         return pow_spectr
     
+    
     def generate_absorption_mode_spectrum(self):
         # first prototype
         ft_rl = np.fft.fft(np.real(self._fid))
@@ -105,9 +106,9 @@ class Spectrum_1D:
         spectrum_rigth = [i+j for i,j in zip(rl_ft_rl[:length//2], im_ft_im[:length//2])]
 
         # consider other half of fid
-
         
         return np.array(spectrum_left + spectrum_rigth)
+    
     
     def integrate(self, begin, end, vtype="fraction"):
         """
@@ -169,8 +170,6 @@ class Spectrum_1D:
         begin_point = round(begin*len(self.spectrum))
         end_point = round(end*len(self.spectrum))
         
-
-        
         # setting low values to zero, it allows broad integrals where there are no peaks
         # to be equal to zero
         peak_values = self.spectrum[begin_point:end_point]
@@ -190,6 +189,7 @@ class Spectrum_1D:
         
         self.integral_list.append((begin_point, end_point, real_value, relative_value))
         return (begin, end, real_value, relative_value)
+    
     
     def corr_zero_order_phase(self, angle):
         # angle is an number of pi*radian by which to "turn" phase. 2 is identity.
@@ -236,9 +236,18 @@ class Spectrum_1D:
             
         return angle
                 
-            
-            
-        
+# self.info - guaranteed keys:
+    # "solvent"        : string
+    # "lock_freq"      : [MHz] lock (deuterium) frequency of spectrometer
+    # "samplename"     : string
+    # "nucleus"        : string observed nucleus e.g.: H1, C13 etc.
+    # "spectral_width" : [Hz] width of spectrum
+    # "obs_nucl_freq"  : [MHz] Larmor frequency of observed nucleus
+    # "plot_begin"     : [Hz] beginning of plot
+    # "plot_end"       : [Hz] end of plot
+    # "plot_ppm"       : [ppm] beginning of plot
+    # "plot_ppm"       : [ppm] end of plot
+
         
 if __name__ == "__main__":
     nmr_file_path = "./example_fids/agilent_example1H.fid"
