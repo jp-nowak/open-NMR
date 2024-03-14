@@ -111,7 +111,7 @@ def info_agilent(params):
         "points_number" : "np"# number of data points
         }
     
-    # import of directrly stated params
+    # import of directly stated params
     for i, j in params_keywords.items():
         try:
             value = params[j][1][1]
@@ -210,14 +210,28 @@ def bruker_info(params):
         "spectral_width" : "$SW_h",
         "spectral_width_ppm" : "$SW",
         "nucleus" : "$NUC1",
-        "spectral_center" : "$OC1",
-        "obs_nucl_freq" : "$BF1",
-        "byte_order" : "$BYTORDA",
+        "spectral_center" : "$O1", # [Hz]
+        "obs_nucl_freq" : "$BF1", # [MHz]
+        "byte_order" : "$BYTORDA", # 0-little endian or 1-big endian
         "date" : "$DATE", # uknown format - unix?
         "number_of_scans" : "$NS",
         }
-    raise NotImplementedError
-
+    for i, j in params_keywords.items():
+        try:
+            value = params[j][0][0]
+            value = float(value) if value.replace('.','',1).replace('-','',1).isdigit() else value[1:-1]
+        except KeyError:
+            value = None
+        info[i] = value
+        
+        
+    info["plot_begin"] =   info["spectral_center"] + info["spectral_width"]/2
+    info["plot_end"] =   info["spectral_center"] - info["spectral_width"]/2  
+    
+    info["plot_begin_ppm"] = info["plot_begin"] / info["obs_nucl_freq"]
+    info["plot_end_ppm"] = info["plot_end"] / info["obs_nucl_freq"]
+    
+    return info
 
 
 if __name__ == "__main__":
@@ -228,3 +242,4 @@ if __name__ == "__main__":
         for line in file:
             lines.append(line)
     params = read_bruker_acqus(lines)
+    info = bruker_info(params)
