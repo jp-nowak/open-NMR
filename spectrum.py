@@ -66,7 +66,7 @@ class Spectrum_1D:
     @classmethod
     def create_from_file(cls, path):
         #to be considered: open() exceptions 
-        path = os.path.dirname(os.path.abspath(path))
+        path = os.path.abspath(path)
         ftype = readingfids.fid_file_type(path)
         if ftype == "agilent":
             # to be delegated into wrapper function

@@ -135,7 +135,7 @@ class spectrum_painter(QWidget):
             'h': rect.bottomLeft().y()-rect.topRight().y()
         }
         if not self.drawstatus:
-            painter.drawText(QPointF(self.p_size['w']/2, self.p_size['w']/2), 'nothing loaded')
+            painter.drawText(QPointF(self.p_size['w']/2, self.p_size['h']/2), 'nothing loaded')
             return None
         
         painter.setFont(self.textfont)
@@ -205,16 +205,16 @@ class openNMR(QMainWindow):
 
     def openFile(self):
         file_dialog = QFileDialog(self)
-        file_dialog.setWindowTitle('Choose a file')
-        file_dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+        file_dialog.setWindowTitle('Choose a folder')
+        file_dialog.setFileMode(QFileDialog.FileMode.Directory)
+        file_dialog.setOption(QFileDialog.Option.ShowDirsOnly)
         if file_dialog.exec():
             selected_file = file_dialog.selectedFiles()
             print("Selected file:", selected_file[0])
-        
         title = "Open NMR"
-        nmr_file_path = "./example_fids/agilent_example1H"
+        print(selected_file[0])
         self.painter_widget.generate_data(Spectrum_1D.create_from_file(selected_file[0]), self.zoom_button)
-        title += ' - ' + nmr_file_path
+        title += ' - ' + selected_file[0]
         self.setWindowTitle(title)
         self.painter_widget.update()
 

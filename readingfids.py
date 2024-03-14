@@ -63,6 +63,7 @@ DataBlockHead = collections.namedtuple("DataBlockHead",
 # number - number of header in block
 
 def fid_file_type(path):
+    print(os.path.join(path, "fid"))
     if not os.path.isfile(os.path.join(path, "fid")):
         raise FileNotFoundError
     if os.path.isfile(os.path.join(path, "procpar")):
