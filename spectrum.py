@@ -69,16 +69,20 @@ class Spectrum_1D:
         path = os.path.dirname(os.path.abspath(path))
         ftype = readingfids.fid_file_type(path)
         if ftype == "agilent":
+            # to be delegated into wrapper function
             fid_content, procpar_lines = readingfids.open_experiment_folder_agilent(path)
             procpar = readingfids.read_agilent_procpar(procpar_lines)
             headers, fid = readingfids.read_agilent_fid(fid_content)
             info = readingfids.info_agilent(procpar)
+            fid = fid[0]
+        elif ftype == "bruker":
+            info, fid = readingfids.bruker_wrapper(path)
         else:
             raise NotImplementedError(f"not implemented file format: {ftype}")
         
 
         
-        return cls(fid[0], info, path)
+        return cls(fid, info, path)
     
     
     def generate_power_mode_spectrum(self):
@@ -107,7 +111,7 @@ class Spectrum_1D:
 
         # consider other half of fid
         
-        return np.array(spectrum_left + spectrum_rigth)
+        return np.array((spectrum_left + spectrum_rigth)[::-1])
     
     
     def integrate(self, begin, end, vtype="fraction"):

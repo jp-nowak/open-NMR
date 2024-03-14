@@ -165,10 +165,11 @@ def read_agilent_fid(file_content):
     el_type = np.csingle
     el_size = 2 * header0.ebytes if el_type == np.csingle else header0.ebytes
     bl_el_number = header0.np // 2 if el_type == np.csingle else header0.np
+    # to be done: rewrite in such way that bl_el_number will be taken from appr. block header not file header
     fids = []
     def read_element(element):
         # i am not really sure which part is real in fid
-        b, a = element
+        a, b = element
         result = a + b*1j
         return result
         
@@ -193,6 +194,27 @@ def read_agilent_fid(file_content):
 #     info = info_agilent(params)
 #     headers, fids = read_agilent_fid(fid_content)
 
+def open_experiment_folder_bruker(path):
+    # to be merged with agilent version into universal file opener
+    fid_path = os.path.join(path, "fid")
+    acqus_path = os.path.join(path,"acqus")
+    with open(fid_path, "rb") as file:
+        fid_content = file.read()
+    acqus_lines = []
+    with open(acqus_path, "r") as file:
+        for line in file:
+            acqus_lines.append(line)
+
+    return fid_content, acqus_lines
+
+def bruker_wrapper(path):
+    fid_content, acqus_lines = open_experiment_folder_bruker(path)
+    params = read_bruker_acqus(acqus_lines)
+    info = bruker_info(params)
+    fid = read_bruker_fid_1D(fid_content, info)
+    return info, fid
+
+
 def read_bruker_acqus(acqus_lines):
     params = dict()
     key = "error"
@@ -216,8 +238,9 @@ def bruker_info(params):
         "spectral_center" : "$O1", # [Hz]
         "obs_nucl_freq" : "$BF1", # [MHz]
         "byte_order" : "$BYTORDA", # 0-little endian or 1-big endian
-        "date" : "$DATE", # uknown format - unix?
+        "date" : "$DATE", # unknown format - unix?
         "number_of_scans" : "$NS",
+        "number_of_data_points" : "$TD"
         }
     for i, j in params_keywords.items():
         try:
@@ -228,21 +251,33 @@ def bruker_info(params):
         info[i] = value
         
         
-    info["plot_begin"] =   info["spectral_center"] + info["spectral_width"]/2
-    info["plot_end"] =   info["spectral_center"] - info["spectral_width"]/2  
+    info["plot_end"] = info["spectral_center"] + info["spectral_width"]/2
+    info["plot_begin"] = info["spectral_center"] - info["spectral_width"]/2  
     
     info["plot_begin_ppm"] = info["plot_begin"] / info["obs_nucl_freq"]
     info["plot_end_ppm"] = info["plot_end"] / info["obs_nucl_freq"]
     
     return info
 
+def read_bruker_fid_1D(file_content, info):
+    ptr = 48
+    el_specifier = "<ff" if info["byte_order"] == 0 else ">ff"
+    fid = np.zeros(int(info["number_of_data_points"]), dtype=np.csingle)
+    el_size = 8
+    def read_element(element):
+        # i am not really sure which part is real in fid
+        a, b = element
+        result = a + b*1j
+        return result
+    for i in range(0, int(info["number_of_data_points"])):
+        fid[i] = read_element(struct.unpack(el_specifier, file_content[ptr:ptr+el_size]))
+    
+    return fid
+
 
 if __name__ == "__main__":
     # testing of bruker files reading
-    path = "D:/projekt nmr/open-NMR/example_fids/1H/acqus"
-    lines = []
-    with open(path, "r") as file:
-        for line in file:
-            lines.append(line)
-    params = read_bruker_acqus(lines)
-    info = bruker_info(params)
+    path = "D:/projekt nmr/open-NMR/example_fids/bruker/1"
+    bruker = bruker_wrapper(path)
+    
+    
