@@ -212,8 +212,8 @@ class openNMR(QMainWindow):
             print("Selected file:", selected_file[0])
         
         title = "Open NMR"
-        nmr_file_path = "./example_fids/agilent_example1H.fid"
-        self.painter_widget.generate_data(Spectrum_1D.create_from_file(nmr_file_path), self.zoom_button)
+        nmr_file_path = "./example_fids/agilent_example1H"
+        self.painter_widget.generate_data(Spectrum_1D.create_from_file(selected_file[0]), self.zoom_button)
         title += ' - ' + nmr_file_path
         self.setWindowTitle(title)
         self.painter_widget.update()

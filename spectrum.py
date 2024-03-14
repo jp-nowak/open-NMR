@@ -6,7 +6,7 @@ Created on Fri Mar  1 14:19:35 2024
 """
 import readingfids
 import numpy as np
-
+import os
 
 
 class Spectrum_1D:
@@ -66,7 +66,7 @@ class Spectrum_1D:
     @classmethod
     def create_from_file(cls, path):
         #to be considered: open() exceptions 
-        
+        path = os.path.dirname(os.path.abspath(path))
         ftype = readingfids.fid_file_type(path)
         if ftype == "agilent":
             fid_content, procpar_lines = readingfids.open_experiment_folder_agilent(path)
