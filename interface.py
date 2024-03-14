@@ -66,27 +66,27 @@ def data_prep(data, width, height, rang):
     # downsampling, bad method, we need one for nmr spectra specifically
     pointperpixel = 100
     sample = max(len(data)//(pointperpixel*width), 1)
-
+    
     # scaling to image size
     data = data[::sample]*(width, height)
     return data
 
-
 class spectrum_painter(QWidget):
-    # dragging
-    # dragStarted = pyqtSignal(0.0)
-    # dragEnded = pyqtSignal(0.0)
-
-    def __init__(self, data, info, zoom_button):
+    def __init__(self):
         super().__init__()
+        self.drawstatus = False
+
+    def generate_data(self, experiments, zoom_button):
         self.zoom_button = zoom_button
         # geometry and settings
         self.textfont = QFont('Times', 10)
-        self.data = data
+        #data
+        self.drawstatus = True
+        self.data = experiments.spectrum
         self.resampled = []
-        self.info = info
+        self.info = experiments.info
         self.axis_pars = {'dlen': 5, 'pixperinc': 50,
-                          'incperppm': 5, 'ax_padding': 30, 'spect_padding': 50,
+                          'incperppm': 100, 'ax_padding': 30, 'spect_padding': 50,
                           'end_ppm': self.info['plot_end_ppm'],
                           'begin_ppm': self.info['plot_begin_ppm']}
         # deln is a length of delimiter in pixels
@@ -126,8 +126,7 @@ class spectrum_painter(QWidget):
 
         # settings
         painter = QPainter(self)
-        painter.setFont(self.textfont)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
 
         # updating window size
         rect = self.rect()
@@ -135,6 +134,13 @@ class spectrum_painter(QWidget):
             'w': rect.topRight().x()-rect.topLeft().x(),
             'h': rect.bottomLeft().y()-rect.topRight().y()
         }
+        if not self.drawstatus:
+            painter.drawText(QPointF(self.p_size['w']/2, self.p_size['w']/2), 'nothing loaded')
+            return None
+        
+        painter.setFont(self.textfont)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
         # drawing plot
         self.resampled = data_prep(self.data.copy(),
                                    self.p_size['w'],
@@ -174,18 +180,10 @@ class openNMR(QMainWindow):
         self.setGeometry(200, 200, size['w'], size['h'])
 
         # opening spectrum, in the future on event
-        experiments = []
-        title = "Open NMR"
-        if 'event':
-            nmr_file_path = "./example_fids/agilent_example1H.fid"
-            experiments.append(Spectrum_1D.create_from_file(nmr_file_path))
-            title += ' - ' + nmr_file_path
-
+        self.experiments = []
+        
         # modifying in relation to spectrum
-        self.setWindowTitle(title)
-        spec = experiments[0]
-        self.painter_widget = spectrum_painter(
-            spec.spectrum, spec.info, self.zoom_button)
+        self.painter_widget = spectrum_painter()
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(button_layout)
@@ -211,7 +209,14 @@ class openNMR(QMainWindow):
         file_dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
         if file_dialog.exec():
             selected_file = file_dialog.selectedFiles()
-            print("Selected file:", selected_file[0])  # Just for demonstration, you can handle the file as needed
+            print("Selected file:", selected_file[0])
+        
+        title = "Open NMR"
+        nmr_file_path = "./example_fids/agilent_example1H.fid"
+        self.painter_widget.generate_data(Spectrum_1D.create_from_file(nmr_file_path), self.zoom_button)
+        title += ' - ' + nmr_file_path
+        self.setWindowTitle(title)
+        self.painter_widget.update()
 
 
 if __name__ == "__main__":
