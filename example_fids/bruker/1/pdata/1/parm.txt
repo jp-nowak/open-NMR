@@ -1,0 +1,26 @@
+
+Current Data Parameters
+NAME              52645              
+EXPNO                 1              
+PROCNO                1              
+
+F2 - Acquisition Parameters
+Date_          20240125              
+Time               8.44              
+SOLVENT           CDCl3              
+TE                298.2 K            
+AQ            3.5000577 sec          
+NS                   32              
+FIDRES         0.142855 Hz           
+PULPROG            zg30              
+D1       0 sec          
+
+======== CHANNEL f1 ========
+SFO1        300.2018539 MHz          
+NUC1                 1H              
+P1                14.50 usec         
+PLW1         6.00000000 W            
+
+F2 - Processing parameters
+SI                65536              
+LB       0 Hz           

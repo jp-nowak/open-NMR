@@ -1,0 +1,16 @@
+##TITLE= Parameter file, TOPSPIN		Version 3.2
+##JCAMPDX= 5.0
+##DATATYPE= Parameter Values
+##NPOINTS= 1	$$ modification sequence number
+##ORIGIN= Bruker BioSpin GmbH
+##OWNER= sici
+$$ 2024-01-25 08:46:49.453 +0100  sici@b300
+$$ /dane/sici/52645/2/pdata/1/outd
+$$ process /opt/topspin3.2/prog/mod/edparproc
+##$CURPLOT= <no printer>
+##$CURPRIN= <$no printer>
+##$DFORMAT= <normdp>
+##$LAYOUT= <+/carbon.xwp>
+##$LFORMAT= <normlp>
+##$PFORMAT= <normpl>
+##END=

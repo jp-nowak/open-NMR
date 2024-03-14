@@ -1,0 +1,36 @@
+##TITLE= Audit trail, TOPSPIN		Version 3.2
+##JCAMPDX= 5.01
+##ORIGIN= Bruker BioSpin GmbH
+##OWNER= sici
+$$ /dane/sici/52645/2/pdata/1/auditp.txt
+##AUDIT TRAIL=  $$ (NUMBER, WHEN, WHO, WHERE, PROCESS, VERSION, WHAT)
+(   1,<2024-01-25 09:00:38.608 +0100>,<sici>,<b300>,<go>,<TOPSPIN 3.2>,
+      <created by zg
+	started at 2024-01-25 08:48:04.684 +0100,
+	POWCHK disabled, PULCHK disabled,
+       terminated by command 'halt'
+       configuration hash MD5:
+       BC 1C 14 58 EB E2 DD 8C ED 00 7E DA 14 31 29 83
+       data hash MD5: 64K
+       75 8A 8C 91 6A 09 49 5C DC A2 65 EA 18 D3 EE AC>)
+(   2,<2024-01-25 09:00:42.609 +0100>,<sici>,<b300>,<proc1d>,<TOPSPIN 3.2>,
+      <Start of raw data processing
+       em LB = 1 SI = 32K 
+       data hash MD5: 32K
+       1C C1 82 AE AA CC 49 41 D2 98 74 E5 56 C7 89 CC>)
+(   3,<2024-01-25 09:00:42.649 +0100>,<sici>,<b300>,<proc1d>,<TOPSPIN 3.2>,
+      <ft FT_mod = 6 PKNL = 1 SI = 32K 
+       data hash MD5: 32K
+       46 FB 4B D9 B6 CE F5 31 4B 69 41 EF 88 E0 BA BC>)
+(   4,<2024-01-25 09:00:42.734 +0100>,<sici>,<b300>,<proc1d>,<TOPSPIN 3.2>,
+      <apk 
+       data hash MD5: 32K
+       00 27 12 0E 3D 1C EE C0 6D BE 5D BC 61 61 7E BF>)
+(   5,<2024-01-25 09:00:42.751 +0100>,<sici>,<b300>,<proc1d>,<TOPSPIN 3.2>,
+      <abs n ABSG = 5 
+       data hash MD5: 32K
+       42 A9 28 0E 2F FC C3 B2 E1 52 3A A5 75 F1 33 60>)
+##END=
+
+$$ hash MD5
+$$ F2 B6 54 39 51 2B EE F1 63 8F 8B 5A 3F F1 47 B9

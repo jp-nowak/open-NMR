@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PeakList modified="2024-01-25T08:45:31">
+  <PeakList1D>
+    <PeakList1DHeader creator="sici" date="2024-01-25T08:45:31" expNo="1" name="52645" owner="" procNo="1" source="/dane/sici">
+      <PeakPickDetails>F1=9.454ppm, F2=8.614ppm, MI=0.02cm, MAXI=0.12cm, PC=1.000
+      </PeakPickDetails>
+    </PeakList1DHeader>
+    <Peak1D F1="9.3301" intensity="0.03" type="0"/>
+    <Peak1D F1="9.3083" intensity="0.03" type="0"/>
+    <Peak1D F1="9.2965" intensity="0.03" type="0"/>
+    <Peak1D F1="9.2800" intensity="0.03" type="0"/>
+    <Peak1D F1="9.2655" intensity="0.03" type="0"/>
+    <Peak1D F1="9.2341" intensity="0.02" type="0"/>
+    <Peak1D F1="8.8588" intensity="0.02" type="0"/>
+    <Peak1D F1="8.8102" intensity="0.04" type="0"/>
+    <Peak1D F1="8.8042" intensity="0.04" type="0"/>
+  </PeakList1D>
+  <PeakList1D>
+    <PeakList1DHeader creator="sici" date="2024-01-25T08:45:31" expNo="1" name="52645" owner="" procNo="1" source="/dane/sici">
+      <PeakPickDetails>F1=7.843ppm, F2=4.877ppm, MI=0.14cm, MAXI=1.83cm, PC=1.000
+      </PeakPickDetails>
+    </PeakList1DHeader>
+    <Peak1D F1="7.4885" intensity="0.53" type="0"/>
+    <Peak1D F1="7.4780" intensity="0.53" type="0"/>
+    <Peak1D F1="7.2820" intensity="0.33" type="0"/>
+    <Peak1D F1="6.6473" intensity="0.68" type="0"/>
+    <Peak1D F1="6.6368" intensity="0.66" type="0"/>
+    <Peak1D F1="5.5843" intensity="1.54" type="0"/>
+  </PeakList1D>
+  <PeakList1D>
+    <PeakList1DHeader creator="sici" date="2024-01-25T08:45:31" expNo="1" name="52645" owner="" procNo="1" source="/dane/sici">
+      <PeakPickDetails>F1=3.789ppm, F2=3.257ppm, MI=0.11cm, MAXI=1.21cm, PC=1.000
+      </PeakPickDetails>
+    </PeakList1DHeader>
+    <Peak1D F1="3.5452" intensity="0.55" type="0"/>
+    <Peak1D F1="3.5372" intensity="0.11" type="0"/>
+    <Peak1D F1="3.5184" intensity="0.65" type="0"/>
+    <Peak1D F1="3.4910" intensity="0.58" type="0"/>
+  </PeakList1D>
+  <PeakList1D>
+    <PeakList1DHeader creator="sici" date="2024-01-25T08:45:31" expNo="1" name="52645" owner="" procNo="1" source="/dane/sici">
+      <PeakPickDetails>F1=1.269ppm, F2=0.506ppm, MI=0.20cm, MAXI=0.83cm, PC=1.000
+      </PeakPickDetails>
+    </PeakList1DHeader>
+    <Peak1D F1="0.9582" intensity="0.58" type="0"/>
+    <Peak1D F1="0.9307" intensity="0.63" type="0"/>
+    <Peak1D F1="0.9039" intensity="0.60" type="0"/>
+  </PeakList1D>
+  <PeakList1D>
+    <PeakList1DHeader creator="sici" date="2024-01-25T08:45:31" expNo="1" name="52645" owner="" procNo="1" source="/dane/sici">
+      <PeakPickDetails>F1=0.154ppm, F2=-0.471ppm, MI=0.63cm, MAXI=15.95cm, PC=1.000
+      </PeakPickDetails>
+    </PeakList1DHeader>
+    <Peak1D F1="-0.0362" intensity="0.80" type="0"/>
+    <Peak1D F1="-0.0469" intensity="15.00" type="0"/>
+    <Peak1D F1="-0.0580" intensity="0.71" type="0"/>
+  </PeakList1D>
+</PeakList>
