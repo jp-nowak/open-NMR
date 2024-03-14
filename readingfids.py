@@ -1,7 +1,6 @@
 import struct
 import collections
 import numpy as np
-import matplotlib.pyplot as plt
 import os
 
 #CONSTANT
@@ -63,9 +62,13 @@ DataBlockHead = collections.namedtuple("DataBlockHead",
 # };
 # number - number of header in block
 
-def fid_file_type(file_content):
-    #TO BE DONE
-    return "agilent"
+def fid_file_type(path):
+    if not os.path.isfile(os.path.join(path, "fid")):
+        raise FileNotFoundError
+    if os.path.isfile(os.path.join(path, "procpar")):
+        return "agilent"
+    if os.path.isfile(os.path.join(path, "acqus")):
+        return "bruker"
 
 def open_experiment_folder_agilent(path):
     fid_path = os.path.join(path, "fid")

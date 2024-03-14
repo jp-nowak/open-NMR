@@ -74,7 +74,7 @@ class Spectrum_1D:
             headers, fid = readingfids.read_agilent_fid(fid_content)
             info = readingfids.info_agilent(procpar)
         else:
-            raise NotImplementedError
+            raise NotImplementedError(f"not implemented file format: {ftype}")
         
 
         
