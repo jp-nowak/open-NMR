@@ -105,13 +105,13 @@ def info_agilent(params):
         "spectral_width" : "sw", # [Hz]
         "studyowner" : "studyowner",
         "operator" : "operator",
-        "data" : "time_saved", # string "yyyymmddThhmmss"
+        "date" : "time_saved", # string "yyyymmddThhmmss"
         "obs_nucl_freq" : "sfrq", # [MHz]
         "plot_begin" : "sp", # [Hz] beginning of plot
         "points_number" : "np"# number of data points
         }
     
-    # import of directrly stated params
+    # import of directly stated params
     for i, j in params_keywords.items():
         try:
             value = params[j][1][1]
@@ -182,12 +182,64 @@ def read_agilent_fid(file_content):
             fids.append(fid)     
     return headers, fids
 
-if __name__ == "__main__":
-    #testing
-    path = "./example_fids/agilent_example1H.fid"
-    fid_content, procpar_lines = open_experiment_folder_agilent(path)
-    params = read_agilent_procpar(procpar_lines)
-    info = info_agilent(params)
-    headers, fids = read_agilent_fid(fid_content)
+# if __name__ == "__main__":
+#     # testing of agilent files reading
+#     path = "./example_fids/agilent_example1H.fid"
+#     fid_content, procpar_lines = open_experiment_folder_agilent(path)
+#     params = read_agilent_procpar(procpar_lines)
+#     info = info_agilent(params)
+#     headers, fids = read_agilent_fid(fid_content)
 
+def read_bruker_acqus(acqus_lines):
+    params = dict()
+    key = "error"
+    params[key] = []
+    for line in acqus_lines:
+        words = line.split()
+        if words[0][0:2] == "##":
+            key = words[0][2:-1]
+            params[key] = [words[1:]]
+        else:
+            params[key].append(words)
+    return params
+
+def bruker_info(params):
+    info = dict()
+    params_keywords = {
+        "solvent" : "$SOLVENT",
+        "spectral_width" : "$SW_h",
+        "spectral_width_ppm" : "$SW",
+        "nucleus" : "$NUC1",
+        "spectral_center" : "$O1", # [Hz]
+        "obs_nucl_freq" : "$BF1", # [MHz]
+        "byte_order" : "$BYTORDA", # 0-little endian or 1-big endian
+        "date" : "$DATE", # uknown format - unix?
+        "number_of_scans" : "$NS",
+        }
+    for i, j in params_keywords.items():
+        try:
+            value = params[j][0][0]
+            value = float(value) if value.replace('.','',1).replace('-','',1).isdigit() else value[1:-1]
+        except KeyError:
+            value = None
+        info[i] = value
+        
+        
+    info["plot_begin"] =   info["spectral_center"] + info["spectral_width"]/2
+    info["plot_end"] =   info["spectral_center"] - info["spectral_width"]/2  
     
+    info["plot_begin_ppm"] = info["plot_begin"] / info["obs_nucl_freq"]
+    info["plot_end_ppm"] = info["plot_end"] / info["obs_nucl_freq"]
+    
+    return info
+
+
+if __name__ == "__main__":
+    # testing of bruker files reading
+    path = "D:/projekt nmr/open-NMR/example_fids/1H/acqus"
+    lines = []
+    with open(path, "r") as file:
+        for line in file:
+            lines.append(line)
+    params = read_bruker_acqus(lines)
+    info = bruker_info(params)
