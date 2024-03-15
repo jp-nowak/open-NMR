@@ -106,7 +106,7 @@ class Spectrum_1D:
 
         # consider other half of fid
         
-        return np.array((spectrum_left + spectrum_rigth)[::-1])
+        return np.array((spectrum_left + spectrum_rigth))
     
     
     def integrate(self, begin, end, vtype="fraction"):

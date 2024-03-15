@@ -71,12 +71,109 @@ def fid_file_type(path):
     if os.path.isfile(os.path.join(path, "acqus")):
         return "bruker"
 
-def agilent_wrapper(path):
+
+def read_fid_1D(file_content, ptr, el_number, primary_type, quadrature=True, big_endian=True):
+    el_specifier = str()
+    
+    if big_endian:
+        el_specifier += ">"
+    else:
+        el_specifier += "<"
+    
+    if primary_type == np.int16:
+        el_specifier += "h"
+        el_size = 2
+    elif primary_type == np.int32:
+        el_specifier += "i"
+        el_size = 4
+    elif primary_type == np.int64:
+        el_specifier += "q"
+        el_size = 8
+    elif primary_type == np.single:
+        el_specifier += "f"
+        el_size = 4
+    elif primary_type == np.double:
+        el_specifier += "d"
+        el_size = 8
+    else:
+        raise NotImplementedError(f"not implemented primary type{primary_type}")
+        
+    if quadrature:
+        if primary_type == np.int16 or primary_type == np.int32 or primary_type == np.int32:
+            el_type = np.csingle
+        elif primary_type == np.int64 or primary_type == np.float64:
+            el_type = np.cdouble
+        def read_element(element):
+            a, b = element
+            result = a + b*1j
+            return result
+        el_specifier += el_specifier[1]
+        el_size *= 2
+    else:
+        el_type = primary_type
+        def read_element(element):
+            return 
+    
+    fid = np.zeros(el_number, dtype=el_type)
+    
+    for i in range(el_number):
+        fid[i] = read_element(struct.unpack(el_specifier, file_content[ptr:ptr+el_size]))
+        ptr += el_size
+        
+    return fid
+
+# primary_type | int16       int32       int64       float32       float64
+# C type       | short       int         long long   float         double 
+# -------------|
+# quadrature   |
+#              |
+# True         | csingle    csingle     cdouble      csingle      cdouble
+#              | ("hh")     ("ii")      ("qq")       ("ff")       ("dd")
+#              |
+# False        | int32       int32       int64        single       double
+#              | ("h")       ("i")       ("q")        ("f")        ("d")
+    
+    
+# Older version of reading of agilent experiment folder
+def agilent_wrapper(path): 
     fid_content, procpar_lines = open_experiment_folder_agilent(path)
     procpar = read_agilent_procpar(procpar_lines)
     headers, fid = read_agilent_fid(fid_content)
     info = info_agilent(procpar)
     return info, fid[0]
+
+
+def new_agilent_wrapper(path):
+    # agilent - file header size 32 bytes, block headers 28 bytes
+    fid_content, procpar_lines = open_experiment_folder_agilent(path)
+    procpar = read_agilent_procpar(procpar_lines)
+    info = info_agilent(procpar)
+    headers, fid = new_read_agilent_fid(fid_content)
+
+def new_read_agilent_fid(fid_content):
+    ptr = 0
+    file_header = DataFileHead(*struct.unpack(">llllllhhl", fid_content[0:32]))
+    ptr += 32
+    fids = []
+    if file_header.nblocks > 1:
+        raise NotImplementedError("two dimensional spectra")
+    for i1 in range(file_header.nblocks):
+        header = DataBlockHead(*struct.unpack(">hhhhlffff", fid_content[ptr:ptr+28]))
+        ptr += 28
+        if file_header.nbheaders == 1:
+            pass
+        elif file_header.nbheaders == 2:
+            raise NotImplementedError("hypercmplxbhead")
+        else:
+            raise NotImplementedError("unexpected number of block headers")
+        if file_header.ntraces > 1:
+            raise NotImplementedError("more then one trace per block")
+        for i3 in range(file_header.ntraces):
+            pass
+    # TODO:
+    # - determining quadrature and element type - reading file_header.status bits + file_header.ebytes
+    # - element number -||- + file_header.np
+    
 
 def open_experiment_folder_agilent(path):
     fid_path = os.path.join(path, "fid")
@@ -178,7 +275,7 @@ def read_agilent_fid(file_content):
     def read_element(element):
         # i am not really sure which part is real in fid
         a, b = element
-        result = a + b*1j
+        result = b + a*1j
         return result
         
     for i1 in range(header0.nblocks):
@@ -276,67 +373,4 @@ def read_bruker_fid_1D(file_content, info):
     return fid
 
 
-def read_fid_1D(file_content, ptr, el_number, primary_type, quadrature=True, big_endian=True):
-    el_specifier = str()
-    
-    if big_endian:
-        el_specifier += ">"
-    else:
-        el_specifier += "<"
-    
-    if primary_type == np.int16:
-        el_specifier += "h"
-        el_size = 2
-    elif primary_type == np.int32:
-        el_specifier += "i"
-        el_size = 4
-    elif primary_type == np.int64:
-        el_specifier += "q"
-        el_size = 8
-    elif primary_type == np.single:
-        el_specifier += "f"
-        el_size = 4
-    elif primary_type == np.double:
-        el_specifier += "d"
-        el_size = 8
-    else:
-        raise NotImplementedError(f"not implemented primary type{primary_type}")
-        
-    if quadrature:
-        if primary_type == np.int16 or primary_type == np.int32 or primary_type == np.int32:
-            el_type = np.csingle
-        elif primary_type == np.int64 or primary_type == np.float64:
-            el_type = np.cdouble
-        def read_element(element):
-            a, b = element
-            result = a + b*1j
-            return result
-        el_specifier += el_specifier[1]
-        el_size *= 2
-    else:
-        el_type = primary_type
-        def read_element(element):
-            return 
-    
-    fid = np.zeros(el_number, dtype=el_type)
-    
-    for i in range(el_number):
-        fid[i] = read_element(struct.unpack(el_specifier, file_content[ptr:ptr+el_size]))
-        ptr += el_size
-        
-    return fid
 
-
-
-# primary_type | int16       int32       int64       float32       float64
-# C type       | short       int         long long   float         double 
-# -------------|
-# quadrature   |
-#              |
-# True         | csingle    csingle     cdouble      csingle      cdouble
-#              | ("hh")     ("ii")      ("qq")       ("ff")       ("dd")
-#              |
-# False        | int32       int32       int64        single       double
-#              | ("h")       ("i")       ("q")        ("f")        ("d")
-    
-    
