@@ -28,7 +28,7 @@ def axis_generator(painter, p_size, axis_pars, textfont):
     else:
         del_pos_list = [axis_pars['end_ppm'] % incr_ppm/width +
                         i*incr_fac for i in range(math.ceil(width/incr_ppm))]
-    del_pos_list.sort()
+    del_pos_list = list(set(del_pos_list))
     del_pos_list = [i for i in del_pos_list if i >
                     0+20/p_size['w'] and i < 1-20/p_size['w']]
     del_text_list = [str(round(axis_pars['end_ppm']-i*width, 3))
@@ -156,11 +156,6 @@ class spectrum_painter(QWidget):
             'h': rect.bottomLeft().y()-rect.topRight().y()
         }
         if not self.drawstatus:
-            message = 'nothing loaded'
-            font_metrics = QFontMetrics(self.font())
-            text_width = font_metrics.horizontalAdvance(message)
-            painter.drawText(
-                QPointF(self.p_size['w']/2 - text_width, self.p_size['h']/2), message)
             return None
 
         painter.setFont(self.textfont)
@@ -225,7 +220,7 @@ class openNMR(QMainWindow):
         central_widget = QWidget()
         central_widget.setLayout(main_layout)
         self.setCentralWidget(central_widget)
-
+        
     def toggle_dragging(self, checked):
         self.painter_widget.zooming = True
 
@@ -258,7 +253,7 @@ class openNMR(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    app.setStyle('Fusion')
+    #app.setStyle('Fusion')
     QFontDatabase.addApplicationFont("styling/titillium.ttf")
     with open("styling/styles.qss", "r") as f:
         style = f.read()
