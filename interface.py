@@ -12,25 +12,27 @@ def axis_generator(painter, p_size, axis_pars, textfont):
     # parameters
     ax_pos = p_size['h']-axis_pars['ax_padding']
     width = axis_pars['end_ppm']-axis_pars['begin_ppm']
-    incr_ppm = 2**round(np.log2(width*axis_pars['pixperinc']/math.ceil(p_size['w'])))
+    incr_ppm = 2**round(np.log2(width * axis_pars['pixperinc']/math.ceil(p_size['w'])))
     incr_fac = incr_ppm/width
     # axis line
     painter.drawLine(QPointF(0.0, ax_pos),
                      QPointF(p_size['w'], ax_pos))
-    print(incr_ppm)
     # increments lists
     del_pos_list = []
     if axis_pars['end_ppm'] > 0 and axis_pars['begin_ppm'] < 0:
-        numincright = math.ceil(axis_pars['end_ppm']/incr_ppm)
-        del_pos_list = [axis_pars['end_ppm']/width-i*incr_fac for i in range(numincright)]
-        # negative_list = [i*incr_ppm/width+abs(1-axis_pars['begin_ppm']/width) for i in range(math.ceil(abs(axis_pars['begin_ppm']/incr_ppm)))]
-        # del_pos_list.extend(negative_list)
+        iterright = math.ceil(axis_pars['end_ppm']/incr_ppm)
+        iterleft = math.ceil(abs(axis_pars['begin_ppm']/incr_ppm))
+        del_pos_list = [axis_pars['end_ppm']/width - i*incr_fac for i in range(iterright)]
+        negative_list = [axis_pars['end_ppm']/width + i*incr_fac for i in range(iterleft)]
+        del_pos_list.extend(negative_list)
     else:
-        del_pos_list = [axis_pars['end_ppm']%incr_ppm/width+i*incr_fac for i in range(math.ceil(width/incr_ppm))]
+        del_pos_list = [axis_pars['end_ppm'] % incr_ppm/width +
+                        i*incr_fac for i in range(math.ceil(width/incr_ppm))]
     del_pos_list.sort()
-    del_pos_list = [i for i in del_pos_list if i>0+20/p_size['w'] and i<1-20/p_size['w']]
-    print(del_pos_list)
-    del_text_list = [str(round(axis_pars['end_ppm']-i*width, 3)) for i in del_pos_list]
+    del_pos_list = [i for i in del_pos_list if i >
+                    0+20/p_size['w'] and i < 1-20/p_size['w']]
+    del_text_list = [str(round(axis_pars['end_ppm']-i*width, 3))
+                     for i in del_pos_list]
 
     # draw delimiters
     for i in range(len(del_pos_list)):
@@ -68,7 +70,7 @@ def data_prep(data, width, height, rang):
     if new_method:
         resampled = []
         sample = int(len(data)//(width*2))
-        if sample<4:
+        if sample < 4:
             return data
         for pix in range(int(math.ceil(len(data)/sample))):
             start = pix*sample
@@ -78,8 +80,6 @@ def data_prep(data, width, height, rang):
             else:
                 resampled.extend([data[start], data[end]])
         return resampled
-            
-
 
 
 class spectrum_painter(QWidget):
@@ -89,6 +89,13 @@ class spectrum_painter(QWidget):
         self.integrate_button = integrate_button
         self.drawstatus = False
         self.textfont = QFont('Times', 10)
+        self.rang = [0, 1]
+        # dragging
+        self.zooming = False
+        self.integrating = False
+        self.startPos = 0
+        self.endPos = 1
+        
 
     def generate_data(self, experiment):
         # data
@@ -103,13 +110,7 @@ class spectrum_painter(QWidget):
                           'begin_ppm': self.info['plot_begin_ppm']}
         # deln is a length of delimiter in pixels
         # incperppm: multiples - 2 => 0.5 is the minimum increment
-        self.rang = [0, 1]
-
-        # dragging
-        self.zooming = False
-        self.integrating = False
-        self.startPos = 0
-        self.endPos = 1
+       
 
     def mousePressEvent(self, event):
         if self.zooming or self.integrating:
@@ -138,7 +139,8 @@ class spectrum_painter(QWidget):
             self.zooming = False
 
         if self.integrating:
-            print(absrang) #spectrum should get this absrang and come up with integration output
+            # spectrum should get this absrang and come up with integration output
+            print(absrang)
             self.integrate_button.setChecked(False)
             self.integrating = False
 
