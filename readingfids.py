@@ -71,6 +71,13 @@ def fid_file_type(path):
     if os.path.isfile(os.path.join(path, "acqus")):
         return "bruker"
 
+def agilent_wrapper(path):
+    fid_content, procpar_lines = open_experiment_folder_agilent(path)
+    procpar = read_agilent_procpar(procpar_lines)
+    headers, fid = read_agilent_fid(fid_content)
+    info = info_agilent(procpar)
+    return info, fid[0]
+
 def open_experiment_folder_agilent(path):
     fid_path = os.path.join(path, "fid")
     procpar_path = os.path.join(path,"procpar")
@@ -318,7 +325,6 @@ def read_fid_1D(file_content, ptr, el_number, primary_type, quadrature=True, big
         ptr += el_size
         
     return fid
-
 
 
 
