@@ -72,19 +72,20 @@ def data_prep(data, width, height, rang):
     return data
 
 class spectrum_painter(QWidget):
-    def __init__(self):
+    def __init__(self, zoom_button, integrate_button):
         super().__init__()
-        self.drawstatus = False
-
-    def generate_data(self, experiments, zoom_button):
         self.zoom_button = zoom_button
-        # geometry and settings
+        self.integrate_button = integrate_button
+        self.drawstatus = False
         self.textfont = QFont('Times', 10)
-        #data
+
+    def generate_data(self, experiment):
+        # data
         self.drawstatus = True
-        self.data = experiments.spectrum
+        self.experiment = experiment
+        self.data = experiment.spectrum
+        self.info = experiment.info
         self.resampled = []
-        self.info = experiments.info
         self.axis_pars = {'dlen': 5, 'pixperinc': 50,
                           'incperppm': 100, 'ax_padding': 30, 'spect_padding': 50,
                           'end_ppm': self.info['plot_end_ppm'],
@@ -94,33 +95,44 @@ class spectrum_painter(QWidget):
         self.rang = [0, 1]
 
         # dragging
-        self.dragging = False
+        self.zooming = False
+        self.integrating = False
         self.startPos = 0
         self.endPos = 1
 
     def mousePressEvent(self, event):
-        if self.dragging:
+        if self.zooming or self.integrating:
             self.startPos = event.pos().x()/self.p_size['w']
 
     def mouseMoveEvent(self, event):
-        if self.dragging:
+        if self.zooming or self.integrating:
             self.endPos = event.pos().x()/self.p_size['w']
 
     def mouseReleaseEvent(self, event):
+        print(self.zooming, self.integrating)
         # adjusting rang
-        zoomrang = [self.endPos, self.startPos]
-        zoomrang.sort()
-        self.rang = [self.rang[0]+(self.rang[1]-self.rang[0])*zoomrang[0],
-                     self.rang[0]+(self.rang[1]-self.rang[0])*zoomrang[1]
+        selrang = [self.endPos, self.startPos]
+        selrang.sort()
+        absrang = [self.rang[0]+(self.rang[1]-self.rang[0])*selrang[0],
+                     self.rang[0]+(self.rang[1]-self.rang[0])*selrang[1]
                      ]
-        self.rang.sort()
-        if self.zoom_button.isChecked():
+        absrang.sort()
+        if self.zooming: 
+            self.rang = absrang
+            # adjusting axis
+            width = self.info['plot_end_ppm']-self.info['plot_begin_ppm']
+            self.axis_pars['end_ppm'] = self.info['plot_end_ppm'] - width*self.rang[0]
+            self.axis_pars['begin_ppm'] = self.info['plot_begin_ppm'] + width*(1-self.rang[1])
             self.zoom_button.setChecked(False)
-        # adjusting axis
-        width = self.info['plot_end_ppm']-self.info['plot_begin_ppm']
-        self.axis_pars['end_ppm'] = self.info['plot_end_ppm'] - width*self.rang[0]
-        self.axis_pars['begin_ppm'] = self.info['plot_begin_ppm'] + width*(1-self.rang[1])
-        self.update()
+            self.update()
+            self.zooming = False
+        
+        if self.integrating:
+            print(absrang)
+            self.integrate_button.setChecked(False)
+            self.integrating = False
+            
+        
 
     def paintEvent(self, event):
 
@@ -158,22 +170,30 @@ class spectrum_painter(QWidget):
 class openNMR(QMainWindow):
     def __init__(self):
         super().__init__()
-
+        # open folder
         button_layout = QHBoxLayout()
-        self.file_button = QPushButton("Open File")
+        self.file_button = QPushButton("Open Folder")
         self.file_button.clicked.connect(self.openFile)
         button_layout.addWidget(self.file_button)
 
-        button_layout.addWidget(QPushButton("Find Peaks"))
-
+        # zoom button
         self.zoom_button = QPushButton("Zoom")
         self.zoom_button.setCheckable(True)
         self.zoom_button.toggled.connect(self.toggle_dragging)
-        button_layout.addWidget(self.zoom_button)
 
+        # reset zoom button
         self.zoom_reset_button = QPushButton("Reset Zoom")
         self.zoom_reset_button.clicked.connect(self.reset_zoom)
+
+        self.integrate_button = QPushButton("Integrate Manually")
+        self.integrate_button.setCheckable(True)
+        self.integrate_button.clicked.connect(self.toggle_integration)
+
+        # to implement
+        button_layout.addWidget(self.zoom_button)
         button_layout.addWidget(self.zoom_reset_button)
+        button_layout.addWidget(self.integrate_button)
+        button_layout.addWidget(QPushButton("Find Peaks"))
 
         # widnow size, position, margins, etc
         size = {'w': 800, 'h': 400}
@@ -183,7 +203,7 @@ class openNMR(QMainWindow):
         self.experiments = []
         
         # modifying in relation to spectrum
-        self.painter_widget = spectrum_painter()
+        self.painter_widget = spectrum_painter(self.zoom_button, self.integrate_button)
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(button_layout)
@@ -193,7 +213,10 @@ class openNMR(QMainWindow):
         self.setCentralWidget(central_widget)
 
     def toggle_dragging(self, checked):
-        self.painter_widget.dragging = True
+        self.painter_widget.zooming = True
+    
+    def toggle_integration(self, checked):
+        self.painter_widget.integrating = True
 
     def reset_zoom(self):
         self.painter_widget.rang = [0, 1]
@@ -208,14 +231,13 @@ class openNMR(QMainWindow):
         file_dialog.setWindowTitle('Choose a folder')
         file_dialog.setFileMode(QFileDialog.FileMode.Directory)
         file_dialog.setOption(QFileDialog.Option.ShowDirsOnly)
+        selected_file = []
         if file_dialog.exec():
-            selected_file = file_dialog.selectedFiles()
-            print("Selected file:", selected_file[0])
-        title = "Open NMR"
-        print(selected_file[0])
-        self.painter_widget.generate_data(Spectrum_1D.create_from_file(selected_file[0]), self.zoom_button)
-        title += ' - ' + selected_file[0]
-        self.setWindowTitle(title)
+            selected_file = file_dialog.selectedFiles()[0]
+            title = "Open NMR"
+            self.painter_widget.generate_data(Spectrum_1D.create_from_file(selected_file))
+            title += ' - ' + selected_file
+            self.setWindowTitle(title)
         self.painter_widget.update()
 
 
