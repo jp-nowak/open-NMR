@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStyleFactory
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStyleFactory, QStackedWidget
 from PyQt6.QtGui import QMouseEvent, QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase
 from PyQt6.QtCore import QPointF, pyqtSignal, QPoint
 import numpy as np
@@ -12,7 +12,8 @@ def axis_generator(painter, p_size, axis_pars, textfont):
     # parameters
     ax_pos = p_size['h']-axis_pars['ax_padding']
     width = axis_pars['end_ppm']-axis_pars['begin_ppm']
-    incr_ppm = 2**round(np.log2(width * axis_pars['pixperinc']/math.ceil(p_size['w'])))
+    incr_ppm = 2**round(np.log2(width *
+                        axis_pars['pixperinc']/math.ceil(p_size['w'])))
     incr_fac = incr_ppm/width
     # axis line
     painter.drawLine(QPointF(0.0, ax_pos),
@@ -22,8 +23,10 @@ def axis_generator(painter, p_size, axis_pars, textfont):
     if axis_pars['end_ppm'] > 0 and axis_pars['begin_ppm'] < 0:
         iterright = math.ceil(axis_pars['end_ppm']/incr_ppm)
         iterleft = math.ceil(abs(axis_pars['begin_ppm']/incr_ppm))
-        del_pos_list = [axis_pars['end_ppm']/width - i*incr_fac for i in range(iterright)]
-        negative_list = [axis_pars['end_ppm']/width + i*incr_fac for i in range(iterleft)]
+        del_pos_list = [axis_pars['end_ppm']/width -
+                        i*incr_fac for i in range(iterright)]
+        negative_list = [axis_pars['end_ppm']/width +
+                         i*incr_fac for i in range(iterleft)]
         del_pos_list.extend(negative_list)
     else:
         del_pos_list = [axis_pars['end_ppm'] % incr_ppm/width +
@@ -75,6 +78,9 @@ def data_prep(data, width, height, rang):
         for pix in range(int(math.ceil(len(data)/sample))):
             start = pix*sample
             end = min((pix+1)*sample-1, len(data)-1)
+            if start == end:
+                resampled.append(data[-1])
+                break
             if abs(max(data[start:end, 1])-min(data[start:end, 1])) > 1:
                 resampled.extend(data[start:end])
             else:
@@ -95,7 +101,6 @@ class spectrum_painter(QWidget):
         self.integrating = False
         self.startPos = 0
         self.endPos = 1
-        
 
     def generate_data(self, experiment):
         # data
@@ -110,7 +115,6 @@ class spectrum_painter(QWidget):
                           'begin_ppm': self.info['plot_begin_ppm']}
         # deln is a length of delimiter in pixels
         # incperppm: multiples - 2 => 0.5 is the minimum increment
-       
 
     def mousePressEvent(self, event):
         if self.zooming or self.integrating:
@@ -145,10 +149,8 @@ class spectrum_painter(QWidget):
             self.integrating = False
 
     def paintEvent(self, event):
-
         # settings
         painter = QPainter(self)
-
         # updating window size
         rect = self.rect()
         self.p_size = {
@@ -169,15 +171,15 @@ class spectrum_painter(QWidget):
                                    self.rang)
         self.resampled = [QPointF(i[0], i[1]) for i in self.resampled]
         painter.drawPolyline(QPolygonF(self.resampled))
-
         axis_generator(painter, self.p_size, self.axis_pars, self.textfont)
-
         painter.end()
 
 
 class openNMR(QMainWindow):
     def __init__(self):
         super().__init__()
+        title = "Open NMR"
+        self.setWindowTitle(title)
         # open folder
         button_layout = QHBoxLayout()
         self.file_button = QPushButton("Open Folder")
@@ -211,29 +213,29 @@ class openNMR(QMainWindow):
         self.experiments = []
 
         # modifying in relation to spectrum
-        self.painter_widget = spectrum_painter(
-            self.zoom_button, self.integrate_button)
+        self.stacked_widget = QStackedWidget()
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(button_layout)
-        main_layout.addWidget(self.painter_widget)
+        main_layout.addWidget(self.stacked_widget)
         central_widget = QWidget()
         central_widget.setLayout(main_layout)
         self.setCentralWidget(central_widget)
-        
+
     def toggle_dragging(self, checked):
-        self.painter_widget.zooming = True
+        self.stacked_widget.currentWidget().zooming = True
 
     def toggle_integration(self, checked):
-        self.painter_widget.integrating = True
+        self.stacked_widget.currentWidget().integrating = True
 
     def reset_zoom(self):
-        self.painter_widget.rang = [0, 1]
-        self.painter_widget.startPos = 0
-        self.painter_widget.endPos = 1
-        self.painter_widget.axis_pars['begin_ppm'] = self.painter_widget.info['plot_begin_ppm']
-        self.painter_widget.axis_pars['end_ppm'] = self.painter_widget.info['plot_end_ppm']
-        self.painter_widget.update()
+        current = self.stacked_widget.currentWidget()
+        current.rang = [0, 1]
+        current.startPos = 0
+        current.endPos = 1
+        current.axis_pars['begin_ppm'] = current.info['plot_begin_ppm']
+        current.axis_pars['end_ppm'] = current.info['plot_end_ppm']
+        current.update()
 
     def openFile(self):
         file_dialog = QFileDialog(self)
@@ -243,17 +245,20 @@ class openNMR(QMainWindow):
         selected_file = []
         if file_dialog.exec():
             selected_file = file_dialog.selectedFiles()[0]
-            title = "Open NMR"
-            self.painter_widget.generate_data(
-                Spectrum_1D.create_from_file(selected_file))
-            title += ' - ' + selected_file
-            self.setWindowTitle(title)
-        self.painter_widget.update()
+            self.add_new_page(selected_file)
+
+    def add_new_page(self, file):
+        page_index = round(self.stacked_widget.count())
+        painter_widget = spectrum_painter(
+            self.zoom_button, self.integrate_button)
+        painter_widget.generate_data(Spectrum_1D.create_from_file(file))
+        self.stacked_widget.addWidget(painter_widget)
+        self.stacked_widget.setCurrentIndex(page_index)
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    #app.setStyle('Fusion')
+    # app.setStyle('Fusion')
     QFontDatabase.addApplicationFont("styling/titillium.ttf")
     with open("styling/styles.qss", "r") as f:
         style = f.read()
