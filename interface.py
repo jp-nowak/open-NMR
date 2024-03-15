@@ -65,13 +65,30 @@ def data_prep(data, width, height, rang):
     ymax = max(data[:, 1])
     ymin = min(data[:, 1])
     data[:, 1] = -(data[:, 1]-ymin)/(ymax-ymin)+1
-    # downsampling, bad method, we need one for nmr spectra specifically
-    pointperpixel = 100
-    sample = max(len(data)//(pointperpixel*width), 1)
+    data = data*(width, height)
+    new_method = True
+    if not new_method:
+        # downsampling, bad method, we need one for nmr spectra specifically
+        pointperpixel = 100
+        sample = max(len(data)//(pointperpixel*width), 1)
+        # scaling to image size
+        resampled = data[::sample]
+        return resampled
+    if new_method:
+        resampled = []
+        sample = int(len(data)//(width*2))
+        if sample<4:
+            return data
+        for pix in range(int(math.ceil(len(data)/sample))):
+            start = pix*sample
+            end = min((pix+1)*sample-1, len(data)-1)
+            if abs(max(data[start:end, 1])-min(data[start:end, 1])) > 1:
+                resampled.extend(data[start:end])
+            else:
+                resampled.extend([data[start], data[end]])
+        return resampled
+            
 
-    # scaling to image size
-    data = data[::sample]*(width, height)
-    return data
 
 
 class spectrum_painter(QWidget):
@@ -112,7 +129,6 @@ class spectrum_painter(QWidget):
             self.endPos = event.pos().x()/self.p_size['w']
 
     def mouseReleaseEvent(self, event):
-        print(self.zooming, self.integrating)
         # adjusting rang
         selrang = [self.endPos, self.startPos]
         selrang.sort()
@@ -131,7 +147,7 @@ class spectrum_painter(QWidget):
             self.zooming = False
 
         if self.integrating:
-            print(absrang)
+            print(absrang) #spectrum should get this absrang and come up with integration output
             self.integrate_button.setChecked(False)
             self.integrating = False
 
