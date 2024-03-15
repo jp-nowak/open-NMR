@@ -187,13 +187,6 @@ def read_agilent_fid(file_content):
             fids.append(fid)     
     return headers, fids
 
-# if __name__ == "__main__":
-#     # testing of agilent files reading
-#     path = "./example_fids/agilent_example1H.fid"
-#     fid_content, procpar_lines = open_experiment_folder_agilent(path)
-#     params = read_agilent_procpar(procpar_lines)
-#     info = info_agilent(params)
-#     headers, fids = read_agilent_fid(fid_content)
 
 def open_experiment_folder_bruker(path):
     # to be merged with agilent version into universal file opener
@@ -276,9 +269,68 @@ def read_bruker_fid_1D(file_content, info):
     return fid
 
 
-if __name__ == "__main__":
-    # testing of bruker files reading
-    path = "D:/projekt nmr/open-NMR/example_fids/bruker/1"
-    bruker = bruker_wrapper(path)
+def read_fid_1D(file_content, ptr, el_number, primary_type, quadrature=True, big_endian=True):
+    el_specifier = str()
+    
+    if big_endian:
+        el_specifier += ">"
+    else:
+        el_specifier += "<"
+    
+    if primary_type == np.int16:
+        el_specifier += "h"
+        el_size = 2
+    elif primary_type == np.int32:
+        el_specifier += "i"
+        el_size = 4
+    elif primary_type == np.int64:
+        el_specifier += "q"
+        el_size = 8
+    elif primary_type == np.single:
+        el_specifier += "f"
+        el_size = 4
+    elif primary_type == np.double:
+        el_specifier += "d"
+        el_size = 8
+    else:
+        raise NotImplementedError(f"not implemented primary type{primary_type}")
+        
+    if quadrature:
+        if primary_type == np.int16 or primary_type == np.int32 or primary_type == np.int32:
+            el_type = np.csingle
+        elif primary_type == np.int64 or primary_type == np.float64:
+            el_type = np.cdouble
+        def read_element(element):
+            a, b = element
+            result = a + b*1j
+            return result
+        el_specifier += el_specifier[1]
+        el_size *= 2
+    else:
+        el_type = primary_type
+        def read_element(element):
+            return 
+    
+    fid = np.zeros(el_number, dtype=el_type)
+    
+    for i in range(el_number):
+        fid[i] = read_element(struct.unpack(el_specifier, file_content[ptr:ptr+el_size]))
+        ptr += el_size
+        
+    return fid
+
+
+
+
+# primary_type | int16       int32       int64       float32       float64
+# C type       | short       int         long long   float         double 
+# -------------|
+# quadrature   |
+#              |
+# True         | csingle    csingle     cdouble      csingle      cdouble
+#              | ("hh")     ("ii")      ("qq")       ("ff")       ("dd")
+#              |
+# False        | int32       int32       int64        single       double
+#              | ("h")       ("i")       ("q")        ("f")        ("d")
     
     
