@@ -12,34 +12,25 @@ def axis_generator(painter, p_size, axis_pars, textfont):
     # parameters
     ax_pos = p_size['h']-axis_pars['ax_padding']
     width = axis_pars['end_ppm']-axis_pars['begin_ppm']
-    incr = math.ceil(axis_pars['incperppm']*width/(p_size['w'] //
-                                                   axis_pars['pixperinc']))/axis_pars['incperppm']
-
+    incr_ppm = 2**round(np.log2(width*axis_pars['pixperinc']/math.ceil(p_size['w'])))
+    incr_fac = incr_ppm/width
     # axis line
     painter.drawLine(QPointF(0.0, ax_pos),
                      QPointF(p_size['w'], ax_pos))
-
+    print(incr_ppm)
     # increments lists
     del_pos_list = []
     if axis_pars['end_ppm'] > 0 and axis_pars['begin_ppm'] < 0:
-        del_pos_list = [axis_pars['end_ppm']/width-incr/width *
-                        i for i in range(math.ceil(axis_pars['end_ppm']/incr))]
-        negative_extension = [axis_pars['end_ppm']/width+incr/width *
-                              i for i in range(math.ceil(-axis_pars['begin_ppm']/incr))]
-        del_pos_list.extend(negative_extension)
-        del_pos_list = sorted(set(del_pos_list))
+        numincright = math.ceil(axis_pars['end_ppm']/incr_ppm)
+        del_pos_list = [axis_pars['end_ppm']/width-i*incr_fac for i in range(numincright)]
+        # negative_list = [i*incr_ppm/width+abs(1-axis_pars['begin_ppm']/width) for i in range(math.ceil(abs(axis_pars['begin_ppm']/incr_ppm)))]
+        # del_pos_list.extend(negative_list)
     else:
-        del_pos_list = [(i*incr+width % incr) /
-                        width for i in range(int(width//incr))]
-    del_text_list = [str(round((axis_pars['end_ppm']-i*width) *
-                               axis_pars['incperppm'])/axis_pars['incperppm']) for i in del_pos_list]
-    # if last delimiter is too close to edge
-    if (1-del_pos_list[-1])*p_size['w'] < 10:
-        del_pos_list.pop(-1)
-        del_text_list.pop(-1)
-    if del_pos_list[0]*p_size['w'] < 10:
-        del_pos_list.pop(0)
-        del_text_list.pop(0)
+        del_pos_list = [axis_pars['end_ppm']%incr_ppm/width+i*incr_fac for i in range(math.ceil(width/incr_ppm))]
+    del_pos_list.sort()
+    del_pos_list = [i for i in del_pos_list if i>0+20/p_size['w'] and i<1-20/p_size['w']]
+    print(del_pos_list)
+    del_text_list = [str(round(axis_pars['end_ppm']-i*width, 3)) for i in del_pos_list]
 
     # draw delimiters
     for i in range(len(del_pos_list)):
@@ -106,7 +97,7 @@ class spectrum_painter(QWidget):
         self.data = experiment.spectrum
         self.info = experiment.info
         self.resampled = []
-        self.axis_pars = {'dlen': 5, 'pixperinc': 50,
+        self.axis_pars = {'dlen': 5, 'pixperinc': 70,
                           'incperppm': 100, 'ax_padding': 30, 'spect_padding': 50,
                           'end_ppm': self.info['plot_end_ppm'],
                           'begin_ppm': self.info['plot_begin_ppm']}
