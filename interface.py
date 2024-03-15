@@ -21,14 +21,16 @@ def axis_generator(painter, p_size, axis_pars, textfont):
 
     # increments lists
     del_pos_list = []
-    if axis_pars['end_ppm']>0 and axis_pars['begin_ppm']<0:
-        del_pos_list = [axis_pars['end_ppm']/width-incr/width*i for i in range(math.ceil(axis_pars['end_ppm']/incr))]
-        negative_extension = [axis_pars['end_ppm']/width+incr/width*i for i in range(math.ceil(-axis_pars['begin_ppm']/incr))]
+    if axis_pars['end_ppm'] > 0 and axis_pars['begin_ppm'] < 0:
+        del_pos_list = [axis_pars['end_ppm']/width-incr/width *
+                        i for i in range(math.ceil(axis_pars['end_ppm']/incr))]
+        negative_extension = [axis_pars['end_ppm']/width+incr/width *
+                              i for i in range(math.ceil(-axis_pars['begin_ppm']/incr))]
         del_pos_list.extend(negative_extension)
         del_pos_list = sorted(set(del_pos_list))
     else:
         del_pos_list = [(i*incr+width % incr) /
-                    width for i in range(int(width//incr))]
+                        width for i in range(int(width//incr))]
     del_text_list = [str(round((axis_pars['end_ppm']-i*width) *
                                axis_pars['incperppm'])/axis_pars['incperppm']) for i in del_pos_list]
     # if last delimiter is too close to edge
@@ -66,10 +68,11 @@ def data_prep(data, width, height, rang):
     # downsampling, bad method, we need one for nmr spectra specifically
     pointperpixel = 100
     sample = max(len(data)//(pointperpixel*width), 1)
-    
+
     # scaling to image size
     data = data[::sample]*(width, height)
     return data
+
 
 class spectrum_painter(QWidget):
     def __init__(self, zoom_button, integrate_button):
@@ -114,10 +117,10 @@ class spectrum_painter(QWidget):
         selrang = [self.endPos, self.startPos]
         selrang.sort()
         absrang = [self.rang[0]+(self.rang[1]-self.rang[0])*selrang[0],
-                     self.rang[0]+(self.rang[1]-self.rang[0])*selrang[1]
-                     ]
+                   self.rang[0]+(self.rang[1]-self.rang[0])*selrang[1]
+                   ]
         absrang.sort()
-        if self.zooming: 
+        if self.zooming:
             self.rang = absrang
             # adjusting axis
             width = self.info['plot_end_ppm']-self.info['plot_begin_ppm']
@@ -126,19 +129,16 @@ class spectrum_painter(QWidget):
             self.zoom_button.setChecked(False)
             self.update()
             self.zooming = False
-        
+
         if self.integrating:
             print(absrang)
             self.integrate_button.setChecked(False)
             self.integrating = False
-            
-        
 
     def paintEvent(self, event):
 
         # settings
         painter = QPainter(self)
-        
 
         # updating window size
         rect = self.rect()
@@ -147,9 +147,13 @@ class spectrum_painter(QWidget):
             'h': rect.bottomLeft().y()-rect.topRight().y()
         }
         if not self.drawstatus:
-            painter.drawText(QPointF(self.p_size['w']/2, self.p_size['h']/2), 'nothing loaded')
+            message = 'nothing loaded'
+            font_metrics = QFontMetrics(self.font())
+            text_width = font_metrics.horizontalAdvance(message)
+            painter.drawText(
+                QPointF(self.p_size['w']/2 - text_width, self.p_size['h']/2), message)
             return None
-        
+
         painter.setFont(self.textfont)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
@@ -201,9 +205,10 @@ class openNMR(QMainWindow):
 
         # opening spectrum, in the future on event
         self.experiments = []
-        
+
         # modifying in relation to spectrum
-        self.painter_widget = spectrum_painter(self.zoom_button, self.integrate_button)
+        self.painter_widget = spectrum_painter(
+            self.zoom_button, self.integrate_button)
 
         main_layout = QVBoxLayout()
         main_layout.addLayout(button_layout)
@@ -214,7 +219,7 @@ class openNMR(QMainWindow):
 
     def toggle_dragging(self, checked):
         self.painter_widget.zooming = True
-    
+
     def toggle_integration(self, checked):
         self.painter_widget.integrating = True
 
@@ -235,7 +240,8 @@ class openNMR(QMainWindow):
         if file_dialog.exec():
             selected_file = file_dialog.selectedFiles()[0]
             title = "Open NMR"
-            self.painter_widget.generate_data(Spectrum_1D.create_from_file(selected_file))
+            self.painter_widget.generate_data(
+                Spectrum_1D.create_from_file(selected_file))
             title += ' - ' + selected_file
             self.setWindowTitle(title)
         self.painter_widget.update()
@@ -246,8 +252,8 @@ if __name__ == "__main__":
     app.setStyle('Fusion')
     QFontDatabase.addApplicationFont("styling/titillium.ttf")
     with open("styling/styles.qss", "r") as f:
-            style = f.read()
-            app.setStyleSheet(style)
+        style = f.read()
+        app.setStyleSheet(style)
     # main app
     window = openNMR()
     window.show()
