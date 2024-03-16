@@ -121,6 +121,7 @@ def read_fid_1D(file_content, ptr, el_number, primary_type, quadrature, big_endi
         fid[i] = read_element(struct.unpack(el_specifier, file_content[ptr:ptr+el_size]))
         ptr += el_size
         
+        
     return fid
 
 # primary_type | int16       int32       int64       float32       float64
@@ -133,6 +134,8 @@ def read_fid_1D(file_content, ptr, el_number, primary_type, quadrature, big_endi
 #              |
 # False        | int32       int32       int64        single       double
 #              | ("h")       ("i")       ("q")        ("f")        ("d")
+
+#------------------------------------------------------------------------------
     
 def agilent_wrapper(path):
     # agilent - file header size 32 bytes, block headers 28 bytes
@@ -165,7 +168,7 @@ def read_agilent_fid(fid_content):
     
     if ((not status_dict["s_data"]) or status_dict["s_spec"] or status_dict["s_hypercomplex"] or
         status_dict["s_secnd"] or status_dict["s_transf"] or status_dict["s_np"] or 
-        status_dict["s_nf"] or status_dict["s_ni"] or status_dict["s_ni2"]):
+        status_dict["s_nf"] or status_dict["s_ni"] or status_dict["s_ni2"] or status_dict["s_complex"]):
         raise NotImplementedError(f"not implemented spectrum type {status_dict}")
     
     if status_dict["s_float"]:
@@ -285,10 +288,25 @@ def bruker_wrapper(path):
     fid_content, acqus_lines = open_experiment_folder_bruker(path)
     params = read_bruker_acqus(acqus_lines)
     info = bruker_info(params)
-    fid = None
+    fid = read_bruker_fid(fid_content, info)
     return info, fid
 
-
+def read_bruker_fid(fid_content, info):
+    big_endian = bool(info["byte_order"])
+    el_number = info["number_of_data_points"]//2
+    quadrature = True
+    start_offset = 40 #in bytes, temporary
+    if info["data_type"] == 0:
+        primary_type = np.int32
+        el_number -= start_offset//8
+    elif info["data_type"] == 2:
+        primary_type = np.double
+        el_number -= start_offset//16
+    else:
+        raise NotImplementedError("unknown primary data type")
+    fid = read_fid_1D(fid_content, 40, el_number, primary_type, quadrature, big_endian)
+    return [fid]
+    
 def read_bruker_acqus(acqus_lines):
     params = dict()
     key = "error"
@@ -314,7 +332,8 @@ def bruker_info(params):
         "byte_order" : "$BYTORDA", # 0-little endian or 1-big endian
         "date" : "$DATE", # unknown format - unix?
         "number_of_scans" : "$NS",
-        "number_of_data_points" : "$TD"
+        "number_of_data_points" : "$TD", # number of complex points = number_of_data_points/2
+        "data_type" : "$DTYPA"
         }
     for i, j in params_keywords.items():
         try:
@@ -330,6 +349,10 @@ def bruker_info(params):
     
     info["plot_begin_ppm"] = info["plot_begin"] / info["obs_nucl_freq"]
     info["plot_end_ppm"] = info["plot_end"] / info["obs_nucl_freq"]
+    
+    info["number_of_data_points"] = int(info["number_of_data_points"] )
+    
+    info["samplename"] = "not implemented in bruker format aaaaaaaaaaaaaaaaaaaaaaaaaaa"
     
     return info
 
