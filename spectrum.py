@@ -75,9 +75,9 @@ class Spectrum_1D:
         else:
             raise NotImplementedError(f"not implemented file format: {ftype}")
         
-
         
-        return cls(fid, info, path)
+        
+        return cls(fid[0], info, path)
     
     
     def generate_power_mode_spectrum(self):
@@ -91,7 +91,8 @@ class Spectrum_1D:
     
     
     def generate_absorption_mode_spectrum(self):
-        # first prototype
+        # # second prototype
+        
         ft_rl = np.fft.fft(np.real(self._fid))
         ft_im = np.fft.fft(np.imag(self._fid))
         rl_ft_rl = np.real(ft_rl)
@@ -246,7 +247,7 @@ class Spectrum_1D:
     # "plot_end"       : [Hz] end of plot
     # "plot_ppm"       : [ppm] beginning of plot
     # "plot_ppm"       : [ppm] end of plot
-
+    # "quadrature"     : bool, true - quadrature detection, false - ADC
         
 if __name__ == "__main__":
     nmr_file_path = "./example_fids/agilent_example1H.fid"

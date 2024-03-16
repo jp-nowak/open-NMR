@@ -37,7 +37,7 @@ DataFileHead = collections.namedtuple("DataFileHead",
 # definition of named tuple class used to store information from file header
 
 DataBlockHead = collections.namedtuple("DataBlockHead",
-   'scale, status, index, mode, ctcount, lpval, rpval, lvl, tlt, number')
+   'scale, status, index, mode, ctcount, lpval, rpval, lvl, tlt')
 # struct datablockhead
 # /* Each file block contains the following header */
 # {
@@ -72,7 +72,7 @@ def fid_file_type(path):
         return "bruker"
 
 
-def read_fid_1D(file_content, ptr, el_number, primary_type, quadrature=True, big_endian=True):
+def read_fid_1D(file_content, ptr, el_number, primary_type, quadrature, big_endian):
     el_specifier = str()
     
     if big_endian:
@@ -99,12 +99,12 @@ def read_fid_1D(file_content, ptr, el_number, primary_type, quadrature=True, big
         raise NotImplementedError(f"not implemented primary type{primary_type}")
         
     if quadrature:
-        if primary_type == np.int16 or primary_type == np.int32 or primary_type == np.int32:
+        if primary_type == np.int16 or primary_type == np.int32 or primary_type == np.single:
             el_type = np.csingle
-        elif primary_type == np.int64 or primary_type == np.float64:
+        elif primary_type == np.int64 or primary_type == np.double:
             el_type = np.cdouble
         def read_element(element):
-            a, b = element
+            b, a = element
             result = a + b*1j
             return result
         el_specifier += el_specifier[1]
@@ -112,7 +112,8 @@ def read_fid_1D(file_content, ptr, el_number, primary_type, quadrature=True, big
     else:
         el_type = primary_type
         def read_element(element):
-            return 
+            return element
+    #print(ptr, el_number, primary_type, quadrature, big_endian, el_specifier, el_size, el_type, sep="\n")
     
     fid = np.zeros(el_number, dtype=el_type)
     
@@ -133,33 +134,60 @@ def read_fid_1D(file_content, ptr, el_number, primary_type, quadrature=True, big
 # False        | int32       int32       int64        single       double
 #              | ("h")       ("i")       ("q")        ("f")        ("d")
     
-    
-# Older version of reading of agilent experiment folder
-def agilent_wrapper(path): 
-    fid_content, procpar_lines = open_experiment_folder_agilent(path)
-    procpar = read_agilent_procpar(procpar_lines)
-    headers, fid = read_agilent_fid(fid_content)
-    info = info_agilent(procpar)
-    return info, fid[0]
-
-
-def new_agilent_wrapper(path):
+def agilent_wrapper(path):
     # agilent - file header size 32 bytes, block headers 28 bytes
     fid_content, procpar_lines = open_experiment_folder_agilent(path)
     procpar = read_agilent_procpar(procpar_lines)
     info = info_agilent(procpar)
-    headers, fid = new_read_agilent_fid(fid_content)
+    status_dict, headers, fid = read_agilent_fid(fid_content)
+    return info, fid
 
-def new_read_agilent_fid(fid_content):
+def read_agilent_fid(fid_content):
     ptr = 0
-    file_header = DataFileHead(*struct.unpack(">llllllhhl", fid_content[0:32]))
+    file_header = DataFileHead(*struct.unpack(">llllllh2sl", fid_content[0:32]))
+    status_dict = {
+        's_data'         : bool(int(file_header.status[1] & int("00000001", 2))),
+        's_spec'         : bool(int(file_header.status[1] & int("00000010", 2))),
+        's_32'           : bool(int(file_header.status[1] & int("00000100", 2))),
+        's_float'        : bool(int(file_header.status[1] & int("00001000", 2))),
+        's_complex'      : bool(int(file_header.status[1] & int("00010000", 2))),
+        's_hypercomplex' : bool(int(file_header.status[1] & int("00100000", 2))),
+        's_acqpar'       : bool(int(file_header.status[1] & int("10000000", 2))),
+        
+        's_secnd'        : bool(int(file_header.status[0] & int("00000001", 2))),
+        's_transf'       : bool(int(file_header.status[0] & int("00000010", 2))),
+        's_np'           : bool(int(file_header.status[0] & int("00000100", 2))),
+        's_nf'           : bool(int(file_header.status[0] & int("00010000", 2))),
+        's_ni'           : bool(int(file_header.status[0] & int("00100000", 2))),
+        's_ni2'          : bool(int(file_header.status[0] & int("01000000", 2))),
+        }
     ptr += 32
+    
+    if ((not status_dict["s_data"]) or status_dict["s_spec"] or status_dict["s_hypercomplex"] or
+        status_dict["s_secnd"] or status_dict["s_transf"] or status_dict["s_np"] or 
+        status_dict["s_nf"] or status_dict["s_ni"] or status_dict["s_ni2"]):
+        raise NotImplementedError(f"not implemented spectrum type {status_dict}")
+    
+    if status_dict["s_float"]:
+        primary_type = np.single
+    else:
+        primary_type = np.int32 if status_dict["s_32"] else np.int16
+        
+    #quadrature = True if status_dict["s_complex"] else False
+    
+    quadrature = True
+    
+    el_number = file_header.np // 2 if quadrature else file_header.np
+    
     fids = []
+    headers = []
+    
     if file_header.nblocks > 1:
         raise NotImplementedError("two dimensional spectra")
     for i1 in range(file_header.nblocks):
         header = DataBlockHead(*struct.unpack(">hhhhlffff", fid_content[ptr:ptr+28]))
         ptr += 28
+        headers.append(header)
         if file_header.nbheaders == 1:
             pass
         elif file_header.nbheaders == 2:
@@ -169,12 +197,11 @@ def new_read_agilent_fid(fid_content):
         if file_header.ntraces > 1:
             raise NotImplementedError("more then one trace per block")
         for i3 in range(file_header.ntraces):
-            pass
-    # TODO:
-    # - determining quadrature and element type - reading file_header.status bits + file_header.ebytes
-    # - element number -||- + file_header.np
+            fid = read_fid_1D(fid_content, ptr, el_number, primary_type, quadrature, big_endian=True)
+        fids.append(fid)
     
-
+    return status_dict, headers, fids
+   
 def open_experiment_folder_agilent(path):
     fid_path = os.path.join(path, "fid")
     procpar_path = os.path.join(path,"procpar")
@@ -238,59 +265,8 @@ def info_agilent(params):
     
     return info
 
-def read_agilent_fid(file_content):
-    """
-    Function used to read data from agilent type .fid file
 
-    Parameters
-    ----------
-    file_content : object created by following:
-        with open(file.fid, "rb") as file:
-            file_content = file.read()
-
-    Returns
-    -------
-    headers : list starting with one DataFileHead object proceeded by one
-    or multiple DataBlockHead objects
-    In case of 1D spectrum it should contain one DataFileHead and one DataBlockHead
-    
-    
-    fids : list of numpy arrays filled with csingle or int16 or int32 type variables,
-    In case of 1D spectrum it should only contain one array. Those arrays contain
-    raw free induction decay data.
-       
-
-    """
-    ptr = 0
-    header0 = DataFileHead(*struct.unpack(">llllllhhl", file_content[ptr:ptr+32]))
-    headers = [header0]
-    ptr += 32
-    #TO BE REDONE FOR OTHER EL TYPES
-    el_specifier = ">ff"
-    el_type = np.csingle
-    el_size = 2 * header0.ebytes if el_type == np.csingle else header0.ebytes
-    bl_el_number = header0.np // 2 if el_type == np.csingle else header0.np
-    # to be done: rewrite in such way that bl_el_number will be taken from appr. block header not file header
-    fids = []
-    def read_element(element):
-        # i am not really sure which part is real in fid
-        a, b = element
-        result = b + a*1j
-        return result
-        
-    for i1 in range(header0.nblocks):
-        for i2 in range(header0.nbheaders):
-            headers.append(DataBlockHead(*struct.unpack(">hhhhlffff", file_content[ptr:ptr+28]), i2))
-            ptr += 28
-        for i3 in range(header0.ntraces):
-            fid = np.zeros(bl_el_number, dtype = el_type)
-            for i4 in range(bl_el_number):
-                #print(struct.unpack(el_specifier, file_content[ptr:ptr+el_size]))
-                fid[i4] = read_element(struct.unpack(el_specifier, file_content[ptr:ptr+el_size]))
-                ptr += el_size
-            fids.append(fid)     
-    return headers, fids
-
+#------------------------------------------------------------------------------
 
 def open_experiment_folder_bruker(path):
     # to be merged with agilent version into universal file opener
@@ -309,7 +285,7 @@ def bruker_wrapper(path):
     fid_content, acqus_lines = open_experiment_folder_bruker(path)
     params = read_bruker_acqus(acqus_lines)
     info = bruker_info(params)
-    fid = read_bruker_fid_1D(fid_content, info)
+    fid = None
     return info, fid
 
 
@@ -357,20 +333,9 @@ def bruker_info(params):
     
     return info
 
-def read_bruker_fid_1D(file_content, info):
-    ptr = 48
-    el_specifier = "<ff" if info["byte_order"] == 0 else ">ff"
-    fid = np.zeros(int(info["number_of_data_points"]), dtype=np.csingle)
-    el_size = 8
-    def read_element(element):
-        # i am not really sure which part is real in fid
-        a, b = element
-        result = a + b*1j
-        return result
-    for i in range(0, int(info["number_of_data_points"])):
-        fid[i] = read_element(struct.unpack(el_specifier, file_content[ptr:ptr+el_size]))
+
+if __name__ == "__main__":
+    info, fid = agilent_wrapper("C:/Users/Jan Nowak/Desktop/open nmr/open-NMR/example_fids/agilent/agilent_example1H.fid")
+
     
-    return fid
-
-
-
+    
