@@ -1,6 +1,6 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStackedWidget, QLabel
-from PyQt6.QtGui import QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStackedWidget, QLabel, QFrame
+from PyQt6.QtGui import QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase, QPen, QColor
 from PyQt6.QtCore import QPointF, Qt
 import numpy as np
 from spectrum import Spectrum_1D
@@ -95,6 +95,7 @@ class spectrum_painter(QWidget):
         self.integrate_button = integrate_button
         self.drawstatus = False
         self.textfont = QFont('Times', 10)
+        self.pen = QPen(QColor("black"))
         self.rang = [0, 1]
         # dragging
         self.zooming = False
@@ -151,6 +152,7 @@ class spectrum_painter(QWidget):
     def paintEvent(self, event):
         # settings
         painter = QPainter(self)
+        painter.setPen(self.pen)
         # updating window size
         rect = self.rect()
         self.p_size = {
@@ -195,7 +197,8 @@ class openNMR(QMainWindow):
         self.integrate_button.setCheckable(True)
         self.integrate_button.clicked.connect(self.toggle_integration)
 
-        actions = QVBoxLayout()
+        actions_frame = QFrame()
+        actions = QVBoxLayout(actions_frame)
         actions.addWidget(QLabel('Actions'))
         actions.addWidget(self.file_button)
         actions.addWidget(self.zoom_button)
@@ -204,13 +207,15 @@ class openNMR(QMainWindow):
         actions.addWidget(QPushButton("Find Peaks"))
         actions.setAlignment(Qt.AlignmentFlag.AlignTop)
         
-        self.tabs = QVBoxLayout()
+        tabs_frame = QFrame()
+        self.tabs = QVBoxLayout(tabs_frame)
         self.tabs.addWidget(QLabel('Tabs'))
         self.tabs.setAlignment(Qt.AlignmentFlag.AlignTop)
-
+        
+        
         toolbar = QVBoxLayout()
-        toolbar.addLayout(actions)
-        toolbar.addLayout(self.tabs)
+        toolbar.addWidget(actions_frame)
+        toolbar.addWidget(tabs_frame)
         
 
         # widnow size, position, margins, etc
