@@ -180,18 +180,14 @@ class openNMR(QMainWindow):
         super().__init__()
         title = "Open NMR"
         self.setWindowTitle(title)
-        # open folder
-        button_layout = QHBoxLayout()
+
         self.file_button = QPushButton("Open Folder")
         self.file_button.clicked.connect(self.openFile)
-        button_layout.addWidget(self.file_button)
 
-        # zoom button
         self.zoom_button = QPushButton("Zoom")
         self.zoom_button.setCheckable(True)
         self.zoom_button.toggled.connect(self.toggle_dragging)
 
-        # reset zoom button
         self.zoom_reset_button = QPushButton("Reset Zoom")
         self.zoom_reset_button.clicked.connect(self.reset_zoom)
 
@@ -199,11 +195,12 @@ class openNMR(QMainWindow):
         self.integrate_button.setCheckable(True)
         self.integrate_button.clicked.connect(self.toggle_integration)
 
-        # to implement
-        button_layout.addWidget(self.zoom_button)
-        button_layout.addWidget(self.zoom_reset_button)
-        button_layout.addWidget(self.integrate_button)
-        button_layout.addWidget(QPushButton("Find Peaks"))
+        toolbar = QVBoxLayout()
+        toolbar.addWidget(self.file_button)
+        toolbar.addWidget(self.zoom_button)
+        toolbar.addWidget(self.zoom_reset_button)
+        toolbar.addWidget(self.integrate_button)
+        toolbar.addWidget(QPushButton("Find Peaks"))
 
         # widnow size, position, margins, etc
         size = {'w': 800, 'h': 400}
@@ -213,23 +210,23 @@ class openNMR(QMainWindow):
         self.experiments = []
 
         # modifying in relation to spectrum
-        self.stacked_widget = QStackedWidget()
+        self.viewer = QStackedWidget()
 
-        main_layout = QVBoxLayout()
-        main_layout.addLayout(button_layout)
-        main_layout.addWidget(self.stacked_widget)
+        main_layout = QHBoxLayout()
+        main_layout.addWidget(self.viewer)
+        main_layout.addLayout(toolbar)
         central_widget = QWidget()
         central_widget.setLayout(main_layout)
         self.setCentralWidget(central_widget)
 
     def toggle_dragging(self, checked):
-        self.stacked_widget.currentWidget().zooming = True
+        self.viewer.currentWidget().zooming = True
 
     def toggle_integration(self, checked):
-        self.stacked_widget.currentWidget().integrating = True
+        self.viewer.currentWidget().integrating = True
 
     def reset_zoom(self):
-        current = self.stacked_widget.currentWidget()
+        current = self.viewer.currentWidget()
         current.rang = [0, 1]
         current.startPos = 0
         current.endPos = 1
@@ -248,12 +245,12 @@ class openNMR(QMainWindow):
             self.add_new_page(selected_file)
 
     def add_new_page(self, file):
-        page_index = round(self.stacked_widget.count())
+        page_index = round(self.viewer.count())
         painter_widget = spectrum_painter(
             self.zoom_button, self.integrate_button)
         painter_widget.generate_data(Spectrum_1D.create_from_file(file))
-        self.stacked_widget.addWidget(painter_widget)
-        self.stacked_widget.setCurrentIndex(page_index)
+        self.viewer.addWidget(painter_widget)
+        self.viewer.setCurrentIndex(page_index)
 
 
 if __name__ == "__main__":
