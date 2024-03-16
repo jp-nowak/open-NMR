@@ -1,7 +1,7 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStyleFactory
-from PyQt6.QtGui import QMouseEvent, QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase
-from PyQt6.QtCore import QPointF, pyqtSignal, QPoint
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStackedWidget, QLabel
+from PyQt6.QtGui import QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase
+from PyQt6.QtCore import QPointF, Qt
 import numpy as np
 from spectrum import Spectrum_1D
 import math
@@ -12,7 +12,8 @@ def axis_generator(painter, p_size, axis_pars, textfont):
     # parameters
     ax_pos = p_size['h']-axis_pars['ax_padding']
     width = axis_pars['end_ppm']-axis_pars['begin_ppm']
-    incr_ppm = 2**round(np.log2(width * axis_pars['pixperinc']/math.ceil(p_size['w'])))
+    incr_ppm = 2**round(np.log2(width *
+                        axis_pars['pixperinc']/math.ceil(p_size['w'])))
     incr_fac = incr_ppm/width
     # axis line
     painter.drawLine(QPointF(0.0, ax_pos),
@@ -22,8 +23,10 @@ def axis_generator(painter, p_size, axis_pars, textfont):
     if axis_pars['end_ppm'] > 0 and axis_pars['begin_ppm'] < 0:
         iterright = math.ceil(axis_pars['end_ppm']/incr_ppm)
         iterleft = math.ceil(abs(axis_pars['begin_ppm']/incr_ppm))
-        del_pos_list = [axis_pars['end_ppm']/width - i*incr_fac for i in range(iterright)]
-        negative_list = [axis_pars['end_ppm']/width + i*incr_fac for i in range(iterleft)]
+        del_pos_list = [axis_pars['end_ppm']/width -
+                        i*incr_fac for i in range(iterright)]
+        negative_list = [axis_pars['end_ppm']/width +
+                         i*incr_fac for i in range(iterleft)]
         del_pos_list.extend(negative_list)
     else:
         del_pos_list = [axis_pars['end_ppm'] % incr_ppm/width +
@@ -75,6 +78,9 @@ def data_prep(data, width, height, rang):
         for pix in range(int(math.ceil(len(data)/sample))):
             start = pix*sample
             end = min((pix+1)*sample-1, len(data)-1)
+            if start == end:
+                resampled.append(data[-1])
+                break
             if abs(max(data[start:end, 1])-min(data[start:end, 1])) > 1:
                 resampled.extend(data[start:end])
             else:
@@ -95,7 +101,6 @@ class spectrum_painter(QWidget):
         self.integrating = False
         self.startPos = 0
         self.endPos = 1
-        
 
     def generate_data(self, experiment):
         # data
@@ -110,7 +115,6 @@ class spectrum_painter(QWidget):
                           'begin_ppm': self.info['plot_begin_ppm']}
         # deln is a length of delimiter in pixels
         # incperppm: multiples - 2 => 0.5 is the minimum increment
-       
 
     def mousePressEvent(self, event):
         if self.zooming or self.integrating:
@@ -145,10 +149,8 @@ class spectrum_painter(QWidget):
             self.integrating = False
 
     def paintEvent(self, event):
-
         # settings
         painter = QPainter(self)
-
         # updating window size
         rect = self.rect()
         self.p_size = {
@@ -169,27 +171,23 @@ class spectrum_painter(QWidget):
                                    self.rang)
         self.resampled = [QPointF(i[0], i[1]) for i in self.resampled]
         painter.drawPolyline(QPolygonF(self.resampled))
-
         axis_generator(painter, self.p_size, self.axis_pars, self.textfont)
-
         painter.end()
 
 
 class openNMR(QMainWindow):
     def __init__(self):
         super().__init__()
-        # open folder
-        button_layout = QHBoxLayout()
+        title = "Open NMR"
+        self.setWindowTitle(title)
+
         self.file_button = QPushButton("Open Folder")
         self.file_button.clicked.connect(self.openFile)
-        button_layout.addWidget(self.file_button)
 
-        # zoom button
         self.zoom_button = QPushButton("Zoom")
         self.zoom_button.setCheckable(True)
         self.zoom_button.toggled.connect(self.toggle_dragging)
 
-        # reset zoom button
         self.zoom_reset_button = QPushButton("Reset Zoom")
         self.zoom_reset_button.clicked.connect(self.reset_zoom)
 
@@ -197,43 +195,53 @@ class openNMR(QMainWindow):
         self.integrate_button.setCheckable(True)
         self.integrate_button.clicked.connect(self.toggle_integration)
 
-        # to implement
-        button_layout.addWidget(self.zoom_button)
-        button_layout.addWidget(self.zoom_reset_button)
-        button_layout.addWidget(self.integrate_button)
-        button_layout.addWidget(QPushButton("Find Peaks"))
+        actions = QVBoxLayout()
+        actions.addWidget(QLabel('Actions'))
+        actions.addWidget(self.file_button)
+        actions.addWidget(self.zoom_button)
+        actions.addWidget(self.zoom_reset_button)
+        actions.addWidget(self.integrate_button)
+        actions.addWidget(QPushButton("Find Peaks"))
+        actions.setAlignment(Qt.AlignmentFlag.AlignTop)
+        
+        self.tabs = QVBoxLayout()
+        self.tabs.addWidget(QLabel('Tabs'))
+        self.tabs.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        toolbar = QVBoxLayout()
+        toolbar.addLayout(actions)
+        toolbar.addLayout(self.tabs)
+        
 
         # widnow size, position, margins, etc
         size = {'w': 800, 'h': 400}
         self.setGeometry(200, 200, size['w'], size['h'])
 
-        # opening spectrum, in the future on event
-        self.experiments = []
-
         # modifying in relation to spectrum
-        self.painter_widget = spectrum_painter(
-            self.zoom_button, self.integrate_button)
+        self.spectrum_viewer = QStackedWidget()
 
-        main_layout = QVBoxLayout()
-        main_layout.addLayout(button_layout)
-        main_layout.addWidget(self.painter_widget)
-        central_widget = QWidget()
-        central_widget.setLayout(main_layout)
-        self.setCentralWidget(central_widget)
+        main_layout = QHBoxLayout()
+        main_layout.addWidget(self.spectrum_viewer)
+        main_layout.addLayout(toolbar)
         
+        complete_window = QWidget()
+        complete_window.setLayout(main_layout)
+        self.setCentralWidget(complete_window)
+
     def toggle_dragging(self, checked):
-        self.painter_widget.zooming = True
+        self.spectrum_viewer.currentWidget().zooming = True
 
     def toggle_integration(self, checked):
-        self.painter_widget.integrating = True
+        self.spectrum_viewer.currentWidget().integrating = True
 
     def reset_zoom(self):
-        self.painter_widget.rang = [0, 1]
-        self.painter_widget.startPos = 0
-        self.painter_widget.endPos = 1
-        self.painter_widget.axis_pars['begin_ppm'] = self.painter_widget.info['plot_begin_ppm']
-        self.painter_widget.axis_pars['end_ppm'] = self.painter_widget.info['plot_end_ppm']
-        self.painter_widget.update()
+        current = self.spectrum_viewer.currentWidget()
+        current.rang = [0, 1]
+        current.startPos = 0
+        current.endPos = 1
+        current.axis_pars['begin_ppm'] = current.info['plot_begin_ppm']
+        current.axis_pars['end_ppm'] = current.info['plot_end_ppm']
+        current.update()
 
     def openFile(self):
         file_dialog = QFileDialog(self)
@@ -243,17 +251,22 @@ class openNMR(QMainWindow):
         selected_file = []
         if file_dialog.exec():
             selected_file = file_dialog.selectedFiles()[0]
-            title = "Open NMR"
-            self.painter_widget.generate_data(
-                Spectrum_1D.create_from_file(selected_file))
-            title += ' - ' + selected_file
-            self.setWindowTitle(title)
-        self.painter_widget.update()
+            self.add_new_page(selected_file)
+
+    def add_new_page(self, file):
+        page_index = round(self.spectrum_viewer.count())
+        painter_widget = spectrum_painter(
+            self.zoom_button, self.integrate_button)
+        painter_widget.generate_data(Spectrum_1D.create_from_file(file))
+        self.spectrum_viewer.addWidget(painter_widget)
+        button = QPushButton(painter_widget.info['samplename'])
+        button.clicked.connect(lambda: self.spectrum_viewer.setCurrentIndex(page_index))
+        self.tabs.addWidget(button)
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    #app.setStyle('Fusion')
+    # app.setStyle('Fusion')
     QFontDatabase.addApplicationFont("styling/titillium.ttf")
     with open("styling/styles.qss", "r") as f:
         style = f.read()
