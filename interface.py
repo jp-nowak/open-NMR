@@ -1,7 +1,7 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStyleFactory, QStackedWidget
-from PyQt6.QtGui import QMouseEvent, QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase
-from PyQt6.QtCore import QPointF, pyqtSignal, QPoint
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStackedWidget, QLabel
+from PyQt6.QtGui import QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase
+from PyQt6.QtCore import QPointF, Qt
 import numpy as np
 from spectrum import Spectrum_1D
 import math
@@ -195,41 +195,47 @@ class openNMR(QMainWindow):
         self.integrate_button.setCheckable(True)
         self.integrate_button.clicked.connect(self.toggle_integration)
 
+        actions = QVBoxLayout()
+        actions.addWidget(QLabel('Actions'))
+        actions.addWidget(self.file_button)
+        actions.addWidget(self.zoom_button)
+        actions.addWidget(self.zoom_reset_button)
+        actions.addWidget(self.integrate_button)
+        actions.addWidget(QPushButton("Find Peaks"))
+        actions.setAlignment(Qt.AlignmentFlag.AlignTop)
+        
         self.tabs = QVBoxLayout()
+        self.tabs.addWidget(QLabel('Tabs'))
+        self.tabs.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        self.toolbar = QVBoxLayout()
-        self.toolbar.addWidget(self.file_button)
-        self.toolbar.addWidget(self.zoom_button)
-        self.toolbar.addWidget(self.zoom_reset_button)
-        self.toolbar.addWidget(self.integrate_button)
-        self.toolbar.addWidget(QPushButton("Find Peaks"))
-        self.toolbar.addLayout(self.tabs)
+        toolbar = QVBoxLayout()
+        toolbar.addLayout(actions)
+        toolbar.addLayout(self.tabs)
+        
 
         # widnow size, position, margins, etc
         size = {'w': 800, 'h': 400}
         self.setGeometry(200, 200, size['w'], size['h'])
 
-        # opening spectrum, in the future on event
-        self.experiments = []
-
         # modifying in relation to spectrum
-        self.viewer = QStackedWidget()
+        self.spectrum_viewer = QStackedWidget()
 
         main_layout = QHBoxLayout()
-        main_layout.addWidget(self.viewer)
-        main_layout.addLayout(self.toolbar)
-        central_widget = QWidget()
-        central_widget.setLayout(main_layout)
-        self.setCentralWidget(central_widget)
+        main_layout.addWidget(self.spectrum_viewer)
+        main_layout.addLayout(toolbar)
+        
+        complete_window = QWidget()
+        complete_window.setLayout(main_layout)
+        self.setCentralWidget(complete_window)
 
     def toggle_dragging(self, checked):
-        self.viewer.currentWidget().zooming = True
+        self.spectrum_viewer.currentWidget().zooming = True
 
     def toggle_integration(self, checked):
-        self.viewer.currentWidget().integrating = True
+        self.spectrum_viewer.currentWidget().integrating = True
 
     def reset_zoom(self):
-        current = self.viewer.currentWidget()
+        current = self.spectrum_viewer.currentWidget()
         current.rang = [0, 1]
         current.startPos = 0
         current.endPos = 1
@@ -248,13 +254,13 @@ class openNMR(QMainWindow):
             self.add_new_page(selected_file)
 
     def add_new_page(self, file):
-        page_index = round(self.viewer.count())
+        page_index = round(self.spectrum_viewer.count())
         painter_widget = spectrum_painter(
             self.zoom_button, self.integrate_button)
         painter_widget.generate_data(Spectrum_1D.create_from_file(file))
-        self.viewer.addWidget(painter_widget)
+        self.spectrum_viewer.addWidget(painter_widget)
         button = QPushButton(painter_widget.info['samplename'])
-        button.clicked.connect(lambda: self.viewer.setCurrentIndex(page_index))
+        button.clicked.connect(lambda: self.spectrum_viewer.setCurrentIndex(page_index))
         self.tabs.addWidget(button)
 
 
