@@ -195,12 +195,15 @@ class openNMR(QMainWindow):
         self.integrate_button.setCheckable(True)
         self.integrate_button.clicked.connect(self.toggle_integration)
 
-        toolbar = QVBoxLayout()
-        toolbar.addWidget(self.file_button)
-        toolbar.addWidget(self.zoom_button)
-        toolbar.addWidget(self.zoom_reset_button)
-        toolbar.addWidget(self.integrate_button)
-        toolbar.addWidget(QPushButton("Find Peaks"))
+        self.tabs = QVBoxLayout()
+
+        self.toolbar = QVBoxLayout()
+        self.toolbar.addWidget(self.file_button)
+        self.toolbar.addWidget(self.zoom_button)
+        self.toolbar.addWidget(self.zoom_reset_button)
+        self.toolbar.addWidget(self.integrate_button)
+        self.toolbar.addWidget(QPushButton("Find Peaks"))
+        self.toolbar.addLayout(self.tabs)
 
         # widnow size, position, margins, etc
         size = {'w': 800, 'h': 400}
@@ -214,7 +217,7 @@ class openNMR(QMainWindow):
 
         main_layout = QHBoxLayout()
         main_layout.addWidget(self.viewer)
-        main_layout.addLayout(toolbar)
+        main_layout.addLayout(self.toolbar)
         central_widget = QWidget()
         central_widget.setLayout(main_layout)
         self.setCentralWidget(central_widget)
@@ -250,7 +253,9 @@ class openNMR(QMainWindow):
             self.zoom_button, self.integrate_button)
         painter_widget.generate_data(Spectrum_1D.create_from_file(file))
         self.viewer.addWidget(painter_widget)
-        self.viewer.setCurrentIndex(page_index)
+        button = QPushButton(painter_widget.info['samplename'])
+        button.clicked.connect(lambda: self.viewer.setCurrentIndex(page_index))
+        self.tabs.addWidget(button)
 
 
 if __name__ == "__main__":
