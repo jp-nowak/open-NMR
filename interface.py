@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStackedWidget, QLabel, QFrame
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStackedWidget, QLabel, QFrame, QStyle
 from PyQt6.QtGui import QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase, QPen, QColor
 from PyQt6.QtCore import QPointF, Qt
 import numpy as np
@@ -177,8 +177,21 @@ class spectrum_painter(QWidget):
         painter.end()
 
 class tab_button(QFrame):
-    def __init__(self):
+    def __init__(self, page_index, painter_widget, spectrum_viewer):
         super().__init__()
+        self.setObjectName('tab')
+        tab_layout = QHBoxLayout()
+        tab_layout.setSpacing(0)
+        self.setLayout(tab_layout)
+        tab_select_btn = QPushButton(painter_widget.info['samplename'])
+        tab_select_btn.clicked.connect(lambda: spectrum_viewer.setCurrentIndex(page_index))
+        tab_select_btn.setObjectName('tabselect')
+        
+        tab_close_btn = QPushButton('-')
+        tab_close_btn.setObjectName('tabclose')
+
+        tab_layout.addWidget(tab_select_btn)
+        tab_layout.addWidget(tab_close_btn)
 
 
 class openNMR(QMainWindow):
@@ -273,10 +286,9 @@ class openNMR(QMainWindow):
         painter_widget = spectrum_painter(
             self.zoom_button, self.integrate_button)
         painter_widget.generate_data(Spectrum_1D.create_from_file(file))
+        
         self.spectrum_viewer.addWidget(painter_widget)
-        button = QPushButton(painter_widget.info['samplename'])
-        button.clicked.connect(lambda: self.spectrum_viewer.setCurrentIndex(page_index))
-        self.tabs.addWidget(button)
+        self.tabs.addWidget(tab_button(page_index, painter_widget, self.spectrum_viewer))
 
 
 if __name__ == "__main__":

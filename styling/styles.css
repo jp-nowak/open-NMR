@@ -6,7 +6,7 @@ QWidget {
 }
 QFrame {
 	background-color: #3d3d3d;
-	border-radius: 3px;
+	border-radius: 4px;
 }
 QFrame#spectrumviewer {
 	background-color: white;
@@ -17,6 +17,15 @@ QPushButton {
 	border-radius: 3px;
 	padding: 5px;
 	color: white;
+}
+QPushButton#tabselect {
+	border-top-right-radius: 0px;
+	border-bottom-right-radius: 0px;
+}
+QPushButton#tabclose {
+	border-top-left-radius: 0px;
+	border-bottom-left-radius: 0px;
+	max-width: 4px;
 }
 QPushButton:hover {
 	background: #656565;
