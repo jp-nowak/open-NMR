@@ -1,0 +1,32 @@
+* {
+	font-family: Titillium Web;
+}
+QWidget {
+	background: #303030;
+}
+QFrame {
+	background-color: #3d3d3d;
+	border-radius: 3px;
+}
+QFrame#spectrumviewer {
+	background-color: white;
+	border-radius: 3px;
+}
+QPushButton {
+	background: #545454;
+	border-radius: 3px;
+	padding: 5px;
+	color: white;
+}
+QPushButton:hover {
+	background: #656565;
+}
+QPushButton:pressed {
+	background: #558B6E;
+}
+QPushButton:checked {
+	background: #4772b3;
+}
+QLabel {
+	color: white;
+}

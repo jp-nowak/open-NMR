@@ -224,6 +224,7 @@ class openNMR(QMainWindow):
 
         # modifying in relation to spectrum
         self.spectrum_viewer = QStackedWidget()
+        self.spectrum_viewer.setObjectName('spectrumviewer')
 
         main_layout = QHBoxLayout()
         main_layout.addWidget(self.spectrum_viewer)
@@ -234,10 +235,14 @@ class openNMR(QMainWindow):
         self.setCentralWidget(complete_window)
 
     def toggle_dragging(self, checked):
-        self.spectrum_viewer.currentWidget().zooming = True
+        current = self.spectrum_viewer.currentWidget()
+        if current:
+            current.zooming = True
 
     def toggle_integration(self, checked):
-        self.spectrum_viewer.currentWidget().integrating = True
+        current = self.spectrum_viewer.currentWidget()
+        if current:
+            current.integrating = True
 
     def reset_zoom(self):
         current = self.spectrum_viewer.currentWidget()
@@ -273,7 +278,7 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     # app.setStyle('Fusion')
     QFontDatabase.addApplicationFont("styling/titillium.ttf")
-    with open("styling/styles.qss", "r") as f:
+    with open("styling/styles.css", "r") as f:
         style = f.read()
         app.setStyleSheet(style)
     # main app
