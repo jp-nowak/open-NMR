@@ -179,20 +179,24 @@ class spectrum_painter(QWidget):
 class tab_button(QFrame):
     def __init__(self, page_index, painter_widget, spectrum_viewer):
         super().__init__()
+        self.sp_v = spectrum_viewer
+        self.pt_w = painter_widget
         self.setObjectName('tab')
         tab_layout = QHBoxLayout()
         tab_layout.setSpacing(0)
         self.setLayout(tab_layout)
-        tab_select_btn = QPushButton(painter_widget.info['samplename'])
-        tab_select_btn.clicked.connect(lambda: spectrum_viewer.setCurrentIndex(page_index))
+        tab_select_btn = QPushButton(self.pt_w.info['samplename'])
+        tab_select_btn.clicked.connect(lambda: self.sp_v.setCurrentIndex(page_index))
         tab_select_btn.setObjectName('tabselect')
         
         tab_close_btn = QPushButton('-')
         tab_close_btn.setObjectName('tabclose')
-
+        tab_close_btn.clicked.connect(self.close_painter)
         tab_layout.addWidget(tab_select_btn)
         tab_layout.addWidget(tab_close_btn)
-
+        
+    def close_painter(self):
+        self.sp_v.removeWidget(self.pt_w)
 
 class openNMR(QMainWindow):
     def __init__(self):
