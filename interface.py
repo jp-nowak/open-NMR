@@ -176,6 +176,10 @@ class spectrum_painter(QWidget):
         axis_generator(painter, self.p_size, self.axis_pars, self.textfont)
         painter.end()
 
+class tab_button(QFrame):
+    def __init__(self):
+        super().__init__()
+
 
 class openNMR(QMainWindow):
     def __init__(self):
@@ -246,12 +250,13 @@ class openNMR(QMainWindow):
 
     def reset_zoom(self):
         current = self.spectrum_viewer.currentWidget()
-        current.rang = [0, 1]
-        current.startPos = 0
-        current.endPos = 1
-        current.axis_pars['begin_ppm'] = current.info['plot_begin_ppm']
-        current.axis_pars['end_ppm'] = current.info['plot_end_ppm']
-        current.update()
+        if current:
+            current.rang = [0, 1]
+            current.startPos = 0
+            current.endPos = 1
+            current.axis_pars['begin_ppm'] = current.info['plot_begin_ppm']
+            current.axis_pars['end_ppm'] = current.info['plot_end_ppm']
+            current.update()
 
     def openFile(self):
         file_dialog = QFileDialog(self)
