@@ -53,6 +53,8 @@ class Spectrum_1D:
         # information about x-values shall be contained in info (spectrum is usually uniformly sampled)
         if spectrum is None:
             self.spectrum = self.generate_absorption_mode_spectrum()
+            if self.info["vendor"] == "bruker":
+                self.spectrum = self.spectrum[::-1]
         else:
             self.spectrum = spectrum
             
@@ -248,6 +250,7 @@ class Spectrum_1D:
     # "plot_ppm"       : [ppm] beginning of plot
     # "plot_ppm"       : [ppm] end of plot
     # "quadrature"     : bool, true - quadrature detection, false - ADC
+    # "vendor"         : producer of spectrometer
         
 if __name__ == "__main__":
     nmr_file_path = "./example_fids/agilent_example1H.fid"

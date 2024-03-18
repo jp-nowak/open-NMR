@@ -306,6 +306,7 @@ def info_agilent(params):
     info["plot_end"] = info["plot_begin"] + info["spectral_width"] # [Hz]
     info["plot_begin_ppm"] = info["plot_begin"] / info["obs_nucl_freq"]
     info["plot_end_ppm"] = info["plot_end"] / info["obs_nucl_freq"]
+    info["vendor"] = "agilent"
     
     return info
 
@@ -336,16 +337,17 @@ def read_bruker_fid(fid_content, info):
     big_endian = bool(info["byte_order"])
     el_number = info["number_of_data_points"]//2
     quadrature = True
-    start_offset = 40 #in bytes, temporary
+
     if info["data_type"] == 0:
         primary_type = np.int32
-        el_number -= start_offset//8
     elif info["data_type"] == 2:
         primary_type = np.double
-        el_number -= start_offset//16
     else:
         raise NotImplementedError("unknown primary data type")
-    fid = read_fid_1D(fid_content, 40, el_number, primary_type, quadrature, big_endian, reverse=False)
+        
+    # to be done elsewhere more cleanly
+    fid = read_fid_1D(fid_content, 0, el_number, primary_type, quadrature, big_endian, reverse=True)
+    fid = np.roll(fid, -round(info["group_delay"]))
     return [fid]
     
 def read_bruker_acqus(acqus_lines):
@@ -374,7 +376,8 @@ def bruker_info(params):
         "date" : "$DATE", # unknown format - unix?
         "number_of_scans" : "$NS",
         "number_of_data_points" : "$TD", # number of complex points = number_of_data_points/2
-        "data_type" : "$DTYPA"
+        "data_type" : "$DTYPA",
+        "group_delay" : "$GRPDLY"
         }
     for i, j in params_keywords.items():
         try:
@@ -392,14 +395,14 @@ def bruker_info(params):
     info["plot_end_ppm"] = info["plot_end"] / info["obs_nucl_freq"]
     
     info["number_of_data_points"] = int(info["number_of_data_points"] )
-    
+    info["vendor"] = "bruker"
     info["samplename"] = "not implemented in bruker format"
     
     return info
 
 
 if __name__ == "__main__":
-    info, fid = agilent_wrapper("C:/Users/Jan Nowak/Desktop/open nmr/open-NMR/example_fids/agilent/agilent_example1H.fid")
+    info, fid = bruker_wrapper("D:/projekt nmr/open-NMR/example_fids/bruker/1")
 
     
     
