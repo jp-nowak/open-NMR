@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStackedWidget, QLabel, QFrame, QStyle
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStackedWidget, QLabel, QFrame, QGridLayout
 from PyQt6.QtGui import QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase, QPen, QColor
 from PyQt6.QtCore import QPointF, Qt
 import numpy as np
@@ -186,15 +186,7 @@ class tab_button(QFrame):
         tab_layout = QHBoxLayout()
         tab_layout.setSpacing(0)
         self.setLayout(tab_layout)
-        tab_select_btn = QPushButton(self.sp_w.info['samplename'])
-        tab_select_btn.clicked.connect(self.change_page)
-        tab_select_btn.setObjectName('tabselect')
         
-        tab_close_btn = QPushButton('-')
-        tab_close_btn.setObjectName('tabclose')
-        tab_close_btn.clicked.connect(self.close_painter)
-        tab_layout.addWidget(tab_select_btn)
-        tab_layout.addWidget(tab_close_btn)
         
     def change_page(self):
         self.sp_v.setCurrentIndex(self.page_index)
@@ -207,12 +199,44 @@ class tab_button(QFrame):
 class TabFrameWidget(QFrame):
     def __init__(self):
         super().__init__()
+        self.setObjectName('tabframe')
+        layout = QVBoxLayout
+        self.setLayout(layout)
+        layout.addWidget(QLabel('Tabs'))
+        self.buttongrid = self.QGridLayout()
+        layout.addLayout(self.buttongrid)
     
+    def add_tab(page_index, pt_w, sp_w):
+        sele_btn = tab_select_btn(sp_w.info['samplename'], page_index)
+        sele_btn.setObjectName('tabselect')
+
+        tab_close_btn = QPushButton('-')
+        tab_close_btn.setObjectName('tabclose')
+        tab_layout.addWidget(sele_btn)
+        tab_layout.addWidget(tab_close_btn)
+
     def rearrange_buttons(self, deleted_page):
-        remaining = [w for w in self.children() if 'tab_button' in str(type(w)) and w.page_index != deleted_page]
+        remaining = [w for w in self.children() if isinstance(w, QPushButton) and w.page_index != deleted_page]
         for i in range(len(remaining)):
             remaining[i].page_index = i
         
+class tab_select_btn(QPushButton):
+    def __init__(self, name, page_index):
+        super().__init__()
+        self.setObjectName(name)
+    
+    def mousePressEvent(self, event):
+        
+
+
+class tab_close_btn(QPushButton):
+    def __init__(self, name):
+        super().__init__()
+        self.setObjectName(name)
+    
+    def mousePressEvent(self, event):
+        
+
 
 class openNMR(QMainWindow):
     def __init__(self):
@@ -247,14 +271,11 @@ class openNMR(QMainWindow):
         self.spectrum_viewer = QStackedWidget()
         self.spectrum_viewer.setObjectName('spectrumviewer')
 
-        tabs_frame = TabFrameWidget()
-        self.tabs = QVBoxLayout(tabs_frame)
-        self.tabs.addWidget(QLabel('Tabs'))
-        self.tabs.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.tabs_frame = TabFrameWidget()
         
         toolbar = QVBoxLayout()
         toolbar.addWidget(actions_frame)
-        toolbar.addWidget(tabs_frame)
+        toolbar.addWidget(self.tabs_frame)
 
         # widnow size, position, margins, etc
         size = {'w': 800, 'h': 400}
@@ -305,7 +326,7 @@ class openNMR(QMainWindow):
         painter_widget.generate_data(Spectrum_1D.create_from_file(file))
         
         self.spectrum_viewer.addWidget(painter_widget)
-        self.tabs.addWidget(tab_button(page_index, painter_widget, self.spectrum_viewer))
+        self.tabs_frame.add_tab(page_index, painter_widget, self.spectrum_viewer)
 
 
 if __name__ == "__main__":

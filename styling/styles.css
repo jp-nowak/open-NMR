@@ -12,6 +12,9 @@ QFrame#spectrumviewer {
 	background-color: white;
 	border-radius: 3px;
 }
+QFrame#tabframe {
+	padding: 5px;
+}
 QPushButton {
 	background: #545454;
 	border-radius: 3px;
@@ -25,7 +28,7 @@ QPushButton#tabselect {
 QPushButton#tabclose {
 	border-top-left-radius: 0px;
 	border-bottom-left-radius: 0px;
-	max-width: 4px;
+	max-width: 5px;
 }
 QPushButton:hover {
 	background: #656565;
