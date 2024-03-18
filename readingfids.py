@@ -72,7 +72,41 @@ def fid_file_type(path):
         return "bruker"
 
 
-def read_fid_1D(file_content, ptr, el_number, primary_type, quadrature, big_endian):
+def read_fid_1D(file_content, ptr, el_number, primary_type, quadrature, big_endian, reverse):
+    """
+    Function to read a continous binary array of properties stated in parameters
+
+    Parameters
+    ----------
+    file_content : binary 
+        content of file in which array is located. created by:
+        with open(fid_path, "rb") as file:
+             fid_content = file.read()
+    ptr : positive integer
+        first byte of file part to be read.
+    el_number : positive integer
+        number of elements to be read, if it is an array of complex data points it is a number of complex data points not their components.
+    primary_type : numpy type class e.g. np.int32
+        type of simple elements e.g. if array contains complex numbers build from int32 components type is np.int32. If array is not of complex numbers it is simply type of elements
+    quadrature : bool
+        True if fid consists of array of complex numbers.
+    big_endian : bool
+        True if binary is in big endian notation.
+    reverse : bool
+        True if imaginary part is first, False if second.
+        only matters if quadrature==True
+
+    Raises
+    ------
+    NotImplementedError
+        error raised if there is no implemented processing for given fid type.
+
+    Returns
+    -------
+    np.array
+        extracted FID. type of elements can be deduced from table beneath the function definition
+
+    """
     el_specifier = str()
     
     if big_endian:
@@ -103,10 +137,17 @@ def read_fid_1D(file_content, ptr, el_number, primary_type, quadrature, big_endi
             el_type = np.csingle
         elif primary_type == np.int64 or primary_type == np.double:
             el_type = np.cdouble
-        def read_element(element):
-            b, a = element
-            result = a + b*1j
-            return result
+        if reverse:
+            def read_element(element):
+                b, a = element
+                result = a + b*1j
+                return result
+        else:
+            def read_element(element):
+                a, b = element
+                result = a + b*1j
+                return result
+        
         el_specifier += el_specifier[1]
         el_size *= 2
     else:
@@ -200,7 +241,7 @@ def read_agilent_fid(fid_content):
         if file_header.ntraces > 1:
             raise NotImplementedError("more then one trace per block")
         for i3 in range(file_header.ntraces):
-            fid = read_fid_1D(fid_content, ptr, el_number, primary_type, quadrature, big_endian=True)
+            fid = read_fid_1D(fid_content, ptr, el_number, primary_type, quadrature, big_endian=True, reverse=True)
         fids.append(fid)
     
     return status_dict, headers, fids
@@ -304,7 +345,7 @@ def read_bruker_fid(fid_content, info):
         el_number -= start_offset//16
     else:
         raise NotImplementedError("unknown primary data type")
-    fid = read_fid_1D(fid_content, 40, el_number, primary_type, quadrature, big_endian)
+    fid = read_fid_1D(fid_content, 40, el_number, primary_type, quadrature, big_endian, reverse=False)
     return [fid]
     
 def read_bruker_acqus(acqus_lines):
@@ -352,7 +393,7 @@ def bruker_info(params):
     
     info["number_of_data_points"] = int(info["number_of_data_points"] )
     
-    info["samplename"] = "not implemented in bruker format aaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    info["samplename"] = "not implemented in bruker format"
     
     return info
 
