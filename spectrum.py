@@ -64,7 +64,6 @@ class Spectrum_1D:
         # value to be decided - placeholder currently
         self._signal_treshold = np.average(self.spectrum)/2
     
-    
     @classmethod
     def create_from_file(cls, path):
         #to be considered: open() exceptions 
@@ -249,7 +248,7 @@ class Spectrum_1D:
     # "plot_end"       : [Hz] end of plot
     # "plot_ppm"       : [ppm] beginning of plot
     # "plot_ppm"       : [ppm] end of plot
-    # "quadrature"     : bool, true - quadrature detection, false - ADC
+    # "quadrature"     : bool, true - fid as complex numbers
     # "vendor"         : producer of spectrometer
         
 if __name__ == "__main__":

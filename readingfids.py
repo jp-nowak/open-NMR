@@ -63,7 +63,6 @@ DataBlockHead = collections.namedtuple("DataBlockHead",
 # number - number of header in block
 
 def fid_file_type(path):
-    print(os.path.join(path, "fid"))
     if not os.path.isfile(os.path.join(path, "fid")):
         raise FileNotFoundError
     if os.path.isfile(os.path.join(path, "procpar")):
@@ -323,14 +322,22 @@ def open_experiment_folder_bruker(path):
     with open(acqus_path, "r") as file:
         for line in file:
             acqus_lines.append(line)
-
-    return fid_content, acqus_lines
+    subfolder_path = [i.path for i in os.scandir(path) if i.is_dir()][0]
+    subfolder_path = [i.path for i in os.scandir(subfolder_path) if i.is_dir()][0]
+    title = ""
+    with open(os.path.join(subfolder_path, "title")) as file:
+        for line in file:
+            title += line.strip() + ' '
+    loose_info = dict()
+    loose_info['samplename'] = title
+    return fid_content, acqus_lines, loose_info
 
 def bruker_wrapper(path):
-    fid_content, acqus_lines = open_experiment_folder_bruker(path)
+    fid_content, acqus_lines, loose_info = open_experiment_folder_bruker(path)
     params = read_bruker_acqus(acqus_lines)
     info = bruker_info(params)
     fid = read_bruker_fid(fid_content, info)
+    info.update(loose_info)
     return info, fid
 
 def read_bruker_fid(fid_content, info):
@@ -396,7 +403,6 @@ def bruker_info(params):
     
     info["number_of_data_points"] = int(info["number_of_data_points"] )
     info["vendor"] = "bruker"
-    info["samplename"] = "not implemented in bruker format"
     
     return info
 
