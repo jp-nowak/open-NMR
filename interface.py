@@ -174,68 +174,66 @@ class spectrum_painter(QWidget):
         self.resampled = [QPointF(i[0], i[1]) for i in self.resampled]
         painter.drawPolyline(QPolygonF(self.resampled))
         axis_generator(painter, self.p_size, self.axis_pars, self.textfont)
-        painter.end()
-
-class tab_button(QFrame):
-    def __init__(self, page_index, spectrum_widget, spectrum_viewer):
-        super().__init__()
-        self.page_index = page_index
-        self.sp_v = spectrum_viewer
-        self.sp_w = spectrum_widget
-        self.setObjectName('tab')
-        tab_layout = QHBoxLayout()
-        tab_layout.setSpacing(0)
-        self.setLayout(tab_layout)
-        
-        
-    def change_page(self):
-        self.sp_v.setCurrentIndex(self.page_index)
-
-    def close_painter(self):
-        self.sp_w.deleteLater()
-        self.deleteLater()
-        self.parent().rearrange_buttons(self.page_index)   
+        painter.end()         
 
 class TabFrameWidget(QFrame):
     def __init__(self):
         super().__init__()
         self.setObjectName('tabframe')
-        layout = QVBoxLayout
+        
+        layout = QVBoxLayout()
         self.setLayout(layout)
         layout.addWidget(QLabel('Tabs'))
-        self.buttongrid = self.QGridLayout()
+        
+        self.buttongrid = QGridLayout()
         layout.addLayout(self.buttongrid)
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.buttongrid.setAlignment(Qt.AlignmentFlag.AlignTop)
     
-    def add_tab(page_index, pt_w, sp_w):
-        sele_btn = tab_select_btn(sp_w.info['samplename'], page_index)
-        sele_btn.setObjectName('tabselect')
-
-        tab_close_btn = QPushButton('-')
-        tab_close_btn.setObjectName('tabclose')
-        tab_layout.addWidget(sele_btn)
-        tab_layout.addWidget(tab_close_btn)
+    def add_tab(self, page_index, pt_w, sv_w):
+        sele_btn = tab_select_btn(pt_w.info['samplename'], page_index, sv_w)
+        close_btn = tab_close_btn(page_index, pt_w, self.buttongrid)
+        num = self.buttongrid.rowCount()
+        self.buttongrid.addWidget(sele_btn, num, 0)
+        self.buttongrid.addWidget(close_btn, num, 1)
 
     def rearrange_buttons(self, deleted_page):
-        remaining = [w for w in self.children() if isinstance(w, QPushButton) and w.page_index != deleted_page]
+        remaining = []
+        for i in range(1,self.buttongrid.rowCount()):
+            if i != deleted_page:
+                selec = self.buttongrid.itemAtPosition(i, 0).widget()
+                close = self.buttongrid.itemAtPosition(i, 1).widget()
+                remaining.append((selec, close))
         for i in range(len(remaining)):
-            remaining[i].page_index = i
+            remaining[0][i].page_index = i
+            remaining[0][i].page_index = i
         
 class tab_select_btn(QPushButton):
-    def __init__(self, name, page_index):
+    def __init__(self, name, page_index, sv_w):
         super().__init__()
-        self.setObjectName(name)
+        self.setText(name)
+        self.setObjectName('selebtn')
+        self.index = page_index
+        self.sv_w = sv_w
     
     def mousePressEvent(self, event):
-        
 
+        self.sv_w.setCurrentIndex(self.index)
 
 class tab_close_btn(QPushButton):
-    def __init__(self, name):
+    def __init__(self, page_index, pt_w, layout):
         super().__init__()
-        self.setObjectName(name)
+        self.setText('-')
+        self.index = page_index
+        self.pt_w = pt_w
+        self.gridlayout = layout
+        self.setObjectName('closebtn')
     
     def mousePressEvent(self, event):
-        
+        self.pt_w.deleteLater()
+        self.gridlayout.itemAtPosition(self.index+1,0).widget().deleteLater()
+        self.deleteLater()
+        self.parent().rearrange_buttons(self.index)
 
 
 class openNMR(QMainWindow):

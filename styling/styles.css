@@ -21,11 +21,11 @@ QPushButton {
 	padding: 5px;
 	color: white;
 }
-QPushButton#tabselect {
+QPushButton#selebtn {
 	border-top-right-radius: 0px;
 	border-bottom-right-radius: 0px;
 }
-QPushButton#tabclose {
+QPushButton#closebtn {
 	border-top-left-radius: 0px;
 	border-bottom-left-radius: 0px;
 	max-width: 5px;
