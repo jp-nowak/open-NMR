@@ -200,13 +200,16 @@ class TabFrameWidget(QFrame):
     def rearrange_buttons(self, deleted_page):
         remaining = []
         for i in range(1,self.buttongrid.rowCount()):
-            if i != deleted_page:
+            if i != deleted_page+1:
                 selec = self.buttongrid.itemAtPosition(i, 0).widget()
                 close = self.buttongrid.itemAtPosition(i, 1).widget()
                 remaining.append((selec, close))
+        print(remaining)
         for i in range(len(remaining)):
-            remaining[0][i].page_index = i
-            remaining[0][i].page_index = i
+            print(remaining[i][0].text())
+            print(i)
+            remaining[0][i].index = i
+            remaining[1][i].index = i
         
 class tab_select_btn(QPushButton):
     def __init__(self, name, page_index, sv_w):
@@ -217,7 +220,7 @@ class tab_select_btn(QPushButton):
         self.sv_w = sv_w
     
     def mousePressEvent(self, event):
-
+        print(self.index)
         self.sv_w.setCurrentIndex(self.index)
 
 class tab_close_btn(QPushButton):
