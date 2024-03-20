@@ -177,10 +177,10 @@ class spectrum_painter(QWidget):
         painter.end()         
 
 class TabFrameWidget(QFrame):
-    def __init__(self):
+    def __init__(self, sv_w):
         super().__init__()
         self.setObjectName('tabframe')
-        
+        self.sv_w = sv_w
         layout = QVBoxLayout()
         self.setLayout(layout)
         layout.addWidget(QLabel('Tabs'))
@@ -189,28 +189,43 @@ class TabFrameWidget(QFrame):
         layout.addLayout(self.buttongrid)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.buttongrid.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        self.pt_indexlis = []
     
-    def add_tab(self, page_index, pt_w, sv_w):
-        sele_btn = tab_select_btn(pt_w.info['samplename'], page_index, sv_w)
-        close_btn = tab_close_btn(page_index, pt_w, self.buttongrid)
+    def add_tab(self, pt_w):
+        sele_btn = QPushButton(pt_w.info['samplename'])
+        sele_btn.clicked.connect(self.seleClicked)
+        close_btn = QPushButton('-')
+        close_btn.clicked.connect(self.deleClicked)
         num = self.buttongrid.rowCount()
         self.buttongrid.addWidget(sele_btn, num, 0)
         self.buttongrid.addWidget(close_btn, num, 1)
+        pt_index = 0
+        if self.pt_indexlis: pt_index += self.pt_indexlis[-1][1]+1
+        self.pt_indexlis.append((pt_w.info['samplename'], pt_index, pt_w))
+    
+    def seleClicked(self):
+        sender = self.sender()
+        if sender:
+            index = [t for t in self.pt_indexlis if t[0]==sender.text()][0][1]
+            print(index)
+            self.sv_w.setCurrentIndex(index)
+    
+    def deleClicked(self):
+        sender = self.sender()
+        if sender:
+            bt_index = self.buttongrid.getItemPosition(self.buttongrid.indexOf(sender))[0]
+            for i in range(2):
+                self.buttongrid.itemAtPosition(bt_index, i).widget().deleteLater()
+            
+            pt_index = [t for t in self.pt_indexlis if t[0]==sender.text()][0][1]
+            self.pt_indexlis[pt_index-1][2].deleteLater()
+            self.pt_indexlis.pop(pt_index-1)
+            for i in range(len(self.pt_indexlis)):
+                self.pt_indexlis[i][1] = i
+            
 
-    def rearrange_buttons(self, deleted_page):
-        remaining = []
-        for i in range(1,self.buttongrid.rowCount()):
-            if i != deleted_page+1:
-                selec = self.buttongrid.itemAtPosition(i, 0).widget()
-                close = self.buttongrid.itemAtPosition(i, 1).widget()
-                remaining.append((selec, close))
-        print(remaining)
-        for i in range(len(remaining)):
-            print(remaining[i][0].text())
-            print(i)
-            remaining[0][i].index = i
-            remaining[1][i].index = i
-        
+
 class tab_select_btn(QPushButton):
     def __init__(self, name, page_index, sv_w):
         super().__init__()
@@ -221,7 +236,7 @@ class tab_select_btn(QPushButton):
     
     def mousePressEvent(self, event):
         print(self.index)
-        self.sv_w.setCurrentIndex(self.index)
+        
 
 class tab_close_btn(QPushButton):
     def __init__(self, page_index, pt_w, layout):
@@ -234,6 +249,7 @@ class tab_close_btn(QPushButton):
     
     def mousePressEvent(self, event):
         self.pt_w.deleteLater()
+        print(self.index+1)
         self.gridlayout.itemAtPosition(self.index+1,0).widget().deleteLater()
         self.deleteLater()
         self.parent().rearrange_buttons(self.index)
@@ -272,7 +288,7 @@ class openNMR(QMainWindow):
         self.spectrum_viewer = QStackedWidget()
         self.spectrum_viewer.setObjectName('spectrumviewer')
 
-        self.tabs_frame = TabFrameWidget()
+        self.tabs_frame = TabFrameWidget(self.spectrum_viewer)
         
         toolbar = QVBoxLayout()
         toolbar.addWidget(actions_frame)
@@ -327,7 +343,7 @@ class openNMR(QMainWindow):
         painter_widget.generate_data(Spectrum_1D.create_from_file(file))
         
         self.spectrum_viewer.addWidget(painter_widget)
-        self.tabs_frame.add_tab(page_index, painter_widget, self.spectrum_viewer)
+        self.tabs_frame.add_tab(painter_widget)
 
 
 if __name__ == "__main__":
