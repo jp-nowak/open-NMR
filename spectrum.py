@@ -215,8 +215,11 @@ class Spectrum_1D:
                 if i > 0:
                     maximum += i
                 else:
-                    maximum += 2*i
+                    maximum += -i*i
             return maximum
+            
+            
+            
         angle = start
         maximum = spectrum_sum()
         step = 1
