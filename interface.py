@@ -194,15 +194,18 @@ class TabFrameWidget(QFrame):
     
     def add_tab(self, pt_w):
         sele_btn = QPushButton(pt_w.info['samplename'])
+        sele_btn.setObjectName('selebtn')
         sele_btn.clicked.connect(self.seleClicked)
         close_btn = QPushButton('-')
+        close_btn.setObjectName('closebtn')
         close_btn.clicked.connect(self.deleClicked)
         num = self.buttongrid.rowCount()
+        self.buttongrid.setHorizontalSpacing(0)
         self.buttongrid.addWidget(sele_btn, num, 0)
         self.buttongrid.addWidget(close_btn, num, 1)
         pt_index = 0
         if self.pt_indexlis: pt_index += self.pt_indexlis[-1][1]+1
-        self.pt_indexlis.append((pt_w.info['samplename'], pt_index, pt_w))
+        self.pt_indexlis.append([pt_w.info['samplename'], pt_index, pt_w])
     
     def seleClicked(self):
         sender = self.sender()
@@ -215,45 +218,17 @@ class TabFrameWidget(QFrame):
         sender = self.sender()
         if sender:
             bt_index = self.buttongrid.getItemPosition(self.buttongrid.indexOf(sender))[0]
-            for i in range(2):
-                self.buttongrid.itemAtPosition(bt_index, i).widget().deleteLater()
-            
-            pt_index = [t for t in self.pt_indexlis if t[0]==sender.text()][0][1]
-            self.pt_indexlis[pt_index-1][2].deleteLater()
-            self.pt_indexlis.pop(pt_index-1)
+            self.buttongrid.itemAtPosition(bt_index, 1).widget().deleteLater()
+            selew = self.buttongrid.itemAtPosition(bt_index, 0).widget()
+            selew.deleteLater()
+            print(selew.text())
+            print([t[0] for t in self.pt_indexlis])
+            pt_index = [t for t in self.pt_indexlis if t[0]==selew.text()][0][1]
+            self.pt_indexlis[pt_index][2].deleteLater()
+            self.pt_indexlis.pop(pt_index)
             for i in range(len(self.pt_indexlis)):
                 self.pt_indexlis[i][1] = i
-            
-
-
-class tab_select_btn(QPushButton):
-    def __init__(self, name, page_index, sv_w):
-        super().__init__()
-        self.setText(name)
-        self.setObjectName('selebtn')
-        self.index = page_index
-        self.sv_w = sv_w
-    
-    def mousePressEvent(self, event):
-        print(self.index)
-        
-
-class tab_close_btn(QPushButton):
-    def __init__(self, page_index, pt_w, layout):
-        super().__init__()
-        self.setText('-')
-        self.index = page_index
-        self.pt_w = pt_w
-        self.gridlayout = layout
-        self.setObjectName('closebtn')
-    
-    def mousePressEvent(self, event):
-        self.pt_w.deleteLater()
-        print(self.index+1)
-        self.gridlayout.itemAtPosition(self.index+1,0).widget().deleteLater()
-        self.deleteLater()
-        self.parent().rearrange_buttons(self.index)
-
+            print(self.pt_indexlis)
 
 class openNMR(QMainWindow):
     def __init__(self):
