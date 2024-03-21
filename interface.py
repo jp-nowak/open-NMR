@@ -211,7 +211,6 @@ class TabFrameWidget(QFrame):
         sender = self.sender()
         if sender:
             index = [t for t in self.pt_indexlis if t[0]==sender.text()][0][1]
-            print(index)
             self.sv_w.setCurrentIndex(index)
     
     def deleClicked(self):
@@ -221,14 +220,11 @@ class TabFrameWidget(QFrame):
             self.buttongrid.itemAtPosition(bt_index, 1).widget().deleteLater()
             selew = self.buttongrid.itemAtPosition(bt_index, 0).widget()
             selew.deleteLater()
-            print(selew.text())
-            print([t[0] for t in self.pt_indexlis])
             pt_index = [t for t in self.pt_indexlis if t[0]==selew.text()][0][1]
             self.pt_indexlis[pt_index][2].deleteLater()
             self.pt_indexlis.pop(pt_index)
             for i in range(len(self.pt_indexlis)):
                 self.pt_indexlis[i][1] = i
-            print(self.pt_indexlis)
 
 class openNMR(QMainWindow):
     def __init__(self):
@@ -280,6 +276,12 @@ class openNMR(QMainWindow):
         complete_window = QWidget()
         complete_window.setLayout(main_layout)
         self.setCentralWidget(complete_window)
+
+        if sys.argv:
+            for filename in sys.argv:
+                if filename.endswith('.fid/'):
+                    try: self.add_new_page(filename)
+                    except: pass
 
     def toggle_dragging(self, checked):
         current = self.spectrum_viewer.currentWidget()
