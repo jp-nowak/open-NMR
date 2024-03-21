@@ -1,0 +1,44 @@
+* {
+	font-family: Titillium Web;
+}
+QWidget {
+	background: #303030;
+}
+QFrame {
+	background-color: #3d3d3d;
+	border-radius: 4px;
+}
+QFrame#spectrumviewer {
+	background-color: white;
+	border-radius: 3px;
+}
+QFrame#tabframe {
+	padding: 5px;
+}
+QPushButton {
+	background: #545454;
+	border-radius: 3px;
+	padding: 5px;
+	color: white;
+}
+QPushButton#selebtn {
+	border-top-right-radius: 0px;
+	border-bottom-right-radius: 0px;
+}
+QPushButton#closebtn {
+	border-top-left-radius: 0px;
+	border-bottom-left-radius: 0px;
+	max-width: 5px;
+}
+QPushButton:hover {
+	background: #656565;
+}
+QPushButton:pressed {
+	background: #558B6E;
+}
+QPushButton:checked {
+	background: #4772b3;
+}
+QLabel {
+	color: white;
+}

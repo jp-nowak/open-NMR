@@ -1,6 +1,6 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStackedWidget, QLabel
-from PyQt6.QtGui import QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStackedWidget, QLabel, QFrame, QGridLayout
+from PyQt6.QtGui import QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase, QPen, QColor
 from PyQt6.QtCore import QPointF, Qt
 import numpy as np
 from spectrum import Spectrum_1D
@@ -95,6 +95,7 @@ class spectrum_painter(QWidget):
         self.integrate_button = integrate_button
         self.drawstatus = False
         self.textfont = QFont('Times', 10)
+        self.pen = QPen(QColor("black"))
         self.rang = [0, 1]
         # dragging
         self.zooming = False
@@ -151,6 +152,7 @@ class spectrum_painter(QWidget):
     def paintEvent(self, event):
         # settings
         painter = QPainter(self)
+        painter.setPen(self.pen)
         # updating window size
         rect = self.rect()
         self.p_size = {
@@ -172,8 +174,61 @@ class spectrum_painter(QWidget):
         self.resampled = [QPointF(i[0], i[1]) for i in self.resampled]
         painter.drawPolyline(QPolygonF(self.resampled))
         axis_generator(painter, self.p_size, self.axis_pars, self.textfont)
-        painter.end()
+        painter.end()         
 
+class TabFrameWidget(QFrame):
+    def __init__(self, sv_w):
+        super().__init__()
+        self.setObjectName('tabframe')
+        self.sv_w = sv_w
+        layout = QVBoxLayout()
+        self.setLayout(layout)
+        layout.addWidget(QLabel('Tabs'))
+        
+        self.buttongrid = QGridLayout()
+        layout.addLayout(self.buttongrid)
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.buttongrid.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        self.pt_indexlis = []
+    
+    def add_tab(self, pt_w):
+        sele_btn = QPushButton(pt_w.info['samplename'])
+        sele_btn.setObjectName('selebtn')
+        sele_btn.clicked.connect(self.seleClicked)
+        close_btn = QPushButton('-')
+        close_btn.setObjectName('closebtn')
+        close_btn.clicked.connect(self.deleClicked)
+        num = self.buttongrid.rowCount()
+        self.buttongrid.setHorizontalSpacing(0)
+        self.buttongrid.addWidget(sele_btn, num, 0)
+        self.buttongrid.addWidget(close_btn, num, 1)
+        pt_index = 0
+        if self.pt_indexlis: pt_index += self.pt_indexlis[-1][1]+1
+        self.pt_indexlis.append([pt_w.info['samplename'], pt_index, pt_w])
+    
+    def seleClicked(self):
+        sender = self.sender()
+        if sender:
+            index = [t for t in self.pt_indexlis if t[0]==sender.text()][0][1]
+            print(index)
+            self.sv_w.setCurrentIndex(index)
+    
+    def deleClicked(self):
+        sender = self.sender()
+        if sender:
+            bt_index = self.buttongrid.getItemPosition(self.buttongrid.indexOf(sender))[0]
+            self.buttongrid.itemAtPosition(bt_index, 1).widget().deleteLater()
+            selew = self.buttongrid.itemAtPosition(bt_index, 0).widget()
+            selew.deleteLater()
+            print(selew.text())
+            print([t[0] for t in self.pt_indexlis])
+            pt_index = [t for t in self.pt_indexlis if t[0]==selew.text()][0][1]
+            self.pt_indexlis[pt_index][2].deleteLater()
+            self.pt_indexlis.pop(pt_index)
+            for i in range(len(self.pt_indexlis)):
+                self.pt_indexlis[i][1] = i
+            print(self.pt_indexlis)
 
 class openNMR(QMainWindow):
     def __init__(self):
@@ -195,7 +250,8 @@ class openNMR(QMainWindow):
         self.integrate_button.setCheckable(True)
         self.integrate_button.clicked.connect(self.toggle_integration)
 
-        actions = QVBoxLayout()
+        actions_frame = QFrame()
+        actions = QVBoxLayout(actions_frame)
         actions.addWidget(QLabel('Actions'))
         actions.addWidget(self.file_button)
         actions.addWidget(self.zoom_button)
@@ -204,21 +260,18 @@ class openNMR(QMainWindow):
         actions.addWidget(QPushButton("Find Peaks"))
         actions.setAlignment(Qt.AlignmentFlag.AlignTop)
         
-        self.tabs = QVBoxLayout()
-        self.tabs.addWidget(QLabel('Tabs'))
-        self.tabs.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.spectrum_viewer = QStackedWidget()
+        self.spectrum_viewer.setObjectName('spectrumviewer')
 
-        toolbar = QVBoxLayout()
-        toolbar.addLayout(actions)
-        toolbar.addLayout(self.tabs)
+        self.tabs_frame = TabFrameWidget(self.spectrum_viewer)
         
+        toolbar = QVBoxLayout()
+        toolbar.addWidget(actions_frame)
+        toolbar.addWidget(self.tabs_frame)
 
         # widnow size, position, margins, etc
         size = {'w': 800, 'h': 400}
         self.setGeometry(200, 200, size['w'], size['h'])
-
-        # modifying in relation to spectrum
-        self.spectrum_viewer = QStackedWidget()
 
         main_layout = QHBoxLayout()
         main_layout.addWidget(self.spectrum_viewer)
@@ -229,19 +282,24 @@ class openNMR(QMainWindow):
         self.setCentralWidget(complete_window)
 
     def toggle_dragging(self, checked):
-        self.spectrum_viewer.currentWidget().zooming = True
+        current = self.spectrum_viewer.currentWidget()
+        if current:
+            current.zooming = True
 
     def toggle_integration(self, checked):
-        self.spectrum_viewer.currentWidget().integrating = True
+        current = self.spectrum_viewer.currentWidget()
+        if current:
+            current.integrating = True
 
     def reset_zoom(self):
         current = self.spectrum_viewer.currentWidget()
-        current.rang = [0, 1]
-        current.startPos = 0
-        current.endPos = 1
-        current.axis_pars['begin_ppm'] = current.info['plot_begin_ppm']
-        current.axis_pars['end_ppm'] = current.info['plot_end_ppm']
-        current.update()
+        if current:
+            current.rang = [0, 1]
+            current.startPos = 0
+            current.endPos = 1
+            current.axis_pars['begin_ppm'] = current.info['plot_begin_ppm']
+            current.axis_pars['end_ppm'] = current.info['plot_end_ppm']
+            current.update()
 
     def openFile(self):
         file_dialog = QFileDialog(self)
@@ -258,17 +316,16 @@ class openNMR(QMainWindow):
         painter_widget = spectrum_painter(
             self.zoom_button, self.integrate_button)
         painter_widget.generate_data(Spectrum_1D.create_from_file(file))
+        
         self.spectrum_viewer.addWidget(painter_widget)
-        button = QPushButton(painter_widget.info['samplename'])
-        button.clicked.connect(lambda: self.spectrum_viewer.setCurrentIndex(page_index))
-        self.tabs.addWidget(button)
+        self.tabs_frame.add_tab(painter_widget)
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     # app.setStyle('Fusion')
     QFontDatabase.addApplicationFont("styling/titillium.ttf")
-    with open("styling/styles.qss", "r") as f:
+    with open("styling/styles.css", "r") as f:
         style = f.read()
         app.setStyleSheet(style)
     # main app
