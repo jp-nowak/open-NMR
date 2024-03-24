@@ -6,54 +6,6 @@ import numpy as np
 from spectrum import Spectrum_1D
 import math
 
-
-def axis_generator(painter, p_size, axis_pars, textfont):
-    # drawing axis delimiters, adjusts automatically
-    # parameters
-    ax_pos = p_size['h']-axis_pars['ax_padding']
-    width = axis_pars['end_ppm']-axis_pars['begin_ppm']
-    incr_ppm = 2**round(np.log2(width *
-                        axis_pars['pixperinc']/math.ceil(p_size['w'])))
-    incr_fac = incr_ppm/width
-    # axis line
-    painter.drawLine(QPointF(0.0, ax_pos),
-                     QPointF(p_size['w'], ax_pos))
-    # increments lists
-    del_pos_list = []
-    if axis_pars['end_ppm'] > 0 and axis_pars['begin_ppm'] < 0:
-        iterright = math.ceil(axis_pars['end_ppm']/incr_ppm)
-        iterleft = math.ceil(abs(axis_pars['begin_ppm']/incr_ppm))
-        del_pos_list = [axis_pars['end_ppm']/width -
-                        i*incr_fac for i in range(iterright)]
-        negative_list = [axis_pars['end_ppm']/width +
-                         i*incr_fac for i in range(iterleft)]
-        del_pos_list.extend(negative_list)
-    else:
-        del_pos_list = [axis_pars['end_ppm'] % incr_ppm/width +
-                        i*incr_fac for i in range(math.ceil(width/incr_ppm))]
-    del_pos_list = list(set(del_pos_list))
-    del_pos_list = [i for i in del_pos_list if i >
-                    0+20/p_size['w'] and i < 1-20/p_size['w']]
-    del_text_list = [str(round(axis_pars['end_ppm']-i*width, 3))
-                     for i in del_pos_list]
-
-    # draw delimiters
-    for i in range(len(del_pos_list)):
-        del_pos = del_pos_list[i]
-        del_text = del_text_list[i]
-        top_del = QPointF(
-            del_pos*p_size['w'], ax_pos+axis_pars['dlen'])
-        bot_del = QPointF(
-            del_pos*p_size['w'], ax_pos-axis_pars['dlen'])
-        painter.drawLine(top_del, bot_del)
-        # paramters for text
-        font_metrics = QFontMetrics(textfont)
-        text_width = font_metrics.horizontalAdvance(del_text)
-        num_pos = QPointF(
-            del_pos*p_size['w']-0.5*text_width, ax_pos+4*axis_pars['dlen'])
-        painter.drawText(num_pos, del_text)
-
-
 def data_prep(data, width, height, rang):
     data = data[round(len(data)*rang[0]):round(len(data)*rang[1])]
     data = np.column_stack((np.linspace(0, 1, len(data)), data))
@@ -94,7 +46,7 @@ class spectrum_painter(QWidget):
         self.zoom_button = zoom_button
         self.integrate_button = integrate_button
         self.drawstatus = False
-        self.textfont = QFont('Times', 10)
+        self.textfont = QFont('Times New Roman', 10)
         self.pen = QPen(QColor("black"))
         self.rang = [0, 1]
         # dragging
@@ -173,8 +125,55 @@ class spectrum_painter(QWidget):
                                    self.rang)
         self.resampled = [QPointF(i[0], i[1]) for i in self.resampled]
         painter.drawPolyline(QPolygonF(self.resampled))
-        axis_generator(painter, self.p_size, self.axis_pars, self.textfont)
-        painter.end()         
+        self.axis_generator(painter)
+        painter.end()
+
+    def axis_generator(self, painter):
+        # drawing axis delimiters, adjusts automatically
+        # parameters
+        ax_pos = self.p_size['h']-self.axis_pars['ax_padding']
+        width = self.axis_pars['end_ppm']-self.axis_pars['begin_ppm']
+        incr_ppm = 2**round(np.log2(width *
+                            self.axis_pars['pixperinc']/math.ceil(self.p_size['w'])))
+        incr_fac = incr_ppm/width
+        # axis line
+        painter.drawLine(QPointF(0.0, ax_pos),
+                        QPointF(self.p_size['w'], ax_pos))
+        # increments lists
+        del_pos_list = []
+        if self.axis_pars['end_ppm'] > 0 and self.axis_pars['begin_ppm'] < 0:
+            iterright = math.ceil(self.axis_pars['end_ppm']/incr_ppm)
+            iterleft = math.ceil(abs(self.axis_pars['begin_ppm']/incr_ppm))
+            del_pos_list = [self.axis_pars['end_ppm']/width -
+                            i*incr_fac for i in range(iterright)]
+            negative_list = [self.axis_pars['end_ppm']/width +
+                            i*incr_fac for i in range(iterleft)]
+            del_pos_list.extend(negative_list)
+        else:
+            del_pos_list = [self.axis_pars['end_ppm'] % incr_ppm/width +
+                            i*incr_fac for i in range(math.ceil(width/incr_ppm))]
+        del_pos_list = list(set(del_pos_list))
+        del_pos_list = [i for i in del_pos_list if i >
+                        0+20/self.p_size['w'] and i < 1-20/self.p_size['w']]
+        del_text_list = [str(round(self.axis_pars['end_ppm']-i*width, 3))
+                        for i in del_pos_list]
+
+        # draw delimiters
+        for i in range(len(del_pos_list)):
+            del_pos = del_pos_list[i]
+            del_text = del_text_list[i]
+            top_del = QPointF(
+                del_pos*self.p_size['w'], ax_pos+self.axis_pars['dlen'])
+            bot_del = QPointF(
+                del_pos*self.p_size['w'], ax_pos-self.axis_pars['dlen'])
+            painter.drawLine(top_del, bot_del)
+            # paramters for text
+            font_metrics = QFontMetrics(self.textfont)
+            text_width = font_metrics.horizontalAdvance(del_text)
+            num_pos = QPointF(
+                del_pos*self.p_size['w']-0.5*text_width, ax_pos+4*self.axis_pars['dlen'])
+            painter.drawText(num_pos, del_text)
+
 
 class TabFrameWidget(QFrame):
     def __init__(self, sv_w):
