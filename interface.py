@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStackedWidget, QLabel, QFrame, QGridLayout
-from PyQt5.QtGui import QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase, QPen, QColor
+from PyQt5.QtGui import QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase, QPen, QColor, QBrush, QPalette
 from PyQt5.QtCore import QPointF, Qt
 import numpy as np
 from spectrum import Spectrum_1D
@@ -41,41 +41,49 @@ def data_prep(data, width, height, rang):
 
 
 class spectrum_painter(QWidget):
-    def __init__(self, zoom_button, integrate_button):
+    def __init__(self, zoom_button, integrate_button, palette2):
         super().__init__()
         self.zoom_button = zoom_button
         self.integrate_button = integrate_button
         self.drawstatus = False
         self.textfont = QFont('Times New Roman', 10)
         self.pen = QPen(QColor("black"))
+        self.palette2 = palette2
         self.rang = [0, 1]
+        self.int_rangs = []
         # dragging
         self.zooming = False
         self.integrating = False
         self.startPos = 0
         self.endPos = 1
+        self.selectstart = None
+        self.selectend = None
 
     def generate_data(self, experiment):
         # data
         self.drawstatus = True
         self.experiment = experiment
-        self.data = experiment.spectrum
-        self.info = experiment.info
+        self.data = experiment.spectrum.copy()
+        self.info = experiment.info.copy()
         self.resampled = []
         self.axis_pars = {'dlen': 5, 'pixperinc': 70,
-                          'incperppm': 100, 'ax_padding': 30, 'spect_padding': 50,
+                          'incperppm': 100, 'ax_padding': 30, 'spect_padding': 70,
                           'end_ppm': self.info['plot_end_ppm'],
                           'begin_ppm': self.info['plot_begin_ppm']}
+        self.artist_pars = {'intsep':5}
         # deln is a length of delimiter in pixels
         # incperppm: multiples - 2 => 0.5 is the minimum increment
 
     def mousePressEvent(self, event):
+        self.selectstart = event.pos()
         if self.zooming or self.integrating:
-            self.startPos = event.pos().x()/self.p_size['w']
+            self.startPos = self.selectstart.x()/self.p_size['w']
 
     def mouseMoveEvent(self, event):
+        self.selectend = event.pos()
         if self.zooming or self.integrating:
-            self.endPos = event.pos().x()/self.p_size['w']
+            self.endPos = self.selectend.x()/self.p_size['w']
+            self.update()
 
     def mouseReleaseEvent(self, event):
         # adjusting rang
@@ -97,13 +105,26 @@ class spectrum_painter(QWidget):
 
         if self.integrating:
             # spectrum should get this absrang and come up with integration output
-            print(absrang)
+            self.experiment.integrate(absrang[0], absrang[1], vtype="fraction")
             self.integrate_button.setChecked(False)
             self.integrating = False
+            self.update()
+        self.selectend = None
+        self.selectstart = None
 
     def paintEvent(self, event):
-        # settings
         painter = QPainter(self)
+        
+        #when selecting
+        accent = self.palette2['accent']
+        accent.setAlphaF(0.5)
+        painter.setPen(QPen(accent, 0, Qt.SolidLine))
+        painter.setBrush(QBrush(accent))
+        if self.selectstart and self.selectend:
+            painter.drawRect(self.selectstart.x(), 0,
+                             self.selectend.x() - self.selectstart.x(),
+                             self.p_size['h'])
+
         painter.setPen(self.pen)
         # updating window size
         rect = self.rect()
@@ -126,6 +147,7 @@ class spectrum_painter(QWidget):
         self.resampled = [QPointF(i[0], i[1]) for i in self.resampled]
         painter.drawPolyline(QPolygonF(self.resampled))
         self.axis_generator(painter)
+        self.integration_marks(painter)
         painter.end()
 
     def axis_generator(self, painter):
@@ -174,6 +196,20 @@ class spectrum_painter(QWidget):
                 del_pos*self.p_size['w']-0.5*text_width, ax_pos+4*self.axis_pars['dlen'])
             painter.drawText(num_pos, del_text)
 
+    def integration_marks(self, painter):
+        integ_padding = self.p_size['h']-self.axis_pars['spect_padding']+4*self.artist_pars['intsep']
+        for integ in self.experiment.integral_list:
+            integ_abspos = (integ[4]+integ[5])/2
+            if integ_abspos > self.rang[1] or integ_abspos < self.rang[0]: continue
+            integ_pos = (integ_abspos-self.rang[0])/(self.rang[1]-self.rang[0])
+            print(integ_pos, integ_abspos)
+            integ_name = str(round(integ[3],2))
+            font_metrics = QFontMetrics(self.textfont)
+            text_width = font_metrics.horizontalAdvance(integ_name)
+            print(integ)
+            num_pos = QPointF(integ_pos*self.p_size['w']-0.5*text_width, integ_padding)
+            painter.drawText(num_pos, integ_name)
+        pass
 
 class TabFrameWidget(QFrame):
     def __init__(self, sv_w):
@@ -228,6 +264,9 @@ class TabFrameWidget(QFrame):
 class openNMR(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.additional_palette = {}
+        self.additional_palette['accent'] = QColor("#558B6E")
+
         title = "Open NMR"
         self.setWindowTitle(title)
 
@@ -315,7 +354,7 @@ class openNMR(QMainWindow):
     def add_new_page(self, file):
         page_index = round(self.spectrum_viewer.count())
         painter_widget = spectrum_painter(
-            self.zoom_button, self.integrate_button)
+            self.zoom_button, self.integrate_button, self.additional_palette)
         painter_widget.generate_data(Spectrum_1D.create_from_file(file))
         
         self.spectrum_viewer.addWidget(painter_widget)

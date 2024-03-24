@@ -188,7 +188,7 @@ class Spectrum_1D:
                 raise ValueError
             relative_value = real_value/self._integral_rel_one
         
-        self.integral_list.append((begin_point, end_point, real_value, relative_value))
+        self.integral_list.append((begin_point, end_point, real_value, relative_value, begin, end))
         return (begin, end, real_value, relative_value)
     
     
