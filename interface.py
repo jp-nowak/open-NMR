@@ -116,7 +116,7 @@ class spectrum_painter(QWidget):
                           'incperppm': 100, 'ax_padding': 30, 'spect_padding': 70,
                           'end_ppm': self.info['plot_end_ppm'],
                           'begin_ppm': self.info['plot_begin_ppm']}
-        self.artist_pars = {'intsep':5}
+        self.artist_pars = {'marksep':20, 'bracketsep':5, 'br_width':2}
         # deln is a length of delimiter in pixels
         # incperppm: multiples - 2 => 0.5 is the minimum increment
 
@@ -197,18 +197,36 @@ class spectrum_painter(QWidget):
         painter.end()
 
     def integration_marks(self, painter):
-        integ_padding = self.p_size['h']-self.axis_pars['spect_padding']+4*self.artist_pars['intsep']
+        mark_padding = self.p_size['h']-self.axis_pars['spect_padding']+self.artist_pars['marksep']
+        bracket_padding = self.p_size['h']-self.axis_pars['spect_padding']+self.artist_pars['bracketsep']
         for integ in self.experiment.integral_list:
-            integ_abspos = (integ[4]+integ[5])/2
-            if integ_abspos > self.rang[1] or integ_abspos < self.rang[0]: continue
-            integ_pos = (integ_abspos-self.rang[0])/(self.rang[1]-self.rang[0])
-            print(integ_pos, integ_abspos)
+            if integ[5] > self.rang[1] or integ[4] < self.rang[0]: continue
+
+            # correction for zoomed view
+            rightend = (integ[5]-self.rang[0])/(self.rang[1]-self.rang[0])
+            leftend = (integ[4]-self.rang[0])/(self.rang[1]-self.rang[0])
+            mark_pos = (rightend+leftend)/2
+            
+            # the mark itself
             integ_name = str(round(integ[3],2))
             font_metrics = QFontMetrics(self.textfont)
             text_width = font_metrics.horizontalAdvance(integ_name)
-            print(integ)
-            num_pos = QPointF(integ_pos*self.p_size['w']-0.5*text_width, integ_padding)
+            num_pos = QPointF(mark_pos*self.p_size['w']-0.5*text_width, mark_padding)
             painter.drawText(num_pos, integ_name)
+            
+            # the bracket
+            painter.drawLine(
+                QPointF(rightend*self.p_size['w'], bracket_padding),
+                QPointF(leftend*self.p_size['w'], bracket_padding)
+                )
+            painter.drawLine(
+                QPointF(rightend*self.p_size['w'], bracket_padding-self.artist_pars['br_width']),
+                QPointF(rightend*self.p_size['w'], bracket_padding+self.artist_pars['br_width'])
+                )
+            painter.drawLine(
+                QPointF(leftend*self.p_size['w'], bracket_padding-self.artist_pars['br_width']),
+                QPointF(leftend*self.p_size['w'], bracket_padding+self.artist_pars['br_width'])
+                )
         pass
 
 class TabFrameWidget(QFrame):
