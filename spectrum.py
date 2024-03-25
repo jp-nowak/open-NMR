@@ -188,9 +188,61 @@ class Spectrum_1D:
                 raise ValueError
             relative_value = real_value/self._integral_rel_one
         
-        self.integral_list.append((begin_point, end_point, real_value, relative_value))
+        self.integral_list.append((begin, end, real_value, relative_value))
         return (begin, end, real_value, relative_value)
     
+    def x_coordinate(self, x_value, vtype, out_type):
+        """
+        Conversion of x coordinate between different units:
+            "ppm" delta scale
+            "fraction" fraction of spectrum: 0 - left edge, 1 - right edge
+            "Hz" relative frequency of point
+            "data_point" only as out_type: number of closest data point from self.spectrum
+
+        Parameters
+        ----------
+        x_value : numeric
+            DESCRIPTION.
+        vtype : string
+            scale of input.
+        out_type : string
+            desired output scale.
+
+        Returns
+        -------
+        x_value : numeric
+            x_coordinates in scale specified in out_type.
+
+        """
+        
+        
+        if vtype=="ppm":
+            x_value = x_value - self.info["plot_begin_ppm"]
+            x_value = x_value/(self.info["plot_end_ppm"] - self.info["plot_begin_ppm"])
+            x_value = 1 - x_value
+        elif vtype=="fraction":
+            pass
+        elif vtype=="Hz":
+            x_value = x_value - self.info["plot_begin"]
+            x_value = x_value/(self.info["plot_end"] - self.info["plot_begin"])
+        else:
+            raise NotImplementedError
+            
+        if out_type=="ppm":
+            x_value = x_value*(self.info["plot_end_ppm"] - self.info["plot_begin_ppm"])
+            x_value = x_value+self.info["plot_begin_ppm"]
+        elif out_type=="fraction":
+            pass
+        elif out_type=="Hz":
+            x_value = 1 - x_value
+            x_value = x_value*(self.info["plot_end"] - self.info["plot_begin"])
+            x_value = x_value + self.info["plot_begin"]
+        elif out_type=="data_point":
+            x_value = round(x_value*len(self.spectrum))
+        
+        return x_value
+            
+            
     
     def corr_zero_order_phase(self, angle):
         # angle is an number of pi*radian by which to "turn" phase. 2 is identity.
@@ -242,20 +294,20 @@ class Spectrum_1D:
                 
 # self.info - guaranteed keys:
     # "solvent"        : string
-    # "lock_freq"      : [MHz] lock (deuterium) frequency of spectrometer
+    # "lock_freq"      : float [MHz] lock (deuterium) frequency of spectrometer
     # "samplename"     : string
     # "nucleus"        : string observed nucleus e.g.: H1, C13 etc.
-    # "spectral_width" : [Hz] width of spectrum
-    # "obs_nucl_freq"  : [MHz] Larmor frequency of observed nucleus
-    # "plot_begin"     : [Hz] beginning of plot
-    # "plot_end"       : [Hz] end of plot
-    # "plot_ppm"       : [ppm] beginning of plot
-    # "plot_ppm"       : [ppm] end of plot
-    # "quadrature"     : bool, true - fid as complex numbers
-    # "vendor"         : producer of spectrometer
+    # "spectral_width" : float [Hz] width of spectrum
+    # "obs_nucl_freq"  : float [MHz] Larmor frequency of observed nucleus
+    # "plot_begin"     : float [Hz] beginning of plot
+    # "plot_end"       : float [Hz] end of plot
+    # "plot_ppm"       : float [ppm] beginning of plot
+    # "plot_ppm"       : float [ppm] end of plot
+    # "quadrature"     : bool: true - fid as complex numbers
+    # "vendor"         : string producer of spectrometer
         
 if __name__ == "__main__":
-    nmr_file_path = "./example_fids/agilent_example1H.fid"
+    nmr_file_path = "D:/projekt nmr/open-NMR/example_fids/agilent/agilent_example1H.fid"
     widmo = Spectrum_1D.create_from_file(nmr_file_path)
     widmo.integrate(8.277, 8.044, vtype="ppm")
     widmo.integrate(7.546, 7.409, vtype="ppm")
@@ -264,7 +316,10 @@ if __name__ == "__main__":
     widmo.integrate(1.358, 1.207, vtype="ppm")
     
     widmo.integrate(12, 11, vtype="ppm") # there is no peak there
-
+    
     #np.savetxt('widmo.txt', widmo.spectrum, fmt='%4.6f', delimiter=' ')
     print(*widmo.integral_list, sep='\n')
+    
+    a = widmo.x_coordinate(4503.63, vtype="Hz", out_type="ppm")
+    print(a)
     
