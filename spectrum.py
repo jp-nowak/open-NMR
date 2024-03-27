@@ -46,18 +46,17 @@ class Spectrum_1D:
         
         # float - stores information about applied zero order phase correction [pi rad]
         self.zero_order_phase_corr = 0        
-        optimal_zero_order_phase_correction = self.opt_zero_order_phase_corr(0, 0.0001)
+        optimal_zero_order_phase_correction = self.opt_zero_order_phase_corr(0, 1, 0.0001)
         self.corr_zero_order_phase(optimal_zero_order_phase_correction)
-
+        # self.corr_zero_order_phase(0)
+        
         # np.array of float - self.spectrum shall contain ready-to-draw spectrum as its y-values, 
         # information about x-values shall be contained in info (spectrum is usually uniformly sampled)
         if spectrum is None:
             self.spectrum = self.generate_absorption_mode_spectrum()
-            if self.info["vendor"] == "bruker":
-                self.spectrum = self.spectrum[::-1]
         else:
             self.spectrum = spectrum
-            
+        #print(sum(self.spectrum))
         #--------------------------------------
         # setting values of private variables declared earlier
         
@@ -92,24 +91,16 @@ class Spectrum_1D:
     
     
     def generate_absorption_mode_spectrum(self):
-        # # second prototype
+        # # # 
+        ft = np.fft.fft(self._fid)
+        left_half = ft[:len(ft)//2][::-1]
+        rigth_half = ft[len(ft)//2:][::-1]
+        spectrum = np.real(np.concatenate((left_half, rigth_half)))
         
-        ft_rl = np.fft.fft(np.real(self._fid))
-        ft_im = np.fft.fft(np.imag(self._fid))
-        rl_ft_rl = np.real(ft_rl)
-
-        im_ft_im = np.imag(ft_im)
-        length = len(rl_ft_rl)
+        if self.info["vendor"] == "bruker":
+            spectrum = spectrum[::-1]
         
-        spectrum_left = [i-j for i,j in zip(rl_ft_rl[:length//2], im_ft_im[:length//2])]
-        spectrum_left = spectrum_left[::-1]
-        
-        spectrum_rigth = [i+j for i,j in zip(rl_ft_rl[:length//2], im_ft_im[:length//2])]
-
-        # consider other half of fid
-        
-        return np.array((spectrum_left + spectrum_rigth))
-    
+        return spectrum
     
     def integrate(self, begin, end, vtype="fraction"):
         """
@@ -251,43 +242,52 @@ class Spectrum_1D:
         self._fid = self._fid*np.exp(angle*1j*np.pi)
         
         
-    def opt_zero_order_phase_corr(self, start, precision):
+    def opt_zero_order_phase_corr(self, start, first_step, precision):
         # temporary solution, later proper algorithm will be implemented
         fid = self._fid.copy()
+        
         def spectrum_sum():
             nonlocal fid
-            rl_ft_rl = np.real(np.fft.fft(np.real(fid)))
-            im_ft_im = np.imag(np.fft.fft(np.imag(fid)))
-            length = len(rl_ft_rl)
-            spectrum = [i-j for i,j in zip(rl_ft_rl[:length//2], im_ft_im[:length//2])]
-            spectrum = spectrum[::-1]
-            spectrum = spectrum + [i+j for i,j in zip(rl_ft_rl[:length//2], im_ft_im[:length//2])]
-            maximum = 0
+
+            ft = np.fft.fft(fid)
+            left_half = ft[:len(ft)//2][::-1]
+            rigth_half = ft[len(ft)//2:][::-1]
+            spectrum = np.real(np.concatenate((left_half, rigth_half)))
+            score = 0
+            
             for i in spectrum:
                 if i > 0:
-                    maximum += i
+                    score += i
                 else:
-                    maximum += -i*i
-            return maximum
-            
-            
+                    score += -i*i
+            return score
             
         angle = start
         maximum = spectrum_sum()
-        step = 1
-        i = 0
+        step = first_step
+        improved = False
+        #print(angle, maximum)
         while True:
-            i += 1
             fid = fid*np.exp(step*1j*np.pi)
             current = spectrum_sum()
             angle += step
+            #print(angle, current)
             if current > maximum:
                 maximum = current
+                improved = True
+                #print("better")
             else:
+                #print("not really")
                 angle -= step
                 fid = fid*np.exp(-step*1j*np.pi)
                 step /= 10
-            if step < precision:
+            if abs(step) < precision:
+                if not improved:
+                    #print("reversing!")
+                    step = -first_step
+                    improved = True
+                    continue
+                #print("end")
                 break
             
         return angle
@@ -320,6 +320,6 @@ if __name__ == "__main__":
     #np.savetxt('widmo.txt', widmo.spectrum, fmt='%4.6f', delimiter=' ')
     print(*widmo.integral_list, sep='\n')
     
-    a = widmo.x_coordinate(4503.63, vtype="Hz", out_type="ppm")
+    a = widmo.x_coordinate(-1, vtype="ppm", out_type="Hz")
     print(a)
     
