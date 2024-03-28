@@ -18,6 +18,7 @@ class Spectrum_1D:
     def __init__(self, fid, info, path, spectrum=None):
         # init shall only create instance atributes
         
+        #--------------------------------------
         # private variables
         
         # np.array of complex32 - raw fid
@@ -75,20 +76,16 @@ class Spectrum_1D:
         else:
             raise NotImplementedError(f"not implemented file format: {ftype}")
         
-        
-        
         return cls(fid[0], info, path)
     
-    
     def generate_power_mode_spectrum(self):
-        # simplified spectrum not suitable for anything, 
-        # though good for display prototyping
+
         ft_rl = np.fft.fft(np.real(self._fid))
         ft_im = np.fft.fft(np.imag(self._fid))
         pow_spectr = [(i*i + j*j) for i, j in zip(
             np.real(ft_rl[:len(ft_rl)//2]), np.imag(ft_im[:len(ft_im)//2]))]
+        
         return pow_spectr
-    
     
     def generate_absorption_mode_spectrum(self):
         # # # 
@@ -96,9 +93,6 @@ class Spectrum_1D:
         left_half = ft[:len(ft)//2][::-1]
         rigth_half = ft[len(ft)//2:][::-1]
         spectrum = np.real(np.concatenate((left_half, rigth_half)))
-        
-        if self.info["vendor"] == "bruker":
-            spectrum = spectrum[::-1]
         
         return spectrum
     
@@ -233,14 +227,11 @@ class Spectrum_1D:
         
         return x_value
             
-            
-    
     def corr_zero_order_phase(self, angle):
         # angle is an number of pi*radian by which to "turn" phase. 2 is identity.
         # angle = 2 -> turn by 2 pi radians -> 360 degree
         self.zero_order_phase_corr += angle
         self._fid = self._fid*np.exp(angle*1j*np.pi)
-        
         
     def opt_zero_order_phase_corr(self, start, first_step, precision):
         # temporary solution, later proper algorithm will be implemented
