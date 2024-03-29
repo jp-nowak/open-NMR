@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStackedWidget, QLabel, QFrame, QGridLayout
-from PyQt5.QtGui import QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase, QPen, QColor
+from PyQt5.QtGui import QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase, QPen, QColor, QBrush, QPalette
 from PyQt5.QtCore import QPointF, Qt
 import numpy as np
 from spectrum import Spectrum_1D
@@ -39,94 +39,40 @@ def data_prep(data, width, height, rang):
                 resampled.extend([data[start], data[end]])
         return resampled
 
+def rearrange(boxlis):
+    """
+    rearranges boxlike (position,width) entities on a scale of 0,1 so that they don't overlap
+    fast, unrealiable, cheap and cumbersome, also known as fucc
+    """
+    for n in range(20):
+        tempboxlis = boxlis.copy()
+        for i in range(len(boxlis)):
+            for j in range(len(boxlis)):
+                if i==j:continue
+                diff = boxlis[i][0]-boxlis[j][0]
+                if abs(diff)<1.1*(boxlis[i][1]/2+boxlis[j][1]/2):
+                    tempboxlis[i][0] += 0.1*np.sign(diff)*abs(diff)
+        boxlis = tempboxlis
+    return boxlis
 
 class spectrum_painter(QWidget):
-    def __init__(self, zoom_button, integrate_button):
+    def __init__(self, zoom_button, integrate_button, palette2):
         super().__init__()
         self.zoom_button = zoom_button
         self.integrate_button = integrate_button
         self.drawstatus = False
         self.textfont = QFont('Times New Roman', 10)
         self.pen = QPen(QColor("black"))
+        self.palette2 = palette2
         self.rang = [0, 1]
+        self.int_rangs = []
         # dragging
         self.zooming = False
         self.integrating = False
         self.startPos = 0
         self.endPos = 1
-
-    def generate_data(self, experiment):
-        # data
-        self.drawstatus = True
-        self.experiment = experiment
-        self.data = experiment.spectrum
-        self.info = experiment.info
-        self.resampled = []
-        self.axis_pars = {'dlen': 5, 'pixperinc': 70,
-                          'incperppm': 100, 'ax_padding': 30, 'spect_padding': 50,
-                          'end_ppm': self.info['plot_end_ppm'],
-                          'begin_ppm': self.info['plot_begin_ppm']}
-        # deln is a length of delimiter in pixels
-        # incperppm: multiples - 2 => 0.5 is the minimum increment
-
-    def mousePressEvent(self, event):
-        if self.zooming or self.integrating:
-            self.startPos = event.pos().x()/self.p_size['w']
-
-    def mouseMoveEvent(self, event):
-        if self.zooming or self.integrating:
-            self.endPos = event.pos().x()/self.p_size['w']
-
-    def mouseReleaseEvent(self, event):
-        # adjusting rang
-        selrang = [self.endPos, self.startPos]
-        selrang.sort()
-        absrang = [self.rang[0]+(self.rang[1]-self.rang[0])*selrang[0],
-                   self.rang[0]+(self.rang[1]-self.rang[0])*selrang[1]
-                   ]
-        absrang.sort()
-        if self.zooming:
-            self.rang = absrang
-            # adjusting axis
-            width = self.info['plot_end_ppm']-self.info['plot_begin_ppm']
-            self.axis_pars['end_ppm'] = self.info['plot_end_ppm'] - width*self.rang[0]
-            self.axis_pars['begin_ppm'] = self.info['plot_begin_ppm'] + width*(1-self.rang[1])
-            self.zoom_button.setChecked(False)
-            self.update()
-            self.zooming = False
-
-        if self.integrating:
-            # spectrum should get this absrang and come up with integration output
-            print(absrang)
-            self.integrate_button.setChecked(False)
-            self.integrating = False
-
-    def paintEvent(self, event):
-        # settings
-        painter = QPainter(self)
-        painter.setPen(self.pen)
-        # updating window size
-        rect = self.rect()
-        self.p_size = {
-            'w': rect.topRight().x()-rect.topLeft().x(),
-            'h': rect.bottomLeft().y()-rect.topRight().y()
-        }
-        if not self.drawstatus:
-            return None
-
-        painter.setFont(self.textfont)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-        # drawing plot
-        self.resampled = data_prep(self.data.copy(),
-                                   self.p_size['w'],
-                                   self.p_size['h'] -
-                                   self.axis_pars['spect_padding'],
-                                   self.rang)
-        self.resampled = [QPointF(i[0], i[1]) for i in self.resampled]
-        painter.drawPolyline(QPolygonF(self.resampled))
-        self.axis_generator(painter)
-        painter.end()
+        self.selectstart = None
+        self.selectend = None
 
     def axis_generator(self, painter):
         # drawing axis delimiters, adjusts automatically
@@ -174,6 +120,135 @@ class spectrum_painter(QWidget):
                 del_pos*self.p_size['w']-0.5*text_width, ax_pos+4*self.axis_pars['dlen'])
             painter.drawText(num_pos, del_text)
 
+    def data_and_pars(self, experiment):
+        # data
+        self.drawstatus = True
+        self.experiment = experiment
+        self.data = experiment.spectrum.copy()
+        self.info = experiment.info.copy()
+        self.resampled = []
+        self.axis_pars = {'dlen': 5, 'pixperinc': 70,
+                          'incperppm': 100, 'ax_padding': 30, 'spect_padding': 70,
+                          'end_ppm': self.info['plot_end_ppm'],
+                          'begin_ppm': self.info['plot_begin_ppm']}
+        self.artist_pars = {'marksep':20, 'bracketsep':5, 'br_width':2}
+        # deln is a length of delimiter in pixels
+        # incperppm: multiples - 2 => 0.5 is the minimum increment
+
+    def mousePressEvent(self, event):
+        self.selectstart = event.pos()
+        if self.zooming or self.integrating:
+            self.startPos = self.selectstart.x()/self.p_size['w']
+
+    def mouseMoveEvent(self, event):
+        self.selectend = event.pos()
+        if self.zooming or self.integrating:
+            self.endPos = self.selectend.x()/self.p_size['w']
+            self.update()
+
+    def mouseReleaseEvent(self, event):
+        # adjusting rang
+        selrang = [self.endPos, self.startPos]
+        selrang.sort()
+        absrang = [self.rang[0]+(self.rang[1]-self.rang[0])*selrang[0],
+                   self.rang[0]+(self.rang[1]-self.rang[0])*selrang[1]
+                   ]
+        absrang.sort()
+        if self.zooming:
+            self.rang = absrang
+            # adjusting axis
+            width = self.info['plot_end_ppm']-self.info['plot_begin_ppm']
+            self.axis_pars['end_ppm'] = self.info['plot_end_ppm'] - width*self.rang[0]
+            self.axis_pars['begin_ppm'] = self.info['plot_begin_ppm'] + width*(1-self.rang[1])
+            self.zoom_button.setChecked(False)
+            self.update()
+            self.zooming = False
+
+        if self.integrating:
+            # spectrum should get this absrang and come up with integration output
+            self.experiment.integrate(absrang[0], absrang[1], vtype="fraction")
+            self.integrate_button.setChecked(False)
+            self.integrating = False
+            self.update()
+        self.selectend = None
+        self.selectstart = None
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        
+        #when selecting
+        accent = self.palette2['accent']
+        accent.setAlphaF(0.5)
+        painter.setPen(QPen(accent, 0, Qt.SolidLine))
+        painter.setBrush(QBrush(accent))
+        if self.selectstart and self.selectend:
+            painter.drawRect(self.selectstart.x(), 0,
+                             self.selectend.x() - self.selectstart.x(),
+                             self.p_size['h'])
+
+        painter.setPen(self.pen)
+        # updating window size
+        rect = self.rect()
+        self.p_size = {
+            'w': rect.topRight().x()-rect.topLeft().x(),
+            'h': rect.bottomLeft().y()-rect.topRight().y()
+        }
+        if not self.drawstatus:
+            return None
+
+        painter.setFont(self.textfont)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        # drawing plot
+        self.resampled = data_prep(self.data.copy(),
+                                   self.p_size['w'],
+                                   self.p_size['h'] -
+                                   self.axis_pars['spect_padding'],
+                                   self.rang)
+        self.resampled = [QPointF(i[0], i[1]) for i in self.resampled]
+        painter.drawPolyline(QPolygonF(self.resampled))
+        self.axis_generator(painter)
+        self.integration_marks(painter)
+        painter.end()
+
+    def integration_marks(self, painter):
+        mark_padding = self.p_size['h']-self.axis_pars['spect_padding']+self.artist_pars['marksep']
+        bracket_padding = self.p_size['h']-self.axis_pars['spect_padding']+self.artist_pars['bracketsep']
+        marklist = []
+        for i in range(len(self.experiment.integral_list)):
+            integ = self.experiment.integral_list[i]
+            begin_point, end_point, real_value, relative_value, begin, end = integ
+            if end > self.rang[1] or begin < self.rang[0]: continue
+
+            # correction for zoomed view
+            rightend = (end-self.rang[0])/(self.rang[1]-self.rang[0])
+            leftend = (begin-self.rang[0])/(self.rang[1]-self.rang[0])
+            mark_pos = (rightend+leftend)/2
+            
+            # the mark itself, drawn in next loop
+            integ_name = str(round(relative_value,2))
+            font_metrics = QFontMetrics(self.textfont)
+            text_width = font_metrics.horizontalAdvance(integ_name)
+            num_pos = mark_pos*self.p_size['w']-0.5*text_width
+            marklist.append([num_pos, text_width, integ_name])
+            
+            # the bracket
+            painter.drawLine(
+                QPointF(rightend*self.p_size['w'], bracket_padding),
+                QPointF(leftend*self.p_size['w'], bracket_padding)
+                )
+            painter.drawLine(
+                QPointF(rightend*self.p_size['w'], bracket_padding-self.artist_pars['br_width']),
+                QPointF(rightend*self.p_size['w'], bracket_padding+self.artist_pars['br_width'])
+                )
+            painter.drawLine(
+                QPointF(leftend*self.p_size['w'], bracket_padding-self.artist_pars['br_width']),
+                QPointF(leftend*self.p_size['w'], bracket_padding+self.artist_pars['br_width'])
+                )
+        marklist = rearrange(marklist)
+        for mark in marklist:
+            painter.drawText(QPointF(mark[0], mark_padding), mark[2])
+        pass
 
 class TabFrameWidget(QFrame):
     def __init__(self, sv_w):
@@ -228,6 +303,9 @@ class TabFrameWidget(QFrame):
 class openNMR(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.additional_palette = {}
+        self.additional_palette['accent'] = QColor("#558B6E")
+
         title = "Open NMR"
         self.setWindowTitle(title)
 
@@ -315,8 +393,8 @@ class openNMR(QMainWindow):
     def add_new_page(self, file):
         page_index = round(self.spectrum_viewer.count())
         painter_widget = spectrum_painter(
-            self.zoom_button, self.integrate_button)
-        painter_widget.generate_data(Spectrum_1D.create_from_file(file))
+            self.zoom_button, self.integrate_button, self.additional_palette)
+        painter_widget.data_and_pars(Spectrum_1D.create_from_file(file))
         
         self.spectrum_viewer.addWidget(painter_widget)
         self.tabs_frame.add_tab(painter_widget)
