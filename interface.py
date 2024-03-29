@@ -217,7 +217,7 @@ class spectrum_painter(QWidget):
         marklist = []
         for i in range(len(self.experiment.integral_list)):
             integ = self.experiment.integral_list[i]
-            begin_point, end_point, real_value, relative_value, begin, end = integ
+            begin, end, real_value, relative_value = integ
             if end > self.rang[1] or begin < self.rang[0]: continue
 
             # correction for zoomed view
