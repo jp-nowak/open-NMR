@@ -39,6 +39,23 @@ def data_prep(data, width, height, rang):
                 resampled.extend([data[start], data[end]])
         return resampled
 
+def rearrange(boxlis):
+    """
+    rearranges boxlike (position,width) entities on a scale of 0,1 so that they don't overlap
+    fast, unrealiable, cheap and cumbersome, also known as fucc
+    """
+    print([i[0] for i in boxlis])
+    for n in range(20):
+        tempboxlis = boxlis.copy()
+        for i in range(len(boxlis)):
+            for j in range(len(boxlis)):
+                if i==j:continue
+                diff = boxlis[i][0]-boxlis[j][0]
+                if abs(diff)<1.1*(boxlis[i][1]/2+boxlis[j][1]/2):
+                    tempboxlis[i][0] += 0.1*np.sign(diff)*abs(diff)
+        boxlis = tempboxlis
+    print([i[0] for i in boxlis])
+    return boxlis
 
 class spectrum_painter(QWidget):
     def __init__(self, zoom_button, integrate_button, palette2):
@@ -199,6 +216,7 @@ class spectrum_painter(QWidget):
     def integration_marks(self, painter):
         mark_padding = self.p_size['h']-self.axis_pars['spect_padding']+self.artist_pars['marksep']
         bracket_padding = self.p_size['h']-self.axis_pars['spect_padding']+self.artist_pars['bracketsep']
+        marklist = []
         for integ in self.experiment.integral_list:
             if integ[5] > self.rang[1] or integ[4] < self.rang[0]: continue
 
@@ -207,12 +225,12 @@ class spectrum_painter(QWidget):
             leftend = (integ[4]-self.rang[0])/(self.rang[1]-self.rang[0])
             mark_pos = (rightend+leftend)/2
             
-            # the mark itself
+            # the mark itself, drawn in next loop
             integ_name = str(round(integ[3],2))
             font_metrics = QFontMetrics(self.textfont)
             text_width = font_metrics.horizontalAdvance(integ_name)
-            num_pos = QPointF(mark_pos*self.p_size['w']-0.5*text_width, mark_padding)
-            painter.drawText(num_pos, integ_name)
+            num_pos = mark_pos*self.p_size['w']-0.5*text_width
+            marklist.append([num_pos, text_width, integ_name])
             
             # the bracket
             painter.drawLine(
@@ -227,6 +245,9 @@ class spectrum_painter(QWidget):
                 QPointF(leftend*self.p_size['w'], bracket_padding-self.artist_pars['br_width']),
                 QPointF(leftend*self.p_size['w'], bracket_padding+self.artist_pars['br_width'])
                 )
+        marklist = rearrange(marklist)
+        for mark in marklist:
+            painter.drawText(QPointF(mark[0], mark_padding), mark[2])
         pass
 
 class TabFrameWidget(QFrame):
