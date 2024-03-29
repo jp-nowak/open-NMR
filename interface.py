@@ -44,7 +44,6 @@ def rearrange(boxlis):
     rearranges boxlike (position,width) entities on a scale of 0,1 so that they don't overlap
     fast, unrealiable, cheap and cumbersome, also known as fucc
     """
-    print([i[0] for i in boxlis])
     for n in range(20):
         tempboxlis = boxlis.copy()
         for i in range(len(boxlis)):
@@ -54,7 +53,6 @@ def rearrange(boxlis):
                 if abs(diff)<1.1*(boxlis[i][1]/2+boxlis[j][1]/2):
                     tempboxlis[i][0] += 0.1*np.sign(diff)*abs(diff)
         boxlis = tempboxlis
-    print([i[0] for i in boxlis])
     return boxlis
 
 class spectrum_painter(QWidget):
@@ -217,16 +215,18 @@ class spectrum_painter(QWidget):
         mark_padding = self.p_size['h']-self.axis_pars['spect_padding']+self.artist_pars['marksep']
         bracket_padding = self.p_size['h']-self.axis_pars['spect_padding']+self.artist_pars['bracketsep']
         marklist = []
-        for integ in self.experiment.integral_list:
-            if integ[5] > self.rang[1] or integ[4] < self.rang[0]: continue
+        for i in range(len(self.experiment.integral_list)):
+            integ = self.experiment.integral_list[i]
+            begin_point, end_point, real_value, relative_value, begin, end = integ
+            if end > self.rang[1] or begin < self.rang[0]: continue
 
             # correction for zoomed view
-            rightend = (integ[5]-self.rang[0])/(self.rang[1]-self.rang[0])
-            leftend = (integ[4]-self.rang[0])/(self.rang[1]-self.rang[0])
+            rightend = (end-self.rang[0])/(self.rang[1]-self.rang[0])
+            leftend = (begin-self.rang[0])/(self.rang[1]-self.rang[0])
             mark_pos = (rightend+leftend)/2
             
             # the mark itself, drawn in next loop
-            integ_name = str(round(integ[3],2))
+            integ_name = str(round(relative_value,2))
             font_metrics = QFontMetrics(self.textfont)
             text_width = font_metrics.horizontalAdvance(integ_name)
             num_pos = mark_pos*self.p_size['w']-0.5*text_width
