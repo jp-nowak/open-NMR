@@ -173,8 +173,7 @@ class spectrum_painter(QWidget):
             self.experiment.integrate(absrang[0], absrang[1], vtype="fraction")
         
         if self.removing:
-            self.experiment.integral_list = [el for el in self.experiment.integral_list if el[0]<absrang[0] and el[1]>absrang[1]]
-            print([el for el in self.experiment.integral_list if el[0]>absrang[0] and el[1]<absrang[1]])
+            self.experiment.integral_list = [el for el in self.experiment.integral_list if el[0]>absrang[1] or el[1]<absrang[0]]
 
         self.update()
         self.integrate_button.setChecked(False)
