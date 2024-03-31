@@ -88,6 +88,15 @@ class Spectrum_1D:
         self._complex_spectrum = spectrum
         self.spectrum = np.real(self._complex_spectrum)
     
+    def reset_integrals(self):
+        self.integral_list = []
+        self._integral_rel_one = None
+        
+    def set_relative_one(self, real_value, rel_value):
+        self._integral_rel_one = real_value/rel_value
+        for integral in self.integral_list:
+            integral[3] = integral[2] / self._integral_rel_one
+    
     def integrate(self, begin, end, vtype="fraction"):
         """
         Function to integrate, it appends self.integral_list, and may modify self._integral_rel_one
@@ -105,7 +114,7 @@ class Spectrum_1D:
 
         Returns
         -------
-        tuple: (begin, end, real_value, relative value)
+        list: [begin, end, real_value, relative value]
         
             begin, end: numeric
             same values as arguments though, if arguments are in ppm they are converted 
@@ -121,7 +130,7 @@ class Spectrum_1D:
             If it is a next integral it is equal to real_value/self.integral_rel_one
             
         *******
-         the same tuple is appended to self.integral_list
+         the same list is appended to self.integral_list
         """
         # to be added: checking input validity
         
@@ -151,13 +160,13 @@ class Spectrum_1D:
         # setting low values to zero, it allows broad integrals where there are no peaks
         # to be equal to zero
         peak_values = self.spectrum[begin_point:end_point]
-        peak_values[peak_values < self._signal_treshold] = 0
+        # peak_values[peak_values < self._signal_treshold] = 0
         
         # numerical integration - trapezoid rule, 
         # to be considered simpsons rule or simple summation
         real_value = np.trapz(peak_values, dx=0.001)
         
-        if not self.integral_list:
+        if not self._integral_rel_one:
             relative_value = 1.0
             self._integral_rel_one = real_value
         else:
@@ -165,8 +174,8 @@ class Spectrum_1D:
                 raise ValueError
             relative_value = real_value/self._integral_rel_one
         
-        self.integral_list.append((begin, end, real_value, relative_value))
-        return (begin, end, real_value, relative_value)
+        self.integral_list.append([begin, end, real_value, relative_value])
+        return [begin, end, real_value, relative_value]
     
     def x_coordinate(self, x_value, vtype, out_type):
         """
