@@ -130,7 +130,10 @@ class spectrum_painter(QWidget):
         self.info = experiment.info.copy()
         self.resampled = []
         self.axis_pars = {'dlen': 5, 'pixperinc': 70,
-                          'incperppm': 100, 'ax_padding': 30, 'spect_padding': 70,
+                          'incperppm': 100,
+                          'ax_padding': 30,
+                          'spect_top_padding': 70,
+                          'spect_bottom_padding': 100,
                           'end_ppm': self.info['plot_end_ppm'],
                           'begin_ppm': self.info['plot_begin_ppm']}
         self.artist_pars = {'marksep':20, 'bracketsep':5, 'br_width':2}
@@ -213,18 +216,17 @@ class spectrum_painter(QWidget):
         # drawing plot
         self.resampled = data_prep(self.data.copy(),
                                    self.p_size['w'],
-                                   self.p_size['h'] -
-                                   self.axis_pars['spect_padding'],
+                                   self.p_size['h'] - self.axis_pars['spect_top_padding'] - self.axis_pars['spect_bottom_padding'],
                                    self.rang)
-        self.resampled = [QPointF(i[0], i[1]) for i in self.resampled]
+        self.resampled = [QPointF(i[0], i[1]+self.axis_pars['spect_bottom_padding']) for i in self.resampled]
         painter.drawPolyline(QPolygonF(self.resampled))
         self.axis_generator(painter)
         self.integration_marks(painter)
         painter.end()
 
     def integration_marks(self, painter):
-        mark_padding = self.p_size['h']-self.axis_pars['spect_padding']+self.artist_pars['marksep']
-        bracket_padding = self.p_size['h']-self.axis_pars['spect_padding']+self.artist_pars['bracketsep']
+        mark_padding = self.p_size['h']-self.axis_pars['spect_top_padding']+self.artist_pars['marksep']
+        bracket_padding = self.p_size['h']-self.axis_pars['spect_top_padding']+self.artist_pars['bracketsep']
         marklist = []
         for i in range(len(self.experiment.integral_list)):
             integ = self.experiment.integral_list[i]
