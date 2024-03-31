@@ -56,10 +56,11 @@ def rearrange(boxlis):
     return boxlis
 
 class spectrum_painter(QWidget):
-    def __init__(self, zoom_button, integrate_button, palette2):
+    def __init__(self, zoom_button, integrate_button, remove_button, palette2):
         super().__init__()
         self.zoom_button = zoom_button
         self.integrate_button = integrate_button
+        self.remove_button = remove_button
         self.drawstatus = False
         self.textfont = QFont('Times New Roman', 10)
         self.pen = QPen(QColor("black"))
@@ -69,6 +70,7 @@ class spectrum_painter(QWidget):
         # dragging
         self.zooming = False
         self.integrating = False
+        self.removing = False
         self.startPos = 0
         self.endPos = 1
         self.selectstart = None
@@ -137,12 +139,12 @@ class spectrum_painter(QWidget):
 
     def mousePressEvent(self, event):
         self.selectstart = event.pos()
-        if self.zooming or self.integrating:
+        if self.zooming or self.integrating or self.removing:
             self.startPos = self.selectstart.x()/self.p_size['w']
 
     def mouseMoveEvent(self, event):
         self.selectend = event.pos()
-        if self.zooming or self.integrating:
+        if self.zooming or self.integrating or self.removing:
             self.endPos = self.selectend.x()/self.p_size['w']
             self.update()
 
@@ -154,24 +156,33 @@ class spectrum_painter(QWidget):
                    self.rang[0]+(self.rang[1]-self.rang[0])*selrang[1]
                    ]
         absrang.sort()
+        
         if self.zooming:
             self.rang = absrang
             # adjusting axis
             width = self.info['plot_end_ppm']-self.info['plot_begin_ppm']
             self.axis_pars['end_ppm'] = self.info['plot_end_ppm'] - width*self.rang[0]
             self.axis_pars['begin_ppm'] = self.info['plot_begin_ppm'] + width*(1-self.rang[1])
-            self.zoom_button.setChecked(False)
-            self.update()
-            self.zooming = False
+            
 
         if self.integrating:
             # spectrum should get this absrang and come up with integration output
             self.experiment.integrate(absrang[0], absrang[1], vtype="fraction")
-            self.integrate_button.setChecked(False)
-            self.integrating = False
-            self.update()
+        
+        if self.removing:
+            self.experiment.integral_list = [el for el in self.experiment.integral_list if el[0]<absrang[0] and el[1]>absrang[1]]
+            print([el for el in self.experiment.integral_list if el[0]>absrang[0] and el[1]<absrang[1]])
+
+        self.update()
+        self.integrate_button.setChecked(False)
+        self.zoom_button.setChecked(False)
+        self.remove_button.setChecked(False)
+        self.zooming = False
+        self.integrating = False
+        self.removing = False
         self.selectend = None
         self.selectstart = None
+
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -323,15 +334,22 @@ class openNMR(QMainWindow):
         self.integrate_button.setCheckable(True)
         self.integrate_button.clicked.connect(self.toggle_integration)
 
+        self.remove_buton = QPushButton("Remove element")
+        self.remove_buton.setCheckable(True)
+        self.remove_buton.clicked.connect(self.toggle_removing)
+
         actions_frame = QFrame()
         actions = QVBoxLayout(actions_frame)
-        actions.addWidget(QLabel('Actions'))
+        actions.addWidget(QLabel('Viewing'))
         actions.addWidget(self.file_button)
         actions.addWidget(self.zoom_button)
         actions.addWidget(self.zoom_reset_button)
+        actions.addWidget(QLabel('Editing'))
         actions.addWidget(self.integrate_button)
+        actions.addWidget(self.remove_buton)
         actions.addWidget(QPushButton("Find Peaks"))
         actions.setAlignment(Qt.AlignmentFlag.AlignTop)
+
         
         self.spectrum_viewer = QStackedWidget()
         self.spectrum_viewer.setObjectName('spectrumviewer')
@@ -369,6 +387,11 @@ class openNMR(QMainWindow):
         current = self.spectrum_viewer.currentWidget()
         if current:
             current.integrating = True
+    
+    def toggle_removing(self, checked):
+        current = self.spectrum_viewer.currentWidget()
+        if current:
+            current.removing = True
 
     def reset_zoom(self):
         current = self.spectrum_viewer.currentWidget()
@@ -393,7 +416,7 @@ class openNMR(QMainWindow):
     def add_new_page(self, file):
         page_index = round(self.spectrum_viewer.count())
         painter_widget = spectrum_painter(
-            self.zoom_button, self.integrate_button, self.additional_palette)
+            self.zoom_button, self.integrate_button, self.remove_buton, self.additional_palette)
         painter_widget.data_and_pars(Spectrum_1D.create_from_file(file))
         
         self.spectrum_viewer.addWidget(painter_widget)
