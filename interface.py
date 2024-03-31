@@ -1,59 +1,11 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStackedWidget, QLabel, QFrame, QGridLayout
-from PyQt5.QtGui import QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase, QPen, QColor, QBrush, QPalette
+from PyQt5.QtGui import QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase, QPen, QColor, QBrush
 from PyQt5.QtCore import QPointF, Qt
 import numpy as np
 from spectrum import Spectrum_1D
 import math
-
-def data_prep(data, width, height, rang):
-    data = data[round(len(data)*rang[0]):round(len(data)*rang[1])]
-    data = np.column_stack((np.linspace(0, 1, len(data)), data))
-    # normalize
-    ymax = max(data[:, 1])
-    ymin = min(data[:, 1])
-    data[:, 1] = -(data[:, 1]-ymin)/(ymax-ymin)+1
-    data = data*(width, height)
-    new_method = True
-    if not new_method:
-        # downsampling, bad method, we need one for nmr spectra specifically
-        pointperpixel = 100
-        sample = max(len(data)//(pointperpixel*width), 1)
-        # scaling to image size
-        resampled = data[::sample]
-        return resampled
-    if new_method:
-        resampled = []
-        sample = int(len(data)//(width*2))
-        if sample < 4:
-            return data
-        for pix in range(int(math.ceil(len(data)/sample))):
-            start = pix*sample
-            end = min((pix+1)*sample-1, len(data)-1)
-            if start == end:
-                resampled.append(data[-1])
-                break
-            if abs(max(data[start:end, 1])-min(data[start:end, 1])) > 1:
-                resampled.extend(data[start:end])
-            else:
-                resampled.extend([data[start], data[end]])
-        return resampled
-
-def rearrange(boxlis):
-    """
-    rearranges boxlike (position,width) entities on a scale of 0,1 so that they don't overlap
-    fast, unrealiable, cheap and cumbersome, also known as fucc
-    """
-    for n in range(20):
-        tempboxlis = boxlis.copy()
-        for i in range(len(boxlis)):
-            for j in range(len(boxlis)):
-                if i==j:continue
-                diff = boxlis[i][0]-boxlis[j][0]
-                if abs(diff)<1.1*(boxlis[i][1]/2+boxlis[j][1]/2):
-                    tempboxlis[i][0] += 0.1*np.sign(diff)*abs(diff)
-        boxlis = tempboxlis
-    return boxlis
+from helper import *
 
 class spectrum_painter(QWidget):
     def __init__(self, zoom_button, integrate_button, remove_button, palette2):
@@ -101,8 +53,7 @@ class spectrum_painter(QWidget):
             del_pos_list = [self.axis_pars['end_ppm'] % incr_ppm/width +
                             i*incr_fac for i in range(math.ceil(width/incr_ppm))]
         del_pos_list = list(set(del_pos_list))
-        del_pos_list = [i for i in del_pos_list if i >
-                        0+20/self.p_size['w'] and i < 1-20/self.p_size['w']]
+        del_pos_list = [i for i in del_pos_list if i > 20/self.p_size['w'] and i < 1-20/self.p_size['w']]
         del_text_list = [str(round(self.axis_pars['end_ppm']-i*width, 3))
                         for i in del_pos_list]
 
@@ -227,6 +178,7 @@ class spectrum_painter(QWidget):
         mark_padding = self.p_size['h']-self.axis_pars['spect_top_padding']+self.artist_pars['marksep']
         bracket_padding = self.p_size['h']-self.axis_pars['spect_top_padding']+self.artist_pars['bracketsep']
         marklist = []
+        painter.setPen(QPen(self.palette2['accent-dark']))
         for i in range(len(self.experiment.integral_list)):
             integ = self.experiment.integral_list[i]
             begin, end, real_value, relative_value = integ
@@ -258,6 +210,7 @@ class spectrum_painter(QWidget):
                 QPointF(leftend*self.p_size['w'], bracket_padding+self.artist_pars['br_width'])
                 )
         marklist = rearrange(marklist)
+        painter.setPen(self.pen)
         for mark in marklist:
             painter.drawText(QPointF(mark[0], mark_padding), mark[2])
         pass
@@ -315,8 +268,8 @@ class TabFrameWidget(QFrame):
 class openNMR(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.additional_palette = {}
-        self.additional_palette['accent'] = QColor("#558B6E")
+        self.additional_palette = {'accent' : QColor("#558B6E"),
+                                   'accent-dark': QColor("#3B614D")}
 
         title = "Open NMR"
         self.setWindowTitle(title)
