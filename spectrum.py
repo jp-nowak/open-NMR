@@ -7,6 +7,14 @@ Created on Fri Mar  1 14:19:35 2024
 import readingfids
 import numpy as np
 import os
+import scipy.signal as spsig
+import dataclasses
+
+
+
+
+
+
 
 
 class Spectrum_1D:
@@ -55,6 +63,15 @@ class Spectrum_1D:
         # value to be decided - placeholder currently
         self._signal_treshold = np.average(self.spectrum)/2
         
+        self.auto_peak_list = []
+        
+        self.calc_treshold()
+        
+        self.find_peaks()
+        
+        print(max(self.spectrum))
+        print(self._signal_treshold)
+
     @classmethod
     def create_from_file(cls, path):
         #to be considered: open() exceptions 
@@ -183,8 +200,11 @@ class Spectrum_1D:
             "ppm" delta scale
             "fraction" fraction of spectrum: 0 - left edge, 1 - right edge
             "Hz" relative frequency of point
-            "data_point" only as out_type: number of closest data point from self.spectrum
-
+            "data_point" : number of data point from self.spectrum
+            
+        It should only be used for conversion of x coordinate of real point on spectrum
+        not as a mean for general unit conversion
+            
         Parameters
         ----------
         x_value : numeric
@@ -211,6 +231,8 @@ class Spectrum_1D:
         elif vtype=="Hz":
             x_value = x_value - self.info["plot_begin"]
             x_value = x_value/(self.info["plot_end"] - self.info["plot_begin"])
+        elif vtype=="data_point":
+            x_value = x_value / len(self.spectrum)
         else:
             raise NotImplementedError
             
@@ -228,12 +250,6 @@ class Spectrum_1D:
         
         return x_value
             
-    def corr_zero_order_phase(self, angle):
-        # angle is an number of pi*radian by which to "turn" phase. 2 is identity.
-        # angle = 2 -> turn by 2 pi radians -> 360 degree
-        self.zero_order_phase_corr += angle
-        self._fid = self._fid*np.exp(angle*1j*np.pi)
-        
     def correct_phase(self, zero, first_a=None, first_b=None):
         self.phase_correction[0] += zero
         self._complex_spectrum = self._complex_spectrum*np.exp(zero*1j*np.pi)
@@ -289,7 +305,35 @@ class Spectrum_1D:
                 break
             
         return angle
-                
+     
+    def calc_treshold(self, begin=0.0, end=0.05):
+        if begin > end:
+            begin, end = end, begin
+            
+        begin_point = round(begin*len(self.spectrum))
+        end_point = round(end*len(self.spectrum))
+        section = self.spectrum[begin_point:end_point]
+        section = section[section > 0]
+        
+        treshold = np.average(section)
+        
+        self._signal_treshold = treshold
+        
+    def find_peaks(self):
+        # to be considered: minimum peak height and distance, low concentration spectra, solvent peaks
+        elem, _ = spsig.find_peaks(self.spectrum, height=50*self._signal_treshold, 
+                                   distance=round((1/self.info["spectral_width"])*len(self.spectrum)))
+        
+        self.auto_peak_list.extend(elem)
+        
+        elem = 1 - (elem / len(self.spectrum))
+        elem = elem*(self.info["plot_end_ppm"] - self.info["plot_begin_ppm"])
+        elem = elem+self.info["plot_begin_ppm"]
+        print(elem)
+
+        
+        
+        
 # self.info - guaranteed keys:
     # "solvent"        : string
     # "lock_freq"      : float - [MHz] lock (deuterium) frequency of spectrometer
@@ -305,19 +349,30 @@ class Spectrum_1D:
     # "vendor"         : string - producer of spectrometer
         
 if __name__ == "__main__":
-    nmr_file_path = "D:/projekt nmr/open-NMR/example_fids/agilent/agilent_example1H.fid"
-    widmo = Spectrum_1D.create_from_file(nmr_file_path)
-    widmo.integrate(8.277, 8.044, vtype="ppm")
-    widmo.integrate(7.546, 7.409, vtype="ppm")
-    widmo.integrate(4.294, 4.148, vtype="ppm")
-    widmo.integrate(2.143, 1.964, vtype="ppm")
-    widmo.integrate(1.358, 1.207, vtype="ppm")
     
-    widmo.integrate(12, 11, vtype="ppm") # there is no peak there
+    import sys
+    from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtGui import QFontDatabase
+    from interface import openNMR
     
-    #np.savetxt('widmo.txt', widmo.spectrum, fmt='%4.6f', delimiter=' ')
-    print(*widmo.integral_list, sep='\n')
+    spektra = ("./example_fids/agilent/agilent_example1H.fid",
+    "./example_fids/agilent/agilent_example13C.fid",
+    "./example_fids/agilent/agilent_example19F.fid",
+    "./example_fids/agilent/agilent_example31P.fid",
+    "./example_fids/bruker/1",
+    "./example_fids/bruker/2",
+    "./example_fids/bruker/3")
     
-    a = widmo.x_coordinate(-1, vtype="ppm", out_type="Hz")
-    print(a)
+    app = QApplication(sys.argv)
+    # app.setStyle('Fusion')
+    QFontDatabase.addApplicationFont("styling/titillium.ttf")
+    with open("styling/styles.css", "r") as f:
+        style = f.read()
+        app.setStyleSheet(style)
+    # main app
+    window = openNMR()
+    window.show()
+    for i in spektra:
+        window.add_new_page(i)
+    sys.exit(app.exec())
     
