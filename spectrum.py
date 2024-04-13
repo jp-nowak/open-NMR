@@ -4,12 +4,14 @@ Created on Fri Mar  1 14:19:35 2024
 
 @author: Jan
 """
-import readingfids
+
 import numpy as np
 import os
 import scipy.signal as spsig
-import dataclasses
+import scipy.stats as spstat
 
+import readingfids
+import processing
 
 
 
@@ -51,6 +53,8 @@ class Spectrum_1D:
         self.path = path
         self.info = info 
         
+        self.zero_fill_to_next_power_of_two()
+
         self.generate_spectrum()
         
         
@@ -69,8 +73,9 @@ class Spectrum_1D:
         
         self.find_peaks()
         
-        print(max(self.spectrum))
-        print(self._signal_treshold)
+        # print(max(self.spectrum))
+        # print(self._signal_treshold)
+        # print(len(self._fid))
 
     @classmethod
     def create_from_file(cls, path):
@@ -85,6 +90,12 @@ class Spectrum_1D:
             raise NotImplementedError(f"not implemented file format: {ftype}")
         
         return cls(fid[0], info, path)
+    
+    def zero_fill_to_next_power_of_two(self):
+        self._fid = processing.zero_fill_to_power_of_two(self._fid)
+    
+    def zero_to_number(self, number):
+        self._fid = processing.zero_fill_to_number(self._fid, number)
     
     def generate_power_mode_spectrum(self):
 
@@ -289,7 +300,10 @@ class Spectrum_1D:
             if current > maximum:
                 maximum = current
                 improved = True
-                #print("better")
+                # print("better")
+                value, counts = np.unique(np.round(np.real(complex_spectrum)/1000, 0), return_counts=True)
+                # print(len(counts))
+                # print(spstat.entropy(counts, base=2))
             else:
                 #print("not really")
                 angle -= step
@@ -329,7 +343,7 @@ class Spectrum_1D:
         elem = 1 - (elem / len(self.spectrum))
         elem = elem*(self.info["plot_end_ppm"] - self.info["plot_begin_ppm"])
         elem = elem+self.info["plot_begin_ppm"]
-        print(elem)
+        # print(elem)
 
         
         
@@ -349,6 +363,8 @@ class Spectrum_1D:
     # "vendor"         : string - producer of spectrometer
         
 if __name__ == "__main__":
+    
+    # widmo = Spectrum_1D.create_from_file("./example_fids/bruker/1")
     
     import sys
     from PyQt5.QtWidgets import QApplication
@@ -373,6 +389,7 @@ if __name__ == "__main__":
     window = openNMR()
     window.show()
     for i in spektra:
+        print(i)
         window.add_new_page(i)
     sys.exit(app.exec())
     
