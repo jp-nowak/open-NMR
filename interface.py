@@ -17,16 +17,15 @@ class spectrum_painter(QWidget):
         self.textfont = QFont('Times New Roman', 10)
         self.pen = QPen(QColor("black"))
         self.palette2 = palette2
-        self.rang = [0, 1]
+        self.width_vis = [0, 1]
         self.int_rangs = []
         # dragging
-        self.zooming = False
-        self.integrating = False
-        self.removing = False
-        self.startPos = 0
-        self.endPos = 1
+        self.current_action = None
+        self.sel_region = [[0,0], [0,0]]
         self.selectstart = None
         self.selectend = None
+        self.range_actions = ['integrating','zooming']
+        self.box_actions = ['removing']
 
     def axis_generator(self, painter):
         # drawing axis delimiters, adjusts automatically
@@ -93,49 +92,45 @@ class spectrum_painter(QWidget):
 
     def mousePressEvent(self, event):
         self.selectstart = event.pos()
-        if self.zooming or self.integrating or self.removing:
-            self.startPos = self.selectstart.x()/self.p_size['w']
+        if self.current_action:
+            self.sel_region[0][0] = self.selectstart.x()/self.p_size['w']
 
     def mouseMoveEvent(self, event):
         self.selectend = event.pos()
-        if self.zooming or self.integrating or self.removing:
-            self.endPos = self.selectend.x()/self.p_size['w']
+        if self.current_action:
+            self.sel_region[1][0] = self.selectend.x()/self.p_size['w']
             self.update()
 
     def mouseReleaseEvent(self, event):
         # adjusting rang
-        selrang = [self.endPos, self.startPos]
-        selrang.sort()
-        absrang = [self.rang[0]+(self.rang[1]-self.rang[0])*selrang[0],
-                   self.rang[0]+(self.rang[1]-self.rang[0])*selrang[1]
+        width_select = [self.sel_region[0][0], self.sel_region[1][0]]
+        width_select.sort()
+        width_select_abs = [self.width_vis[0]+(self.width_vis[1]-self.width_vis[0])*width_select[0],
+                   self.width_vis[0]+(self.width_vis[1]-self.width_vis[0])*width_select[1]
                    ]
-        absrang.sort()
+        width_select_abs.sort()
         
-        if self.zooming:
-            self.rang = absrang
+        if self.current_action=='zooming':
+            self.width_vis = width_select_abs
             # adjusting axis
             width = self.info['plot_end_ppm']-self.info['plot_begin_ppm']
-            self.axis_pars['end_ppm'] = self.info['plot_end_ppm'] - width*self.rang[0]
-            self.axis_pars['begin_ppm'] = self.info['plot_begin_ppm'] + width*(1-self.rang[1])
+            self.axis_pars['end_ppm'] = self.info['plot_end_ppm'] - width*self.width_vis[0]
+            self.axis_pars['begin_ppm'] = self.info['plot_begin_ppm'] + width*(1-self.width_vis[1])
             
 
-        if self.integrating:
-            # spectrum should get this absrang and come up with integration output
-            self.experiment.integrate(absrang[0], absrang[1], vtype="fraction")
+        if self.current_action=='integrating':
+            self.experiment.integrate(width_select_abs[0], width_select_abs[1], vtype="fraction")
         
-        if self.removing:
-            self.experiment.integral_list = [el for el in self.experiment.integral_list if el[0]>absrang[1] or el[1]<absrang[0]]
+        if self.current_action=='removing':
+            self.experiment.integral_list = [el for el in self.experiment.integral_list if el[0]>width_select_abs[1] or el[1]<width_select_abs[0]]
 
         self.update()
         self.integrate_button.setChecked(False)
         self.zoom_button.setChecked(False)
         self.remove_button.setChecked(False)
-        self.zooming = False
-        self.integrating = False
-        self.removing = False
+        self.current_action = None
         self.selectend = None
         self.selectstart = None
-
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -145,10 +140,16 @@ class spectrum_painter(QWidget):
         accent.setAlphaF(0.5)
         painter.setPen(QPen(accent, 0, Qt.SolidLine))
         painter.setBrush(QBrush(accent))
-        if self.selectstart and self.selectend:
+        if any([state==self.current_action for state in self.range_actions]):
             painter.drawRect(self.selectstart.x(), 0,
                              self.selectend.x() - self.selectstart.x(),
                              self.p_size['h'])
+
+        print(any([state==self.current_action for state in self.box_actions]))
+        if any([state==self.current_action for state in self.box_actions]):
+            painter.drawRect(self.selectstart.x(), self.selectstart.y(),
+                             self.selectend.x() - self.selectstart.x(),
+                             self.selectend.y() - self.selectstart.y())
 
         painter.setPen(self.pen)
         # updating window size
@@ -167,7 +168,7 @@ class spectrum_painter(QWidget):
         self.resampled = data_prep(self.data.copy(),
                                    self.p_size['w'],
                                    self.p_size['h'] - self.axis_pars['spect_top_padding'] - self.axis_pars['spect_bottom_padding'],
-                                   self.rang)
+                                   self.width_vis)
         self.resampled = [QPointF(i[0], i[1]+self.axis_pars['spect_bottom_padding']) for i in self.resampled]
         painter.drawPolyline(QPolygonF(self.resampled))
         self.axis_generator(painter)
@@ -182,11 +183,11 @@ class spectrum_painter(QWidget):
         for i in range(len(self.experiment.integral_list)):
             integ = self.experiment.integral_list[i]
             begin, end, real_value, relative_value = integ
-            if end > self.rang[1] or begin < self.rang[0]: continue
+            if end > self.width_vis[1] or begin < self.width_vis[0]: continue
 
             # correction for zoomed view
-            rightend = (end-self.rang[0])/(self.rang[1]-self.rang[0])
-            leftend = (begin-self.rang[0])/(self.rang[1]-self.rang[0])
+            rightend = (end-self.width_vis[0])/(self.width_vis[1]-self.width_vis[0])
+            leftend = (begin-self.width_vis[0])/(self.width_vis[1]-self.width_vis[0])
             mark_pos = (rightend+leftend)/2
             
             # the mark itself, drawn in next loop
@@ -303,7 +304,6 @@ class openNMR(QMainWindow):
         actions.addWidget(self.remove_buton)
         actions.addWidget(QPushButton("Find Peaks"))
         actions.setAlignment(Qt.AlignmentFlag.AlignTop)
-
         
         self.spectrum_viewer = QStackedWidget()
         self.spectrum_viewer.setObjectName('spectrumviewer')
@@ -335,17 +335,22 @@ class openNMR(QMainWindow):
     def toggle_dragging(self, checked):
         current = self.spectrum_viewer.currentWidget()
         if current:
-            current.zooming = True
+            current.current_action = 'zooming'
 
     def toggle_integration(self, checked):
         current = self.spectrum_viewer.currentWidget()
         if current:
-            current.integrating = True
+            current.current_action = 'integrating'
     
     def toggle_removing(self, checked):
         current = self.spectrum_viewer.currentWidget()
         if current:
-            current.removing = True
+            current.current_action = 'removing'
+
+    def toggle_peaks(self, checked):
+        current = self.spectrum_viewer.currentWidget()
+        if current:
+            pass
 
     def reset_zoom(self):
         current = self.spectrum_viewer.currentWidget()
