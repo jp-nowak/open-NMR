@@ -286,7 +286,8 @@ def info_agilent(params):
         "date" : "time_saved", # string "yyyymmddThhmmss"
         "obs_nucl_freq" : "sfrq", # [MHz]
         "plot_begin" : "sp", # [Hz] beginning of plot
-        "points_number" : "np"# number of data points
+        "number_of_data_points" : "np", # number of data points
+        "acquisition_time" : "at" # [s]
         }
     
     # import of directly stated params
@@ -385,7 +386,9 @@ def bruker_info(params):
         "number_of_scans" : "$NS",
         "number_of_data_points" : "$TD", # number of complex points = number_of_data_points/2
         "data_type" : "$DTYPA",
-        "group_delay" : "$GRPDLY"
+        "group_delay" : "$GRPDLY",
+        "acquisition_time" : "$AT",
+        "irradiation_freq" : "$SFO1" # [s]
         }
     for i, j in params_keywords.items():
         try:
@@ -395,21 +398,25 @@ def bruker_info(params):
             value = None
         info[i] = value
         
-        
+    # calculation of plot edges x values
     info["plot_end"] = info["spectral_center"] + info["spectral_width"]/2
     info["plot_begin"] = info["spectral_center"] - info["spectral_width"]/2  
-    
     info["plot_begin_ppm"] = info["plot_begin"] / info["obs_nucl_freq"]
     info["plot_end_ppm"] = info["plot_end"] / info["obs_nucl_freq"]
     
     info["number_of_data_points"] = int(info["number_of_data_points"] )
     info["vendor"] = "bruker"
     
+    # calculation of acquisition time
+    info["dwell_time"] = 1/(2*info["spectral_width_ppm"]*info["irradiation_freq"])
+    if not info["acquisition_time"]:
+        info["acquisition_time"] = info["number_of_data_points"]*info["dwell_time"]
+    
     return info
 
 
 if __name__ == "__main__":
-    info, fid = bruker_wrapper("D:/projekt nmr/open-NMR/example_fids/bruker/1")
+    pass
 
     
     
