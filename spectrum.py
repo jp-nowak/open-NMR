@@ -60,6 +60,8 @@ class Spectrum_1D:
         
         self._integral_rel_one = None
         self.integral_list = []
+
+        self.peak_list = []
         
         self.phase_correction = [0.0, 0.0, 0.0]
         self.correct_phase(self.opt_zero_order_phase_corr(0, 1, 0.001))
@@ -204,6 +206,17 @@ class Spectrum_1D:
         
         self.integral_list.append([begin, end, real_value, relative_value])
         return [begin, end, real_value, relative_value]
+    
+    def quick_peak(self, rang):
+        #just for working with gui, this picks the max in a selected range
+        rang = [round(i*len(self.spectrum)) for i in rang]
+        spect_sliced = self.spectrum[rang[0]:rang[1]]
+        index = max(range(len(spect_sliced)), key=spect_sliced.__getitem__)
+        index+=rang[0]
+        x_value = index/len(self.spectrum)
+        peak_ppm = self.info['plot_end_ppm'] - x_value*(self.info["plot_end_ppm"] - self.info['plot_begin_ppm'])
+        self.peak_list.append([x_value, peak_ppm])
+        print(self.peak_list)
     
     def x_coordinate(self, x_value, vtype, out_type):
         """
