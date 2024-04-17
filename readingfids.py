@@ -307,6 +307,8 @@ def info_agilent(params):
     info["plot_begin_ppm"] = info["plot_begin"] / info["obs_nucl_freq"]
     info["plot_end_ppm"] = info["plot_end"] / info["obs_nucl_freq"]
     info["vendor"] = "agilent"
+    info["number_of_data_points"] = int(info["number_of_data_points"])//2
+    info["dwell_time"] = info["acquisition_time"] / info["number_of_data_points"]
     
     return info
 
@@ -343,7 +345,7 @@ def bruker_wrapper(path):
 
 def read_bruker_fid(fid_content, info):
     big_endian = bool(info["byte_order"])
-    el_number = info["number_of_data_points"]//2
+    el_number = info["number_of_data_points"]
     quadrature = True
 
     if info["data_type"] == 0:
@@ -404,11 +406,11 @@ def bruker_info(params):
     info["plot_begin_ppm"] = info["plot_begin"] / info["obs_nucl_freq"]
     info["plot_end_ppm"] = info["plot_end"] / info["obs_nucl_freq"]
     
-    info["number_of_data_points"] = int(info["number_of_data_points"] )
+    info["number_of_data_points"] = int(info["number_of_data_points"])//2
     info["vendor"] = "bruker"
     
     # calculation of acquisition time
-    info["dwell_time"] = 1/(2*info["spectral_width_ppm"]*info["irradiation_freq"])
+    info["dwell_time"] = 1/(info["spectral_width_ppm"]*info["irradiation_freq"])
     if not info["acquisition_time"]:
         info["acquisition_time"] = info["number_of_data_points"]*info["dwell_time"]
     

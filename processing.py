@@ -18,3 +18,10 @@ def zero_fill_to_number(fid, number):
         return fid
     fid = np.concatenate((fid, np.zeros(number-len(fid), dtype=fid.dtype)))
     return fid
+
+class apodize:
+    @staticmethod
+    def exponential(fid, dwell_time, constant):
+        multipliers = np.array([np.exp(-i*dwell_time*constant*np.pi) for i in range(len(fid))])
+        for i in range(len(fid)):
+            fid[i] = fid[i] * multipliers[i]

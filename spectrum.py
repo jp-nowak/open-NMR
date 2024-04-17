@@ -56,7 +56,8 @@ class Spectrum_1D:
         self.info = info 
         
         self.zero_fill_to_next_power_of_two()
-
+        #self.apodize("exponential", 1/self.info["acquisition_time"])
+        
         self.generate_spectrum()
         
         
@@ -109,6 +110,11 @@ class Spectrum_1D:
     
     def zero_to_number(self, number):
         self._fid = processing.zero_fill_to_number(self._fid, number)
+        
+    def apodize(self, function_type, *params):
+        if function_type == "exponential":
+            processing.apodize.exponential(self._fid, self.info["dwell_time"], *params)
+        self.generate_spectrum()
     
     def generate_power_mode_spectrum(self):
 
@@ -386,13 +392,15 @@ class Spectrum_1D:
         # to be considered: minimum peak height and distance, low concentration spectra, solvent peaks
         elem, _ = spsig.find_peaks(self.spectrum, height=50*self._signal_treshold, 
                                    distance=round((1/self.info["spectral_width"])*len(self.spectrum)))
-        
+        elem = elem/len(self.spectrum)
         self.auto_peak_list.extend(elem)
         
         elem = 1 - (elem / len(self.spectrum))
         elem = elem*(self.info["plot_end_ppm"] - self.info["plot_begin_ppm"])
         elem = elem+self.info["plot_begin_ppm"]
         # print(elem)
+        
+
 
         
         
@@ -412,36 +420,36 @@ class Spectrum_1D:
     # "acquisition_time" : float - [s] time of acquisition (fid recording time for single scan)
         
 if __name__ == "__main__":
-    
+    pass
     # widmo = Spectrum_1D.create_from_file("./example_fids/bruker/1")
     
-    import sys
-    from PyQt5.QtWidgets import QApplication
-    from PyQt5.QtGui import QFontDatabase
-    from interface import openNMR
+    # import sys
+    # from PyQt5.QtWidgets import QApplication
+    # from PyQt5.QtGui import QFontDatabase
+    # from interface import openNMR
     
-    import warnings
-    warnings.filterwarnings("error")
+    # import warnings
+    # warnings.filterwarnings("error")
     
-    spektra = ("./example_fids/agilent/agilent_example1H.fid",
-    "./example_fids/agilent/agilent_example13C.fid",
-    "./example_fids/agilent/agilent_example19F.fid",
-    "./example_fids/agilent/agilent_example31P.fid",
-    "./example_fids/bruker/1",
-    "./example_fids/bruker/2",
-    "./example_fids/bruker/3")
+    # spektra = ("./example_fids/agilent/agilent_example1H.fid",
+    # "./example_fids/agilent/agilent_example13C.fid",
+    # "./example_fids/agilent/agilent_example19F.fid",
+    # "./example_fids/agilent/agilent_example31P.fid",
+    # "./example_fids/bruker/1",
+    # "./example_fids/bruker/2",
+    # "./example_fids/bruker/3")
     
-    app = QApplication(sys.argv)
-    # app.setStyle('Fusion')
-    QFontDatabase.addApplicationFont("styling/titillium.ttf")
-    with open("styling/styles.css", "r") as f:
-        style = f.read()
-        app.setStyleSheet(style)
-    # main app
-    window = openNMR()
-    window.show()
-    for i in spektra:
-        print(i)
-        window.add_new_page(i)
-    sys.exit(app.exec())
+    # app = QApplication(sys.argv)
+    # # app.setStyle('Fusion')
+    # QFontDatabase.addApplicationFont("styling/titillium.ttf")
+    # with open("styling/styles.css", "r") as f:
+    #     style = f.read()
+    #     app.setStyleSheet(style)
+    # # main app
+    # window = openNMR()
+    # window.show()
+    # for i in spektra:
+    #     print(i)
+    #     window.add_new_page(i)
+    # sys.exit(app.exec())
     
