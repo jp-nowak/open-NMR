@@ -222,8 +222,11 @@ class spectrum_painter(QWidget):
         pass
 
     def peak_marks(self, painter):
-        label_padding = self.artist_pars['peak_pos']
-        label_sep = self.artist_pars['peak_pos']+self.artist_pars['peak_sep']
+        label_origin = self.artist_pars['peak_pos']
+        label_pointer1 = self.artist_pars['peak_pos']+self.artist_pars['peak_sep']
+        label_pointer2 = self.artist_pars['peak_pos']+self.artist_pars['peak_sep']*2
+        label_pointer3 = self.artist_pars['peak_pos']+self.artist_pars['peak_sep']*3
+        label_pointer4 = self.artist_pars['peak_pos']+self.artist_pars['peak_sep']*4
         peak_list = []
         for i in range(len(self.experiment.peak_list)):
             peak = self.experiment.peak_list[i]
@@ -236,10 +239,17 @@ class spectrum_painter(QWidget):
             peak_list.append([peak_pos-0.5*text_width, text_width, peak_name, peak_pos])
         
         peak_list = rearrange(peak_list)
+        peak_list = [i + [i[0]+0.5*i[1]] for i in peak_list]
+        #now it contains label pos, text_width, peak_name, peak_pos, label center pos
+        
+        painter.setPen(QPen(self.palette2['accent-dark']))
+        for peak in peak_list:
+            painter.drawLine(QPointF(peak[4], label_pointer1), QPointF(peak[4], label_pointer2))
+            painter.drawLine(QPointF(peak[4], label_pointer2), QPointF(peak[3], label_pointer3))
+            painter.drawLine(QPointF(peak[3], label_pointer3), QPointF(peak[3], label_pointer4))
         painter.setPen(self.pen)
         for peak in peak_list:
-            painter.drawText(QPointF(peak[0], label_padding), peak[2])
-            painter.drawLine(QPointF(peak[0]+0.5*text_width, label_sep), QPointF(peak[3], label_sep*2))
+            painter.drawText(QPointF(peak[0], label_origin), peak[2])
 
 
 class TabFrameWidget(QFrame):
@@ -358,7 +368,7 @@ class openNMR(QMainWindow):
 
         if sys.argv:
             for filename in sys.argv:
-                if filename.endswith('.fid/'):
+                #if filename.endswith('.fid/'):
                     try: self.add_new_page(filename)
                     except: pass
 
