@@ -224,7 +224,7 @@ class spectrum_painter(QWidget):
     def peak_marks(self, painter):
         label_padding = self.artist_pars['peak_pos']
         label_sep = self.artist_pars['peak_pos']+self.artist_pars['peak_sep']
-        label_list = []
+        peak_list = []
         for i in range(len(self.experiment.peak_list)):
             peak = self.experiment.peak_list[i]
             if peak[0]>self.width_vis[1] or peak[0]<self.width_vis[0]: continue
@@ -232,13 +232,14 @@ class spectrum_painter(QWidget):
             peak_name = str(round(peak[1],2))
             font_metrics = QFontMetrics(self.textfont)
             text_width = font_metrics.horizontalAdvance(peak_name)
-            peak_pos = peak_pos*self.p_size['w']-0.5*text_width
-            label_list.append([peak_pos, text_width, peak_name])
+            peak_pos = peak_pos*self.p_size['w']
+            peak_list.append([peak_pos-0.5*text_width, text_width, peak_name, peak_pos])
         
-        label_list = rearrange(label_list)
+        peak_list = rearrange(peak_list)
         painter.setPen(self.pen)
-        for peak_name in label_list:
-            painter.drawText(QPointF(peak_name[0], label_padding), peak_name[2])
+        for peak in peak_list:
+            painter.drawText(QPointF(peak[0], label_padding), peak[2])
+            painter.drawLine(QPointF(peak[0]+0.5*text_width, label_sep), QPointF(peak[3], label_sep*2))
 
 
 class TabFrameWidget(QFrame):

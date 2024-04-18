@@ -39,13 +39,13 @@ def rearrange(boxlis):
     rearranges boxlike (position,width) entities on a scale of 0,1 so that they don't overlap
     fast, unrealiable, cheap and cumbersome, also known as fucc
     """
-    for n in range(20):
+    for n in range(30):
         tempboxlis = boxlis.copy()
         for i in range(len(boxlis)):
             for j in range(len(boxlis)):
                 if i==j:continue
                 diff = boxlis[i][0]-boxlis[j][0]
-                if abs(diff)<1.1*(boxlis[i][1]/2+boxlis[j][1]/2):
-                    tempboxlis[i][0] += 0.1*np.sign(diff)*abs(diff)
+                if abs(diff)<1.5*(boxlis[i][1]/2+boxlis[j][1]/2):
+                    tempboxlis[i][0] += 0.2*np.sign(diff)*abs(diff)
         boxlis = tempboxlis
     return boxlis
