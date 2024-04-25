@@ -309,7 +309,8 @@ def info_agilent(params):
     info["vendor"] = "agilent"
     info["number_of_data_points"] = int(info["number_of_data_points"])//2
     info["dwell_time"] = info["acquisition_time"] / info["number_of_data_points"]
-    
+    info["group_delay"] = 0.0
+    info["frequency_increment"] = info["spectral_width"] / info["number_of_data_points"]
     return info
 
 
@@ -413,6 +414,8 @@ def bruker_info(params):
     info["dwell_time"] = 1/(info["spectral_width_ppm"]*info["irradiation_freq"])
     if not info["acquisition_time"]:
         info["acquisition_time"] = info["number_of_data_points"]*info["dwell_time"]
+    
+    info["frequency_increment"] = info["spectral_width"] / info["number_of_data_points"]
     
     return info
 

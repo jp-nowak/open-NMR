@@ -68,6 +68,7 @@ class Spectrum_1D:
         
         self.phase_correction = [0.0, 0.0, 0.0]
         self.correct_phase(self.opt_zero_order_phase_corr(0, 1, 0.001))
+        #self.correct_phase(0, 0.5)
         
         # value to be decided - placeholder currently
         self._signal_treshold = np.average(self.spectrum)/2
@@ -76,8 +77,9 @@ class Spectrum_1D:
         
         self.calc_treshold()
         
-        self.find_peaks()
+        #self.find_peaks()
         
+        #print(self.info["group_delay"])
         # print(max(self.spectrum))
         # print(self._signal_treshold)
         # print(len(self._fid))
@@ -316,12 +318,20 @@ class Spectrum_1D:
         
         return x_value
             
-    def correct_phase(self, zero, first_a=None, first_b=None):
+    def correct_phase(self, zero, first_a=None, pivot=0.5):
         self.phase_correction[0] += zero
         self._complex_spectrum = self._complex_spectrum*np.exp(zero*1j*np.pi)
         
-        if first_a or first_b:
-            raise NotImplementedError
+        if first_a:
+            # to be reworked
+            pivot -= 0.5
+            pivot = pivot * len(self._complex_spectrum) * self.info["frequency_increment"]
+            x_axis = [(i - (len(self._complex_spectrum)//2)) * self.info["frequency_increment"] + pivot for i in range(len(self._complex_spectrum))]
+            norm = x_axis[-1]
+            x_axis = [i/norm for i in x_axis]
+            first_order_corr = [np.exp(1j*first_a*np.pi*i) for i in x_axis]
+            for i in range(len(self._complex_spectrum)):
+                self._complex_spectrum[i] = self._complex_spectrum[i] * first_order_corr[i]
         
         self.spectrum = np.real(self._complex_spectrum)
         
@@ -418,7 +428,9 @@ class Spectrum_1D:
     # "quadrature"     : bool: true - fid as complex numbers
     # "vendor"         : string - producer of spectrometer
     # "acquisition_time" : float - [s] time of acquisition (fid recording time for single scan)
-        
+    # "frequency_increment" : float - [Hz] distance in Hz between data points of spectrum   
+    # "dwell_time" : float [s] time between data points of fid
+    
 if __name__ == "__main__":
     pass
     # widmo = Spectrum_1D.create_from_file("./example_fids/bruker/1")
