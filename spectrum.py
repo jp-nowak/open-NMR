@@ -66,9 +66,10 @@ class Spectrum_1D:
 
         self.peak_list = []
         
-        self.phase_correction = [0.0, 0.0, 0.0]
+        self.complex_first_order_corr = False
+        self.phase_correction = [0.0, [0.0, 0.0]]
         self.correct_phase(self.opt_zero_order_phase_corr(0, 1, 0.001))
-        #self.correct_phase(0, 0.5)
+        # self.correct_phase(0, 0.5)
         
         # value to be decided - placeholder currently
         self._signal_treshold = np.average(self.spectrum)/2
@@ -323,12 +324,15 @@ class Spectrum_1D:
         self._complex_spectrum = self._complex_spectrum*np.exp(zero*1j*np.pi)
         
         if first_a:
-            # to be reworked
+            if not self.complex_first_order_corr:
+                self.generate_spectrum()
+                self.correct_phase(self.phase_correction[0])
+                self.phase_correction[1] = [first_a, pivot]
+            else:
+                self.phase_correction.append([first_a, pivot])
+                
             pivot -= 0.5
-            pivot = pivot * len(self._complex_spectrum) * self.info["frequency_increment"]
-            x_axis = [(i - (len(self._complex_spectrum)//2)) * self.info["frequency_increment"] + pivot for i in range(len(self._complex_spectrum))]
-            norm = x_axis[-1]
-            x_axis = [i/norm for i in x_axis]
+            x_axis = [i/len(self._complex_spectrum) + pivot for i in range(-len(self._complex_spectrum),len(self._complex_spectrum), 2)]
             first_order_corr = [np.exp(1j*first_a*np.pi*i) for i in x_axis]
             for i in range(len(self._complex_spectrum)):
                 self._complex_spectrum[i] = self._complex_spectrum[i] * first_order_corr[i]
