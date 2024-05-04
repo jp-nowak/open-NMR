@@ -356,10 +356,9 @@ def read_bruker_fid(fid_content, info):
     else:
         raise NotImplementedError("unknown primary data type")
         
-    # to be done elsewhere more cleanly
     fid = read_fid_1D(fid_content, 0, el_number, primary_type, 
                       quadrature, big_endian, reverse=big_endian)
-    fid = np.roll(fid, -round(info["group_delay"]))
+    fid = np.roll(fid, -int(info["group_delay"]))
     return [fid]
     
 def read_bruker_acqus(acqus_lines):
