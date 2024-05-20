@@ -285,9 +285,11 @@ def info_agilent(params):
         "operator" : "operator",
         "date" : "time_saved", # string "yyyymmddThhmmss"
         "obs_nucl_freq" : "sfrq", # [MHz]
-        "plot_begin" : "sp", # [Hz] beginning of plot
+        # "plot_begin" : "sp", # [Hz] beginning of plot
         "number_of_data_points" : "np", # number of data points
-        "acquisition_time" : "at" # [s]
+        "acquisition_time" : "at", # [s]
+        "frequency_offset" : "tof",
+        "zero_frequency" : "reffrq"
         }
     
     # import of directly stated params
@@ -302,8 +304,13 @@ def info_agilent(params):
     # derived params
     if not info["spectrometer_freq"]:
         info["spectrometer_freq"] = round(info["lock_freq"]/DEUTERIUM_EPSILON)
-        
-    info["plot_end"] = info["plot_begin"] + info["spectral_width"] # [Hz]
+    
+    info["irradiation_frequency"] = info["zero_frequency"] - info["obs_nucl_freq"]
+    info["irradiation_frequency"] *= -1000000
+    info["plot_begin"] = info["irradiation_frequency"] - info["spectral_width"]/2
+    info["plot_end"] = info["irradiation_frequency"] + info["spectral_width"]/2
+    
+    # info["plot_end"] = info["plot_begin"] + info["spectral_width"] # [Hz]
     info["plot_begin_ppm"] = info["plot_begin"] / info["obs_nucl_freq"]
     info["plot_end_ppm"] = info["plot_end"] / info["obs_nucl_freq"]
     info["vendor"] = "agilent"

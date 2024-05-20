@@ -108,8 +108,8 @@ class Spectrum_1D:
         # print(max(self.spectrum))
         # print(self._signal_treshold)
         # print(len(self._fid))
-        print(self.info["group_delay"])
-        print(self.phase_correction)
+        # print(self.info["group_delay"])
+        # print(self.phase_correction)
 
     @classmethod
     def create_from_file(cls, path):
@@ -463,35 +463,35 @@ class Spectrum_1D:
     
 if __name__ == "__main__":
     pass
-    # widmo = Spectrum_1D.create_from_file("./example_fids/bruker/1")
+    widmo = Spectrum_1D.create_from_file("./example_fids/bruker/1")
     
-    # import sys
-    # from PyQt5.QtWidgets import QApplication
-    # from PyQt5.QtGui import QFontDatabase
-    # from interface import openNMR
+    import sys
+    from PyQt5.QtWidgets import QApplication
+    from PyQt5.QtGui import QFontDatabase
+    from interface import openNMR
     
-    # import warnings
-    # warnings.filterwarnings("error")
+    import warnings
+    warnings.filterwarnings("error")
     
-    # spektra = ("./example_fids/agilent/agilent_example1H.fid",
-    # "./example_fids/agilent/agilent_example13C.fid",
-    # "./example_fids/agilent/agilent_example19F.fid",
-    # "./example_fids/agilent/agilent_example31P.fid",
-    # "./example_fids/bruker/1",
-    # "./example_fids/bruker/2",
-    # "./example_fids/bruker/3")
+    spektra = ("./example_fids/agilent/agilent_example1H.fid",
+    "./example_fids/agilent/agilent_example13C.fid",
+    "./example_fids/agilent/agilent_example19F.fid",
+    "./example_fids/agilent/agilent_example31P.fid",
+    "./example_fids/bruker/1",
+    "./example_fids/bruker/2",
+    "./example_fids/bruker/3")
     
-    # app = QApplication(sys.argv)
-    # # app.setStyle('Fusion')
-    # QFontDatabase.addApplicationFont("styling/titillium.ttf")
-    # with open("styling/styles.css", "r") as f:
-    #     style = f.read()
-    #     app.setStyleSheet(style)
-    # # main app
-    # window = openNMR()
-    # window.show()
-    # for i in spektra:
-    #     print(i)
-    #     window.add_new_page(i)
-    # sys.exit(app.exec())
+    app = QApplication(sys.argv)
+    # app.setStyle('Fusion')
+    QFontDatabase.addApplicationFont("styling/titillium.ttf")
+    with open("styling/styles.css", "r") as f:
+        style = f.read()
+        app.setStyleSheet(style)
+    # main app
+    window = openNMR()
+    window.show()
+    for i in spektra:
+        print(i)
+        window.add_new_page(i)
+    sys.exit(app.exec())
     
