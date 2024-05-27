@@ -343,6 +343,8 @@ class openNMR(QMainWindow):
         toolbar.addWidget(actions_frame)
         toolbar.addWidget(self.tabs_frame)
 
+        self.CreateMenuBar()
+
         # widnow size, position, margins, etc
         size = {'w': 800, 'h': 400}
         self.setGeometry(200, 200, size['w'], size['h'])
@@ -361,6 +363,18 @@ class openNMR(QMainWindow):
                     try: self.add_new_page(filename)
                     except: pass
 
+    def CreateMenuBar(self):
+        """
+        Function to create menu bar of app window
+        """
+        menubar = self.menuBar()
+        
+        # file menu
+        file_menu = menubar.addMenu("File")
+        open_file = file_menu.addAction("Open experiment folder", self.openFile)
+        close_app = file_menu.addAction("Exit", self.close)
+        
+        
     def toggle_dragging(self, checked):
         current = self.spectrum_viewer.currentWidget()
         if current:
