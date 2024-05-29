@@ -36,6 +36,7 @@ QMenu::item:selected {
 
 QWidget {
 	background: #303030;
+	color: white;
 }
 QFrame {
 	background-color: #3d3d3d;

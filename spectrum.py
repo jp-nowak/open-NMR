@@ -4,19 +4,24 @@ Created on Fri Mar  1 14:19:35 2024
 
 @author: Jan
 """
-
-import numpy as np
 import os
+from dataclasses import dataclass
+import numpy as np
 import scipy.signal as spsig
 import scipy.stats as spstat
 
 import readingfids
 import processing
 
-
-
-
-
+@dataclass
+class Phase_1_order:
+    correction: float
+    pivot: float
+    
+@dataclass
+class Phase:
+    ph0: float
+    ph1: list[Phase_1_order]
 
 
 class Spectrum_1D:
@@ -53,13 +58,8 @@ class Spectrum_1D:
         # complex_first_order_corr : bool - switch if false only one first order phase correction may be applied at given time, using correct_phase()
         #   apply second one will reset first. If true they may be several ones applied - but it will be hard to make gui for that
         
-        # phase_correction : list beginning with one float - zero order phase correction, other elements are two float lists [first, pivot],
-        #   first is value of applied first order correction and pivot is its pivot (fraction of spectrum where correction is equal to zero),
-        #   so overall format is:
-        #   [zero_order_correction, [first1, pivot1], ...]
-        #   [float,               , [float,  float,], ...]
-        #   if complex_first_order_corr == False then it will contain only one [first, pivot] list
-        
+        # phase_correction : object of Phase class, describing applied phase correction
+       
         # peak_list : TO BE EXPLAINED! including format of members
         
         # auto_peak_list : list of peaks found by algorithmic means, format to be specified
@@ -86,7 +86,8 @@ class Spectrum_1D:
         self.peak_list = []
         
         self.complex_first_order_corr = False
-        self.phase_correction = [0.0, [0.0, 0.0]]
+
+        self.phase_correction = Phase(0.0, [Phase_1_order(0.0, 0.5)])
         
         # to be done somewhere else, why pivot should be in 0.75? test with more spectra
         if self.info["group_delay"]:
@@ -346,16 +347,16 @@ class Spectrum_1D:
         return x_value
             
     def correct_phase(self, zero, first_a=None, pivot=0.5):
-        self.phase_correction[0] += zero
+        self.phase_correction.ph0 += zero
         self._complex_spectrum = self._complex_spectrum*np.exp(zero*1j*np.pi)
         
         if first_a:
             if not self.complex_first_order_corr:
                 self.generate_spectrum()
-                self.correct_phase(self.phase_correction[0])
-                self.phase_correction[1] = [first_a, pivot]
+                self.correct_phase(self.phase_correction.ph0)
+                self.phase_correction.ph1 = [Phase_1_order(first_a, pivot)]
             else:
-                self.phase_correction.append([first_a, pivot])
+                self.phase_correction.append(Phase_1_order(first_a, pivot))
                 
             pivot -= 0.5
             x_axis = [i/len(self._complex_spectrum) + pivot for i in range(-len(self._complex_spectrum),len(self._complex_spectrum), 2)]

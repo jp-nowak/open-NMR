@@ -1,11 +1,18 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStackedWidget, QLabel, QFrame, QGridLayout
-from PyQt5.QtGui import QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase, QPen, QColor, QBrush
+
+import PyQt5.QtWidgets as QtWidgets
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+                             QHBoxLayout, QPushButton, QFileDialog, QStackedWidget, 
+                             QLabel, QFrame, QGridLayout)
+from PyQt5.QtGui import (QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase, 
+                         QPen, QColor, QBrush)
 from PyQt5.QtCore import QPointF, Qt
 import numpy as np
 from spectrum import Spectrum_1D
 import math
 from helper import *
+from gui.ph_cor import phaseCorrectionWindow
+
 
 class spectrum_painter(QWidget):
     def __init__(self, zoom_button, integrate_button, remove_button, pick_peak, palette2):
@@ -91,7 +98,7 @@ class spectrum_painter(QWidget):
         # deln is a length of delimiter in pixels
         # incperppm: multiples - 2 => 0.5 is the minimum increment
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event=None):
         self.selectstart = event.pos()
         if self.current_action:
             self.sel_region[0][0] = self.selectstart.x()/self.p_size['w']
@@ -136,7 +143,7 @@ class spectrum_painter(QWidget):
         self.selectend = None
         self.selectstart = None
 
-    def paintEvent(self, event):
+    def paintEvent(self, event=None):
         painter = QPainter(self)
         
         #when selecting
@@ -179,6 +186,14 @@ class spectrum_painter(QWidget):
         self.integration_marks(painter)
         self.peak_marks(painter)
         painter.end()
+
+    def refresh(self):
+        """
+        refreshing plot of spectrum after modification of data inside Spectrum_1D
+        """
+        self.data = self.experiment.spectrum.copy()
+        self.update()
+        # self.mousePressEvent()
 
     def integration_marks(self, painter):
         label_padding = self.p_size['h']-self.axis_pars['spect_top_padding']+self.artist_pars['integ_pos']
@@ -374,7 +389,19 @@ class openNMR(QMainWindow):
         open_file = file_menu.addAction("Open experiment folder", self.openFile)
         close_app = file_menu.addAction("Exit", self.close)
         
+        # spectrum menu
+        spectrum_menu = menubar.addMenu("Spectrum")
+        phase_correction = spectrum_menu.addAction("Phase Correction", self.phase_correction_gui)
         
+    def phase_correction_gui(self):
+        # running gui for phase correction
+        if not (current_tab := self.spectrum_viewer.currentWidget()):
+            return None
+        self.ph_cor_window = phaseCorrectionWindow(current_tab)
+        self.ph_cor_window.show()
+        # experiment.correct_phase(0.2)
+        # current.refresh()
+    
     def toggle_dragging(self, checked):
         current = self.spectrum_viewer.currentWidget()
         if current:
