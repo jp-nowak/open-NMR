@@ -6,6 +6,12 @@ from PyQt5.QtWidgets import (QStyle, QStyleOptionSlider, QWidget,
                              QVBoxLayout, QHBoxLayout, QLabel, QLineEdit)
 from PyQt5.QtCore import QRect, QPoint, Qt
 
+from dataclasses import dataclass
+@dataclass
+class Phase:
+    ph0: float
+    ph1: float
+    pivot: float
 
 class phaseCorrectionWindow(QWidget):
     """
@@ -14,20 +20,20 @@ class phaseCorrectionWindow(QWidget):
     def __init__(self, current_tab=None):
         super().__init__()
         # print("init")
-        
-        ph0_value = current_tab.experiment.phase_correction.ph0/2*360
-        ph1_value = current_tab.experiment.phase_correction.ph1[0].correction/2*360
-        pivot_value = current_tab.experiment.phase_correction.ph1[0].pivot*100
+        self.current_tab = current_tab
+        ph0_value = current_tab.experiment.phase.ph0/2*360
+        ph1_value = current_tab.experiment.phase.ph1/2*360
+        pivot_value = current_tab.experiment.phase.pivot*100
         
         self.setGeometry(200, 200, 400, 150)
-        phc_0 = pcSlider("PH0", -180, 180, 60, ph0_value, parent=self)
-        phc_1 = pcSlider("PH1", -180, 180, 60, ph1_value, parent=self)
-        pivot = pcSlider("Pivot \n [%]", 0, 100, 25, pivot_value, parent=self)
+        self.phc_0 = pcSlider("PH0", -180, 180, 60, ph0_value, parent=self)
+        self.phc_1 = pcSlider("PH1", -180, 180, 60, ph1_value, parent=self)
+        self.pivot = pcSlider("Pivot \n [%]", 0, 100, 25, pivot_value, parent=self)
         
         layout = QVBoxLayout()
-        layout.addWidget(phc_0)
-        layout.addWidget(phc_1)
-        layout.addWidget(pivot)
+        layout.addWidget(self.phc_0)
+        layout.addWidget(self.phc_1)
+        layout.addWidget(self.pivot)
 
         self.setLayout(layout)
         self.slider_changed = {"PH0": self.ph0_changed,
@@ -35,8 +41,13 @@ class phaseCorrectionWindow(QWidget):
                                "Pivot \n [%]": self.pivot_changed,}
         
     def ph0_changed(self):
+            self.current_tab.experiment.set_phase(Phase(self.phc_0.value*2/360, 0.0, 0.0))
+            self.current_tab.refresh()
             print("PH0")
     def ph1_changed(self):
+            self.current_tab.experiment.set_phase(Phase(0.0, 
+                                self.phc_1.value*2/360, self.pivot.value/100))
+            self.current_tab.refresh()
             print("PH1")
     def pivot_changed(self):
             print("Pivot")
@@ -179,17 +190,7 @@ class LabeledSlider(QtWidgets.QWidget):
         return
 
 if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
-    frame=QtWidgets.QWidget()
-    ha=QtWidgets.QHBoxLayout()
-    frame.setLayout(ha)
-
-    w = phaseCorrectionWindow()
-
-    ha.addWidget(w)
-    frame.show()
-    sys.exit(app.exec_())
-        
+    pass
         
 
 
