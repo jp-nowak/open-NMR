@@ -1,17 +1,19 @@
-import sys
-import numpy as np
-from PyQt5 import QtWidgets
+from dataclasses import dataclass
+
+from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtGui import QPainter, QDoubleValidator
 from PyQt5.QtWidgets import (QStyle, QStyleOptionSlider, QWidget,  
                              QVBoxLayout, QHBoxLayout, QLabel, QLineEdit)
 from PyQt5.QtCore import QRect, QPoint, Qt
 
-from dataclasses import dataclass
+
+
 @dataclass
 class Phase:
     ph0: float
     ph1: float
     pivot: float
+
 
 class phaseCorrectionWindow(QWidget):
     """
@@ -26,8 +28,8 @@ class phaseCorrectionWindow(QWidget):
         pivot_value = current_tab.experiment.phase.pivot*100
         
         self.setGeometry(200, 200, 400, 150)
-        self.phc_0 = pcSlider("PH0", -180, 180, 60, ph0_value, parent=self)
-        self.phc_1 = pcSlider("PH1", -180, 180, 60, ph1_value, parent=self)
+        self.phc_0 = pcSlider("PH0", -360, 360, 60, ph0_value, parent=self)
+        self.phc_1 = pcSlider("PH1", -360, 360, 60, ph1_value, parent=self)
         self.pivot = pcSlider("Pivot \n [%]", 0, 100, 25, pivot_value, parent=self)
         
         layout = QVBoxLayout()
@@ -52,6 +54,7 @@ class phaseCorrectionWindow(QWidget):
     def pivot_changed(self):
             print("Pivot")
 
+
 class pcSlider(QWidget):
     """
     widget for choosing phase correction, form as below:
@@ -68,10 +71,12 @@ class pcSlider(QWidget):
         self.slider.slider.valueChanged.connect(self.sliderChanged)
         
         
-        self.input_field = QLineEdit(parent=self)
+        self.input_field = inputFieldWithIncreaseByArrows(parent=self)
         self.input_field.setValidator(QDoubleValidator(minimum, maximum, 2))
+        self.input_field.setFixedWidth(60)
         self.input_field.setText(format(initial, "0.2f"))
         self.input_field.editingFinished.connect(self.inputFieldChanged)
+        
         
         layout = QHBoxLayout()
         layout.addWidget(self.text_label)
@@ -103,6 +108,45 @@ class pcSlider(QWidget):
         self.slider.slider.setValue(value)
         # print(self.value)
         
+        
+class inputFieldWithIncreaseByArrows(QLineEdit):
+    """
+    QLineEdit with value increase/decrease by arrows
+    """
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.parent=kwargs["parent"]
+        up_arrow_shortcut = QtWidgets.QShortcut(
+            QtGui.QKeySequence(QtCore.Qt.Key_Up),
+            self,
+            context=QtCore.Qt.WidgetWithChildrenShortcut,
+            activated=self.up_arrow_clicked)
+        
+        down_arrow_shortcut = QtWidgets.QShortcut(
+            QtGui.QKeySequence(QtCore.Qt.Key_Down),
+            self,
+            context=QtCore.Qt.WidgetWithChildrenShortcut,
+            activated=self.down_arrow_clicked)
+        
+    def setValidator(self, *args, **kwargs):
+        super().setValidator(*args, **kwargs)
+        self.maximum = args[0].top()
+        self.minimum = args[0].bottom()
+    
+    def up_arrow_clicked(self):
+        new_value = self.parent.value + 1.0
+        if new_value <= self.maximum:
+            self.setText(str(new_value))
+            self.parent.inputFieldChanged()
+            
+    def down_arrow_clicked(self):
+        new_value = self.parent.value - 1.0
+        if new_value >= self.minimum:
+            self.setText(str(new_value))
+            self.parent.inputFieldChanged()
+        
+
 class LabeledSlider(QtWidgets.QWidget):
     """
     slider with labeled ticks, because it works only on integers to represent 
@@ -188,6 +232,7 @@ class LabeledSlider(QtWidgets.QWidget):
             pos=QPoint(left, bottom)
             painter.drawText(pos, v_str)
         return
+
 
 if __name__ == '__main__':
     pass

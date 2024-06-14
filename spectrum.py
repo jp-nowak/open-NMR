@@ -86,10 +86,10 @@ class Spectrum_1D:
         self.phase = Phase(0.0, 0.0, 0.5)
         
         # to be done somewhere else, why pivot should be in 0.75? test with more spectra
-        # if self.info["group_delay"]:
-        #     self.set_phase(Phase(0, -(self.info["group_delay"]%1), 0.75))
+        if self.info["group_delay"]:
+            self.set_phase(Phase(0, -(self.info["group_delay"]%1), 0.75))
         
-        # self.set_phase(Phase(self.opt_zero_order_phase_corr(0, 1, 0.001), 0.0, 0.0))
+        self.set_phase(Phase(self.opt_zero_order_phase_corr(0, 1, 0.001), 0.0, 0.0))
         
         # value to be decided - placeholder currently
         self._signal_treshold = np.average(self.spectrum)/2
