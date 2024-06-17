@@ -5,7 +5,7 @@ Created on Fri Mar  1 14:19:35 2024
 @author: Jan
 """
 import os
-from dataclasses import dataclass
+import dataclasses
 import numpy as np
 import scipy.signal as spsig
 import scipy.stats as spstat
@@ -13,7 +13,7 @@ import scipy.stats as spstat
 import readingfids
 import processing
 
-@dataclass
+@dataclasses.dataclass
 class Phase:
     ph0: float
     ph1: float
@@ -60,6 +60,8 @@ class Spectrum_1D:
         
         # auto_peak_list : list of peaks found by algorithmic means, format to be specified
         
+        # auto_phase : object of Phase class, containing phase correction which was auto applied
+        
         #--------------------------------------
         # methods 
         
@@ -90,6 +92,8 @@ class Spectrum_1D:
             self.set_phase(Phase(0, -(self.info["group_delay"]%1), 0.75))
         
         self.set_phase(Phase(self.opt_zero_order_phase_corr(0, 1, 0.001), 0.0, 0.0))
+        
+        self.auto_phase = dataclasses.replace(self.phase)
         
         # value to be decided - placeholder currently
         self._signal_treshold = np.average(self.spectrum)/2
@@ -275,7 +279,7 @@ class Spectrum_1D:
     
     def quick_peak(self, rang):
         # docstring would be a nice addition
-        #just for working with gui, this picks the max in a selected range
+        # just for working with gui, this picks the max in a selected range
         rang = [round(i*len(self.spectrum)) for i in rang]
         spect_sliced = self.spectrum[rang[0]:rang[1]]
         index = max(range(len(spect_sliced)), key=spect_sliced.__getitem__)
@@ -342,6 +346,20 @@ class Spectrum_1D:
         return x_value
             
     def set_phase(self, new_phase):
+        """
+        applies phase correction on spectrum
+
+        Parameters
+        ----------
+        new_phase : Phase
+            phase correction to be applied
+
+
+        """
+        if new_phase == None:
+            self.phase = Phase(0.0, 0.0, 0.5)
+            self.generate_spectrum()
+            return
         
         if new_phase.ph0:
             ph0 = new_phase.ph0 - self.phase.ph0
@@ -370,7 +388,7 @@ class Spectrum_1D:
             self.phase.pivot = new_phase.pivot
         
         self.spectrum = np.real(self._complex_spectrum)
-        
+                
     def opt_zero_order_phase_corr(self, start, first_step, precision):
         # temporary solution, later proper algorithm will be implemented
         complex_spectrum = self._complex_spectrum.copy()

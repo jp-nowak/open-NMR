@@ -21,11 +21,22 @@ class phaseCorrectionWindow(QWidget):
     """
     def __init__(self, current_tab=None):
         super().__init__()
-        # print("init")
+
         self.current_tab = current_tab
         ph0_value = current_tab.experiment.phase.ph0/2*360
         ph1_value = current_tab.experiment.phase.ph1/2*360
         pivot_value = current_tab.experiment.phase.pivot*100
+        
+        buttons = QWidget()
+        buttons.layout = QHBoxLayout()
+        buttons.setLayout(buttons.layout)
+        set_0_phase_btn = QtWidgets.QPushButton("reset phase", parent=self)
+        set_0_phase_btn.clicked.connect(self.reset_phase)
+        auto_phase_btn = QtWidgets.QPushButton("auto correct", parent=self)
+
+        buttons.layout.addWidget(set_0_phase_btn)
+        buttons.layout.addWidget(auto_phase_btn)
+
         
         self.setGeometry(200, 200, 400, 150)
         self.phc_0 = pcSlider("PH0", -360, 360, 60, ph0_value, parent=self)
@@ -33,6 +44,7 @@ class phaseCorrectionWindow(QWidget):
         self.pivot = pcSlider("Pivot \n [%]", 0, 100, 25, pivot_value, parent=self)
         
         layout = QVBoxLayout()
+        layout.addWidget(buttons)
         layout.addWidget(self.phc_0)
         layout.addWidget(self.phc_1)
         layout.addWidget(self.pivot)
@@ -41,18 +53,24 @@ class phaseCorrectionWindow(QWidget):
         self.slider_changed = {"PH0": self.ph0_changed,
                                "PH1": self.ph1_changed,
                                "Pivot \n [%]": self.pivot_changed,}
+    def reset_phase(self):
+        self.current_tab.experiment.set_phase(new_phase=None)
+        self.phc_0.slider.slider.setValue(0)
+        self.phc_1.slider.slider.setValue(0)
+        self.pivot.slider.slider.setValue(5000)
+        self.current_tab.refresh()
         
     def ph0_changed(self):
             self.current_tab.experiment.set_phase(Phase(self.phc_0.value*2/360, 0.0, 0.0))
             self.current_tab.refresh()
-            print("PH0")
+
     def ph1_changed(self):
             self.current_tab.experiment.set_phase(Phase(0.0, 
                                 self.phc_1.value*2/360, self.pivot.value/100))
             self.current_tab.refresh()
-            print("PH1")
+
     def pivot_changed(self):
-            print("Pivot")
+            pass
 
 
 class pcSlider(QWidget):
