@@ -89,12 +89,14 @@ class Spectrum_1D:
         
         # to be done somewhere else, why pivot should be in 0.75? test with more spectra
         if self.info["group_delay"]:
-            self.set_phase(Phase(0, -(self.info["group_delay"]%1), 0.75))
+            self.set_phase(Phase(None, -(self.info["group_delay"]%1), 0.75))
         
-        self.set_phase(Phase(self.opt_zero_order_phase_corr(0, 1, 0.001), 0.0, 0.0))
+        self.set_phase(Phase(self.opt_zero_order_phase_corr(0, 1, 0.001), None, None))
         
         self.auto_phase = dataclasses.replace(self.phase)
-        
+        print(self.auto_phase is self.phase)
+        print(self.phase)
+        print(self.auto_phase)
         # value to be decided - placeholder currently
         self._signal_treshold = np.average(self.spectrum)/2
         
@@ -356,24 +358,32 @@ class Spectrum_1D:
 
 
         """
+        print("set_phase: ", new_phase)
+        if type(new_phase) in (list, tuple):
+            new_phase = Phase(*new_phase)
+            
+            
         if new_phase == None:
             self.phase = Phase(0.0, 0.0, 0.5)
             self.generate_spectrum()
             return
         
-        if new_phase.ph0:
+        if not new_phase.ph0 is None:
             ph0 = new_phase.ph0 - self.phase.ph0
-            self._complex_spectrum = self._complex_spectrum*np.exp(ph0*1j*np.pi)
-            self.phase.ph0 = new_phase.ph0
+            if ph0:
+                self._complex_spectrum = self._complex_spectrum*np.exp(ph0*1j*np.pi)
+                self.phase.ph0 = new_phase.ph0
             
-        if new_phase.ph1:
+        if not new_phase.ph1 is None:
             if new_phase.pivot == self.phase.pivot:
                 ph1 = new_phase.ph1 - self.phase.ph1
             else:
                 self.generate_spectrum()
-                self.set_phase(Phase(self.phase.ph0, 0.0, 0.0))
+                self.set_phase(Phase(self.phase.ph0, None, None))
                 ph1 = new_phase.ph1
                 
+            if not ph1:
+                return
             pivot = -(new_phase.pivot - 0.5)*2
             length = len(self._complex_spectrum)
             length = length // 2

@@ -23,6 +23,7 @@ class phaseCorrectionWindow(QWidget):
         super().__init__()
 
         self.current_tab = current_tab
+        self.setWindowTitle(f"""Phase Correction: {self.current_tab.experiment.info["samplename"]}""")
         ph0_value = current_tab.experiment.phase.ph0/2*360
         ph1_value = current_tab.experiment.phase.ph1/2*360
         pivot_value = current_tab.experiment.phase.pivot*100
@@ -33,7 +34,7 @@ class phaseCorrectionWindow(QWidget):
         set_0_phase_btn = QtWidgets.QPushButton("reset phase", parent=self)
         set_0_phase_btn.clicked.connect(self.reset_phase)
         auto_phase_btn = QtWidgets.QPushButton("auto correct", parent=self)
-
+        auto_phase_btn.clicked.connect(self.auto_phase)
         buttons.layout.addWidget(set_0_phase_btn)
         buttons.layout.addWidget(auto_phase_btn)
 
@@ -56,16 +57,35 @@ class phaseCorrectionWindow(QWidget):
     def reset_phase(self):
         self.current_tab.experiment.set_phase(new_phase=None)
         self.phc_0.slider.slider.setValue(0)
+        self.phc_0.input_field.setText(format(0.0, "0.2f"))
         self.phc_1.slider.slider.setValue(0)
+        self.phc_1.input_field.setText(format(0.0, "0.2f"))
         self.pivot.slider.slider.setValue(5000)
+        self.pivot.input_field.setText(format(50.0, "0.2f"))
         self.current_tab.refresh()
         
+    def auto_phase(self):
+        self.current_tab.experiment.set_phase([None,
+            self.current_tab.experiment.auto_phase.ph1, 
+            self.current_tab.experiment.auto_phase.pivot])
+        self.current_tab.experiment.set_phase(
+            [self.current_tab.experiment.auto_phase.ph0, None, None])
+        self.phc_0.slider.slider.setValue(int(self.current_tab.experiment.phase.ph0/2*360*100))
+        self.phc_0.input_field.setText(format(self.current_tab.experiment.phase.ph0/2*360, "0.2f"))
+        self.phc_1.slider.slider.setValue(int(self.current_tab.experiment.phase.ph1/2*360*100))
+        self.phc_1.input_field.setText(format(self.current_tab.experiment.phase.ph1/2*360, "0.2f"))
+        self.pivot.slider.slider.setValue(int(self.current_tab.experiment.phase.pivot*100*100))
+        self.pivot.input_field.setText(format(self.current_tab.experiment.phase.pivot*100, "0.2f"))
+
+        self.current_tab.refresh()
+        
+        
     def ph0_changed(self):
-            self.current_tab.experiment.set_phase(Phase(self.phc_0.value*2/360, 0.0, 0.0))
+            self.current_tab.experiment.set_phase(Phase(self.phc_0.value*2/360, None, None))
             self.current_tab.refresh()
 
     def ph1_changed(self):
-            self.current_tab.experiment.set_phase(Phase(0.0, 
+            self.current_tab.experiment.set_phase(Phase(None, 
                                 self.phc_1.value*2/360, self.pivot.value/100))
             self.current_tab.refresh()
 
@@ -86,7 +106,7 @@ class pcSlider(QWidget):
 
         self.slider = LabeledSlider(minimum, maximum, interval, 100)
         self.slider.slider.setValue(int(initial*100))
-        self.slider.slider.valueChanged.connect(self.sliderChanged)
+        self.slider.slider.sliderMoved.connect(self.sliderChanged)
         
         
         self.input_field = inputFieldWithIncreaseByArrows(parent=self)
@@ -112,14 +132,13 @@ class pcSlider(QWidget):
         self.value = value
         # print(self.value)
         
-        # signal to phaseCorrectionWindow that value was changed,
-        # (inputFieldChanged causes sliderChanged to run anyway)
         self.parent.slider_changed[self.text_label.text()]()
     
     def inputFieldChanged(self):
         # print("F")
         value = self.input_field.text()
         self.value = float(value)
+        self.parent.slider_changed[self.text_label.text()]()
         value = self.value*100
         value = int(value)
   
