@@ -5,7 +5,7 @@ from PyQt5.QtGui import QPainter, QDoubleValidator
 from PyQt5.QtWidgets import (QStyle, QStyleOptionSlider, QWidget,  
                              QVBoxLayout, QHBoxLayout, QLabel, QLineEdit)
 from PyQt5.QtCore import QRect, QPoint, Qt
-
+import PyQt5.QtCore as QtCore
 
 
 @dataclass
@@ -19,10 +19,17 @@ class phaseCorrectionWindow(QWidget):
     """
     separate window for phase correction gui
     """
-    def __init__(self, current_tab=None):
+    def __init__(self, current_tab):
         super().__init__()
 
         self.current_tab = current_tab
+        
+        # listening to changing active spectrum in main app
+        self.current_tab.window().tabs_frame.selectedSpectrumSignal.connect(self.change_active_spectrum)
+        
+        
+        
+        
         self.setWindowTitle(f"""Phase Correction: {self.current_tab.experiment.info["samplename"]}""")
         ph0_value = current_tab.experiment.phase.ph0/2*360
         ph1_value = current_tab.experiment.phase.ph1/2*360
@@ -91,7 +98,22 @@ class phaseCorrectionWindow(QWidget):
 
     def pivot_changed(self):
             pass
-
+        
+    @QtCore.pyqtSlot(object)
+    def change_active_spectrum(self, new_active_tab):        
+        self.current_tab = new_active_tab
+        self.setWindowTitle(f"""Phase Correction: {self.current_tab.experiment.info["samplename"]}""")
+        self.phc_0.slider.slider.setValue(int(self.current_tab.experiment.phase.ph0/2*360*100))
+        self.phc_0.input_field.setText(format(self.current_tab.experiment.phase.ph0/2*360, "0.2f"))
+        self.phc_1.slider.slider.setValue(int(self.current_tab.experiment.phase.ph1/2*360*100))
+        self.phc_1.input_field.setText(format(self.current_tab.experiment.phase.ph1/2*360, "0.2f"))
+        self.pivot.slider.slider.setValue(int(self.current_tab.experiment.phase.pivot*100*100))
+        self.pivot.input_field.setText(format(self.current_tab.experiment.phase.pivot*100, "0.2f"))
+        
+    def closeEvent(self, event):
+        del self.current_tab.window().ph_cor_window
+        super().closeEvent(event)
+        
 
 class pcSlider(QWidget):
     """
