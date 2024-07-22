@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 
-from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtGui import QPainter, QDoubleValidator
+from PyQt5 import QtWidgets, QtCore
+from PyQt5.QtGui import QPainter
 from PyQt5.QtWidgets import (QStyle, QStyleOptionSlider, QWidget,  
-                             QVBoxLayout, QHBoxLayout, QLabel, QLineEdit)
-from PyQt5.QtCore import QRect, QPoint, Qt
-import PyQt5.QtCore as QtCore
+                             QVBoxLayout, QHBoxLayout, QLabel, 
+                             QDoubleSpinBox)
+from PyQt5.QtCore import QRect, QPoint, Qt, QSignalBlocker
+
 
 
 @dataclass
@@ -64,25 +65,41 @@ class phaseCorrectionWindow(QWidget):
     def reset_phase(self):
         self.current_tab.experiment.set_phase(new_phase=None)
         self.phc_0.slider.slider.setValue(0)
-        self.phc_0.input_field.setText(format(0.0, "0.2f"))
+        self.phc_0.input_field.setValue(0.0)
+        # self.phc_0.input_field.setText(format(0.0, "0.2f"))
         self.phc_1.slider.slider.setValue(0)
-        self.phc_1.input_field.setText(format(0.0, "0.2f"))
+        self.phc_1.input_field.setValue(0.0)
+        # self.phc_1.input_field.setText(format(0.0, "0.2f"))
         self.pivot.slider.slider.setValue(5000)
-        self.pivot.input_field.setText(format(50.0, "0.2f"))
+        self.pivot.input_field.setValue(50.0)
+        # self.pivot.input_field.setText(format(50.0, "0.2f"))
         self.current_tab.refresh()
         
     def auto_phase(self):
+        self.reset_phase()
+        
         self.current_tab.experiment.set_phase([None,
             self.current_tab.experiment.auto_phase.ph1, 
             self.current_tab.experiment.auto_phase.pivot])
         self.current_tab.experiment.set_phase(
             [self.current_tab.experiment.auto_phase.ph0, None, None])
+        
         self.phc_0.slider.slider.setValue(int(self.current_tab.experiment.phase.ph0/2*360*100))
-        self.phc_0.input_field.setText(format(self.current_tab.experiment.phase.ph0/2*360, "0.2f"))
+        self.phc_0.input_field.setValue(self.current_tab.experiment.phase.ph0/2*360)
+        # self.phc_0.input_field.setText(format(self.current_tab.experiment.phase.ph0/2*360, "0.2f"))
         self.phc_1.slider.slider.setValue(int(self.current_tab.experiment.phase.ph1/2*360*100))
-        self.phc_1.input_field.setText(format(self.current_tab.experiment.phase.ph1/2*360, "0.2f"))
+        self.phc_1.input_field.setValue(self.current_tab.experiment.phase.ph0/2*360)
+        # self.phc_1.input_field.setText(format(self.current_tab.experiment.phase.ph1/2*360, "0.2f"))
         self.pivot.slider.slider.setValue(int(self.current_tab.experiment.phase.pivot*100*100))
-        self.pivot.input_field.setText(format(self.current_tab.experiment.phase.pivot*100, "0.2f"))
+        self.pivot.input_field.setValue(self.current_tab.experiment.phase.pivot*100)
+        # self.pivot.input_field.setText(format(self.current_tab.experiment.phase.pivot*100, "0.2f"))
+        
+        # self.phc_0.slider.slider.setValue(int(self.current_tab.experiment.phase.ph0/2*360*100))
+        # self.phc_0.input_field.setText(format(self.current_tab.experiment.phase.ph0/2*360, "0.2f"))
+        # self.phc_1.slider.slider.setValue(int(self.current_tab.experiment.phase.ph1/2*360*100))
+        # self.phc_1.input_field.setText(format(self.current_tab.experiment.phase.ph1/2*360, "0.2f"))
+        # self.pivot.slider.slider.setValue(int(self.current_tab.experiment.phase.pivot*100*100))
+        # self.pivot.input_field.setText(format(self.current_tab.experiment.phase.pivot*100, "0.2f"))
 
         self.current_tab.refresh()
         
@@ -104,11 +121,14 @@ class phaseCorrectionWindow(QWidget):
         self.current_tab = new_active_tab
         self.setWindowTitle(f"""Phase Correction: {self.current_tab.experiment.info["samplename"]}""")
         self.phc_0.slider.slider.setValue(int(self.current_tab.experiment.phase.ph0/2*360*100))
-        self.phc_0.input_field.setText(format(self.current_tab.experiment.phase.ph0/2*360, "0.2f"))
+        self.phc_0.input_field.setValue(self.current_tab.experiment.phase.ph0/2*360)
+        # self.phc_0.input_field.setText(format(self.current_tab.experiment.phase.ph0/2*360, "0.2f"))
         self.phc_1.slider.slider.setValue(int(self.current_tab.experiment.phase.ph1/2*360*100))
-        self.phc_1.input_field.setText(format(self.current_tab.experiment.phase.ph1/2*360, "0.2f"))
+        self.phc_1.input_field.setValue(self.current_tab.experiment.phase.ph0/2*360)
+        # self.phc_1.input_field.setText(format(self.current_tab.experiment.phase.ph1/2*360, "0.2f"))
         self.pivot.slider.slider.setValue(int(self.current_tab.experiment.phase.pivot*100*100))
-        self.pivot.input_field.setText(format(self.current_tab.experiment.phase.pivot*100, "0.2f"))
+        self.pivot.input_field.setValue(self.current_tab.experiment.phase.pivot*100)
+        # self.pivot.input_field.setText(format(self.current_tab.experiment.phase.pivot*100, "0.2f"))
         
     def closeEvent(self, event):
         del self.current_tab.window().ph_cor_window
@@ -130,12 +150,17 @@ class pcSlider(QWidget):
         self.slider.slider.setValue(int(initial*100))
         self.slider.slider.sliderMoved.connect(self.sliderChanged)
         
+        self.input_field = QSpinBoxWithSilentSetValue(parent=self)
+        self.input_field.setRange(minimum, maximum)
+        self.input_field.setDecimals(2)
+        self.input_field.setValue(initial)
+        self.input_field.valueChanged.connect(self.inputFieldChanged)
         
-        self.input_field = inputFieldWithIncreaseByArrows(parent=self)
-        self.input_field.setValidator(QDoubleValidator(minimum, maximum, 2))
-        self.input_field.setFixedWidth(60)
-        self.input_field.setText(format(initial, "0.2f"))
-        self.input_field.editingFinished.connect(self.inputFieldChanged)
+        # self.input_field = inputFieldWithIncreaseByArrows(parent=self)
+        # self.input_field.setValidator(QDoubleValidator(minimum, maximum, 2))
+        # self.input_field.setFixedWidth(60)
+        # self.input_field.setText(format(initial, "0.2f"))
+        # self.input_field.editingFinished.connect(self.inputFieldChanged)
         
         
         layout = QHBoxLayout()
@@ -150,7 +175,8 @@ class pcSlider(QWidget):
     def sliderChanged(self, value):
         # print("S")
         value = value/100
-        self.input_field.setText(str(value))
+        self.input_field.setValue(value)
+        # self.input_field.setText(str(value))
         self.value = value
         # print(self.value)
         
@@ -158,7 +184,8 @@ class pcSlider(QWidget):
     
     def inputFieldChanged(self):
         # print("F")
-        value = self.input_field.text()
+        value = self.input_field.value()
+        # value = self.input_field.text()
         self.value = float(value)
         self.parent.slider_changed[self.text_label.text()]()
         value = self.value*100
@@ -166,44 +193,54 @@ class pcSlider(QWidget):
   
         self.slider.slider.setValue(value)
         # print(self.value)
+
         
-        
-class inputFieldWithIncreaseByArrows(QLineEdit):
+class QSpinBoxWithSilentSetValue(QDoubleSpinBox):
     """
-    QLineEdit with value increase/decrease by arrows
+    QDoubleSpinBox in which .setValue does not cause emiting signal valueChanged
     """
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.parent=kwargs["parent"]
-        up_arrow_shortcut = QtWidgets.QShortcut(
-            QtGui.QKeySequence(QtCore.Qt.Key_Up),
-            self,
-            context=QtCore.Qt.WidgetWithChildrenShortcut,
-            activated=self.up_arrow_clicked)
+    def SetValue(self, value):
+        with QSignalBlocker(self):
+            super().setValue(value)
         
-        down_arrow_shortcut = QtWidgets.QShortcut(
-            QtGui.QKeySequence(QtCore.Qt.Key_Down),
-            self,
-            context=QtCore.Qt.WidgetWithChildrenShortcut,
-            activated=self.down_arrow_clicked)
-        
-    def setValidator(self, *args, **kwargs):
-        super().setValidator(*args, **kwargs)
-        self.maximum = args[0].top()
-        self.minimum = args[0].bottom()
+
+# class inputFieldWithIncreaseByArrows(QLineEdit):
+#     """
+#     NOT USED
+#     QLineEdit with value increase/decrease by arrows
+#     """
     
-    def up_arrow_clicked(self):
-        new_value = self.parent.value + 1.0
-        if new_value <= self.maximum:
-            self.setText(str(new_value))
-            self.parent.inputFieldChanged()
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#         self.parent=kwargs["parent"]
+#         up_arrow_shortcut = QtWidgets.QShortcut(
+#             QtGui.QKeySequence(QtCore.Qt.Key_Up),
+#             self,
+#             context=QtCore.Qt.WidgetWithChildrenShortcut,
+#             activated=self.up_arrow_clicked)
+        
+#         down_arrow_shortcut = QtWidgets.QShortcut(
+#             QtGui.QKeySequence(QtCore.Qt.Key_Down),
+#             self,
+#             context=QtCore.Qt.WidgetWithChildrenShortcut,
+#             activated=self.down_arrow_clicked)
+        
+#     def setValidator(self, *args, **kwargs):
+#         super().setValidator(*args, **kwargs)
+#         self.maximum = args[0].top()
+#         self.minimum = args[0].bottom()
+    
+#     def up_arrow_clicked(self):
+#         new_value = self.parent.value + 1.0
+#         if new_value <= self.maximum:
+#             self.setText(str(new_value))
+#             self.parent.inputFieldChanged()
             
-    def down_arrow_clicked(self):
-        new_value = self.parent.value - 1.0
-        if new_value >= self.minimum:
-            self.setText(str(new_value))
-            self.parent.inputFieldChanged()
+#     def down_arrow_clicked(self):
+#         new_value = self.parent.value - 1.0
+#         if new_value >= self.minimum:
+#             self.setText(str(new_value))
+#             self.parent.inputFieldChanged()
         
 
 class LabeledSlider(QtWidgets.QWidget):
@@ -241,12 +278,10 @@ class LabeledSlider(QtWidgets.QWidget):
         self.slider.setMinimum(minimum)
         self.slider.setMaximum(maximum)
         self.slider.setValue(minimum)
-        if orientation==Qt.Horizontal:
-            self.slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
-            self.slider.setMinimumWidth(300) 
-        else:
-            self.slider.setTickPosition(QtWidgets.QSlider.TicksLeft)
-            self.slider.setMinimumHeight(300) 
+
+        self.slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
+        self.slider.setMinimumWidth(300) 
+
         self.slider.setTickInterval(interval)
         
         # step = (maximum-minimum)/10
@@ -257,34 +292,34 @@ class LabeledSlider(QtWidgets.QWidget):
         
     def paintEvent(self, e):
 
-        super(LabeledSlider,self).paintEvent(e)
+        super(LabeledSlider, self).paintEvent(e)
 
-        style=self.slider.style()
-        painter=QPainter(self)
-        st_slider=QStyleOptionSlider()
+        style = self.slider.style()
+        painter = QPainter(self)
+        st_slider = QStyleOptionSlider()
         st_slider.initFrom(self.slider)
-        st_slider.orientation=self.slider.orientation()
+        st_slider.orientation = self.slider.orientation()
 
-        length=style.pixelMetric(QStyle.PM_SliderLength, st_slider, self.slider)
-        available=style.pixelMetric(QStyle.PM_SliderSpaceAvailable, st_slider, self.slider)
+        length = style.pixelMetric(QStyle.PM_SliderLength, st_slider, self.slider)
+        available = style.pixelMetric(QStyle.PM_SliderSpaceAvailable, st_slider, self.slider)
 
         for v, v_str in self.levels:
-            rect=painter.drawText(QRect(), Qt.TextDontPrint, v_str)
-            x_loc=QStyle.sliderPositionFromValue(self.slider.minimum(),
+            rect = painter.drawText(QRect(), Qt.TextDontPrint, v_str)
+            x_loc = QStyle.sliderPositionFromValue(self.slider.minimum(),
                     self.slider.maximum(), v, available)+length//2
-            left=x_loc-rect.width()//2+self.left_margin
-            bottom=self.rect().bottom()
-            if v==self.slider.minimum():
-                if left<=0:
-                    self.left_margin=rect.width()//2-x_loc
-                if self.bottom_margin<=rect.height():
-                    self.bottom_margin=rect.height()
+            left = x_loc-rect.width()//2+self.left_margin
+            bottom = self.rect().bottom()
+            if v == self.slider.minimum():
+                if left <= 0:
+                    self.left_margin = rect.width() // 2 - x_loc
+                if self.bottom_margin <= rect.height():
+                    self.bottom_margin = rect.height()
 
                 self.layout.setContentsMargins(self.left_margin,
                         self.top_margin, self.right_margin,
                         self.bottom_margin)
-            if v==self.slider.maximum() and rect.width()//2>=self.right_margin:
-                self.right_margin=rect.width()//2
+            if v == self.slider.maximum() and rect.width() // 2 >= self.right_margin:
+                self.right_margin = rect.width() // 2
                 self.layout.setContentsMargins(self.left_margin,
                         self.top_margin, self.right_margin,
                         self.bottom_margin)

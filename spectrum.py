@@ -94,9 +94,7 @@ class Spectrum_1D:
         self.set_phase(Phase(self.opt_zero_order_phase_corr(0, 1, 0.001), None, None))
         
         self.auto_phase = dataclasses.replace(self.phase)
-        print(self.auto_phase is self.phase)
-        print(self.phase)
-        print(self.auto_phase)
+
         # value to be decided - placeholder currently
         self._signal_treshold = np.average(self.spectrum)/2
         
@@ -358,7 +356,7 @@ class Spectrum_1D:
 
 
         """
-        print("set_phase: ", new_phase)
+        # print("set_phase: ", new_phase)
         if type(new_phase) in (list, tuple):
             new_phase = Phase(*new_phase)
             
