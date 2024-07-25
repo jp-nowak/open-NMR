@@ -16,7 +16,7 @@ class Phase:
     pivot: float
 
 
-class phaseCorrectionWindow(QWidget):
+class PhaseCorrectionWindow(QWidget):
     """
     separate window for phase correction gui
     """
@@ -48,9 +48,9 @@ class phaseCorrectionWindow(QWidget):
 
         
         self.setGeometry(200, 200, 400, 150)
-        self.phc_0 = pcSlider("PH0", -360, 360, 60, ph0_value, parent=self)
-        self.phc_1 = pcSlider("PH1", -360, 360, 60, ph1_value, parent=self)
-        self.pivot = pcSlider("Pivot \n [%]", 0, 100, 25, pivot_value, parent=self)
+        self.phc_0 = SliderWithEditField("PH0", -360, 360, 60, ph0_value, parent=self)
+        self.phc_1 = SliderWithEditField("PH1", -360, 360, 60, ph1_value, parent=self)
+        self.pivot = SliderWithEditField("Pivot \n [%]", 0, 100, 25, pivot_value, parent=self)
         
         layout = QVBoxLayout()
         layout.addWidget(buttons)
@@ -88,7 +88,7 @@ class phaseCorrectionWindow(QWidget):
         self.phc_0.input_field.setValue(self.current_tab.experiment.phase.ph0/2*360)
         # self.phc_0.input_field.setText(format(self.current_tab.experiment.phase.ph0/2*360, "0.2f"))
         self.phc_1.slider.slider.setValue(int(self.current_tab.experiment.phase.ph1/2*360*100))
-        self.phc_1.input_field.setValue(self.current_tab.experiment.phase.ph0/2*360)
+        self.phc_1.input_field.setValue(self.current_tab.experiment.phase.ph1/2*360)
         # self.phc_1.input_field.setText(format(self.current_tab.experiment.phase.ph1/2*360, "0.2f"))
         self.pivot.slider.slider.setValue(int(self.current_tab.experiment.phase.pivot*100*100))
         self.pivot.input_field.setValue(self.current_tab.experiment.phase.pivot*100)
@@ -135,7 +135,7 @@ class phaseCorrectionWindow(QWidget):
         super().closeEvent(event)
         
 
-class pcSlider(QWidget):
+class SliderWithEditField(QWidget):
     """
     widget for choosing phase correction, form as below:
         label, slider, text input with position of slider

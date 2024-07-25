@@ -12,8 +12,9 @@ import numpy as np
 from spectrum import Spectrum_1D
 import math
 from helper import *
-from gui.ph_cor import phaseCorrectionWindow
 
+from gui.ph_cor import PhaseCorrectionWindow
+from gui.zero_filling import ZeroFillingAndTruncatingWindow
 
 class spectrum_painter(QWidget):
     def __init__(self, zoom_button, integrate_button, remove_button, pick_peak, palette2):
@@ -424,9 +425,10 @@ class openNMR(QMainWindow):
         
         # spectrum menu
         spectrum_menu = menubar.addMenu("Spectrum")
-        phase_correction = spectrum_menu.addAction("Phase Correction", self.phase_correction_gui)
+        phase_correction = spectrum_menu.addAction("Phase Correction", self.phaseCorrectionGui)
+        zero_filling = spectrum_menu.addAction("Zero filling/truncating", self.zeroFillingGui)
         
-    def phase_correction_gui(self):
+    def phaseCorrectionGui(self):
         """
         function which opens a window for phase correction
 
@@ -442,10 +444,26 @@ class openNMR(QMainWindow):
         if hasattr(self, "ph_cor_window"):
             return None
         
-        self.ph_cor_window = phaseCorrectionWindow(current_tab)
+        self.ph_cor_window = PhaseCorrectionWindow(current_tab) # this reference is deleted by PhaseCorrectionWindow window itself when it is closed
         self.ph_cor_window.show()
 
-    
+    def zeroFillingGui(self):
+        """
+        function which opens a window for zero filling and truncating
+
+        Returns
+        -------
+        None.
+
+        """
+        if not (current_tab := self.spectrum_viewer.currentWidget()):
+            return None
+        
+        self.zero_filling_window = ZeroFillingAndTruncatingWindow(current_tab)
+        self.zero_filling_window.show()
+        
+        pass
+
     def toggle_dragging(self, checked):
         current = self.spectrum_viewer.currentWidget()
         if current:
