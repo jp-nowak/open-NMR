@@ -38,6 +38,17 @@ class spectrum_painter(QWidget):
         self.box_actions = ['removing']
 
     def axis_generator(self, painter):
+        """
+        Well it generates the axis, there are a few problems here that need to be addressed
+        
+        - first of all we need a certain density of delimiters, this density is defined in `data_and_pars`
+        - if the 0.0 can be displayed, the delimiters should be numbered from 0.0
+        - there need to be some kind of margins so that numbers don't show up on the borders of the window
+
+        more or less that's why it looks like a laundromat and a fast food restaurant had a baby, and it's going through its rebellious teen phase
+        
+        """
+        
         # drawing axis delimiters, adjusts automatically
         # parameters
         ax_pos = self.p_size['h']-self.axis_pars['ax_padding']
@@ -83,6 +94,11 @@ class spectrum_painter(QWidget):
             painter.drawText(num_pos, del_text)
 
     def data_and_pars(self, experiment):
+        """
+        this method deals with the data and parameters, its just like,
+        some of them could probably be made dependent on the user's dpi,
+        but I'm waaaay too lazy for that right now
+        """
         # data
         self.drawstatus = True
         self.experiment = experiment
@@ -112,6 +128,17 @@ class spectrum_painter(QWidget):
             self.update()
 
     def mouseReleaseEvent(self, event):
+        """
+        Handles the mouse release event.
+
+        This function is called when the mouse is released. It performs different actions based on the current action.
+        - If the current action is 'zooming', it adjusts the range of the plot by updating the `width_vis` attribute and the `end_ppm` and `begin_ppm` attributes of the `axis_pars` dictionary.
+        - If the current action is 'integrating', it integrates the data within the selected range using the `integrate` method of the `experiment` object.
+        - If the current action is 'removing', it removes the integrals that fall within the selected range from the `integral_list` attribute of the `experiment` object.
+        - If the current action is 'pickpeak', it calls the `quick_peak` method of the `experiment` object with the selected range as an argument.
+        Finally, it updates the plot, resets the current action, and clears the selection.
+        """
+
         # adjusting rang
         width_select = [self.sel_region[0][0], self.sel_region[1][0]]
         width_select.sort()
@@ -146,13 +173,23 @@ class spectrum_painter(QWidget):
         self.selectstart = None
 
     def paintEvent(self, event=None):
+        """
+        basically it checkes in which state the user is and different parts of the method are called
+        
+        actions are grouped lists in self, so it is easily expandable,
+        with different behaviours for different groups
+        
+        the pen changes from accent to black, quite understandable
+        """
+
         painter = QPainter(self)
         
-        #when selecting
-        accent = self.palette2['accent']
+        # when selecting
+        accent = self.palette2['accent'] 
         accent.setAlphaF(0.5)
-        painter.setPen(QPen(accent, 0, Qt.SolidLine))
+        painter.setPen(QPen(accent, 0, Qt.SolidLine)) # changing to accent pen (with alpha)
         painter.setBrush(QBrush(accent))
+
         if any([state==self.current_action for state in self.range_actions]):
             painter.drawRect(self.selectstart.x(), 0,
                              self.selectend.x() - self.selectstart.x(),
@@ -163,7 +200,9 @@ class spectrum_painter(QWidget):
                              self.selectend.x() - self.selectstart.x(),
                              self.selectend.y() - self.selectstart.y())
 
-        painter.setPen(self.pen)
+        
+        painter.setPen(self.pen) # changing to plot pen (no alpha)
+        
         # updating window size
         rect = self.rect()
         self.p_size = {
@@ -198,6 +237,9 @@ class spectrum_painter(QWidget):
         # self.mousePressEvent()
 
     def integration_marks(self, painter):
+        """
+        this method deals with the bracket and the label positions, its boring and self explanatory
+        """
         label_padding = self.p_size['h']-self.axis_pars['spect_top_padding']+self.artist_pars['integ_pos']
         bracket_padding = self.p_size['h']-self.axis_pars['spect_top_padding']+self.artist_pars['integ_sep']
         label_list = []
@@ -239,12 +281,20 @@ class spectrum_painter(QWidget):
         pass
 
     def peak_marks(self, painter):
+        """
+        for anyone wondering, thiis draws the mark above the peak
+        so it needs a label and a line, the line consists of 4 points
+        it goes through the list of peaks in experiment, checks if they need to be drawn
+        creates a list of peaks, with their position and name, the place of the label, etc.
+        """
         label_origin = self.artist_pars['peak_pos']
-        label_pointer1 = self.artist_pars['peak_pos']+self.artist_pars['peak_sep']
-        label_pointer2 = self.artist_pars['peak_pos']+self.artist_pars['peak_sep']*2
-        label_pointer3 = self.artist_pars['peak_pos']+self.artist_pars['peak_sep']*3
-        label_pointer4 = self.artist_pars['peak_pos']+self.artist_pars['peak_sep']*4
-        peak_list = []
+        line_1 = self.artist_pars['peak_pos']+self.artist_pars['peak_sep']
+        line_2 = self.artist_pars['peak_pos']+self.artist_pars['peak_sep']*2
+        line_3 = self.artist_pars['peak_pos']+self.artist_pars['peak_sep']*3
+        line_4 = self.artist_pars['peak_pos']+self.artist_pars['peak_sep']*4
+        
+        peaks_todraw = []
+        
         for i in range(len(self.experiment.peak_list)):
             peak = self.experiment.peak_list[i]
             if peak[0]>self.width_vis[1] or peak[0]<self.width_vis[0]: continue
@@ -253,19 +303,19 @@ class spectrum_painter(QWidget):
             font_metrics = QFontMetrics(self.textfont)
             text_width = font_metrics.horizontalAdvance(peak_name)
             peak_pos = peak_pos*self.p_size['w']
-            peak_list.append([peak_pos-0.5*text_width, text_width, peak_name, peak_pos])
+            peaks_todraw.append([peak_pos-0.5*text_width, text_width, peak_name, peak_pos])
         
-        peak_list = rearrange(peak_list)
-        peak_list = [i + [i[0]+0.5*i[1]] for i in peak_list]
+        peaks_todraw = rearrange(peaks_todraw)
+        peaks_todraw = [i + [i[0]+0.5*i[1]] for i in peaks_todraw]
         #now it contains label pos, text_width, peak_name, peak_pos, label center pos
         
         painter.setPen(QPen(self.palette2['accent-dark']))
-        for peak in peak_list:
-            painter.drawLine(QPointF(peak[4], label_pointer1), QPointF(peak[4], label_pointer2))
-            painter.drawLine(QPointF(peak[4], label_pointer2), QPointF(peak[3], label_pointer3))
-            painter.drawLine(QPointF(peak[3], label_pointer3), QPointF(peak[3], label_pointer4))
+        for peak in peaks_todraw:
+            painter.drawLine(QPointF(peak[4], line_1), QPointF(peak[4], line_2))
+            painter.drawLine(QPointF(peak[4], line_2), QPointF(peak[3], line_3))
+            painter.drawLine(QPointF(peak[3], line_3), QPointF(peak[3], line_4))
         painter.setPen(self.pen)
-        for peak in peak_list:
+        for peak in peaks_todraw:
             painter.drawText(QPointF(peak[0], label_origin), peak[2])
 
 
