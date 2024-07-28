@@ -1,11 +1,20 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QFileDialog, QStackedWidget, QLabel, QFrame, QGridLayout
-from PyQt5.QtGui import QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase, QPen, QColor, QBrush
+
+import PyQt5.QtWidgets as QtWidgets
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
+                             QHBoxLayout, QPushButton, QFileDialog, QStackedWidget, 
+                             QLabel, QFrame, QGridLayout)
+from PyQt5.QtGui import (QPainter, QPolygonF, QFontMetrics, QFont, QFontDatabase, 
+                         QPen, QColor, QBrush)
 from PyQt5.QtCore import QPointF, Qt
+import PyQt5.QtCore as QtCore
 import numpy as np
 from spectrum import Spectrum_1D
 import math
 from helper import *
+
+from gui.ph_cor import PhaseCorrectionWindow
+from gui.zero_filling import ZeroFillingAndTruncatingWindow
 
 class spectrum_painter(QWidget):
     def __init__(self, zoom_button, integrate_button, remove_button, pick_peak, palette2):
@@ -91,7 +100,7 @@ class spectrum_painter(QWidget):
         # deln is a length of delimiter in pixels
         # incperppm: multiples - 2 => 0.5 is the minimum increment
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event=None):
         self.selectstart = event.pos()
         if self.current_action:
             self.sel_region[0][0] = self.selectstart.x()/self.p_size['w']
@@ -136,7 +145,7 @@ class spectrum_painter(QWidget):
         self.selectend = None
         self.selectstart = None
 
-    def paintEvent(self, event):
+    def paintEvent(self, event=None):
         painter = QPainter(self)
         
         #when selecting
@@ -179,6 +188,14 @@ class spectrum_painter(QWidget):
         self.integration_marks(painter)
         self.peak_marks(painter)
         painter.end()
+
+    def refresh(self):
+        """
+        refreshing plot of spectrum after modification of data inside Spectrum_1D
+        """
+        self.data = self.experiment.spectrum.copy()
+        self.update()
+        # self.mousePressEvent()
 
     def integration_marks(self, painter):
         label_padding = self.p_size['h']-self.axis_pars['spect_top_padding']+self.artist_pars['integ_pos']
@@ -253,7 +270,29 @@ class spectrum_painter(QWidget):
 
 
 class TabFrameWidget(QFrame):
+    """
+    widget which stores open spectra and allows switching between them
+    """
+    
+    # signal which is emited when spectrum button is clicked
+    # it carries reference to Spectrum_1D which is chosen as active spectrum
+    selectedSpectrumSignal = QtCore.pyqtSignal(object)
+
+    
     def __init__(self, sv_w):
+        """
+        
+
+        Parameters
+        ----------
+        sv_w : QStackedWidget
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         super().__init__()
         self.setObjectName('tabframe')
         self.sv_w = sv_w
@@ -267,6 +306,10 @@ class TabFrameWidget(QFrame):
         self.buttongrid.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         self.pt_indexlis = []
+        
+        
+        
+        
     
     def add_tab(self, pt_w):
         sele_btn = QPushButton(pt_w.info['samplename'])
@@ -284,10 +327,13 @@ class TabFrameWidget(QFrame):
         self.pt_indexlis.append([pt_w.info['samplename'], pt_index, pt_w])
     
     def seleClicked(self):
-        sender = self.sender()
+        sender = self.sender() # sender return widget which sent signal which activated function
         if sender:
+            # getting an index of spectrum_painter widget which is to be set as active in sv_w (QStackedWidget)
             index = [t for t in self.pt_indexlis if t[0]==sender.text()][0][1]
             self.sv_w.setCurrentIndex(index)
+            active_tab = self.sv_w.currentWidget()
+            self.selectedSpectrumSignal.emit(active_tab)
     
     def deleClicked(self):
         sender = self.sender()
@@ -333,6 +379,7 @@ class openNMR(QMainWindow):
         self.pick_peak.setCheckable(True)
         self.pick_peak.clicked.connect(self.toggle_peaks)
 
+        # frame with actions buttons on the left of app window
         actions_frame = QFrame()
         actions = QVBoxLayout(actions_frame)
         actions.addWidget(QLabel('Viewing'))
@@ -345,14 +392,18 @@ class openNMR(QMainWindow):
         actions.addWidget(self.pick_peak)
         actions.setAlignment(Qt.AlignmentFlag.AlignTop)
         
+        # middle area of window
         self.spectrum_viewer = QStackedWidget()
         self.spectrum_viewer.setObjectName('spectrumviewer')
-
+        
+        # frame on down left storing open spectra
         self.tabs_frame = TabFrameWidget(self.spectrum_viewer)
         
         toolbar = QVBoxLayout()
         toolbar.addWidget(actions_frame)
         toolbar.addWidget(self.tabs_frame)
+
+        self.createMenuBar()
 
         # widnow size, position, margins, etc
         size = {'w': 800, 'h': 400}
@@ -371,6 +422,58 @@ class openNMR(QMainWindow):
                 #if filename.endswith('.fid/'):
                     try: self.add_new_page(filename)
                     except: pass
+
+    def createMenuBar(self):
+        """
+        Function to create menu bar of app window
+        """
+        menubar = self.menuBar()
+        
+        # file menu
+        file_menu = menubar.addMenu("File")
+        open_file = file_menu.addAction("Open experiment folder", self.openFile)
+        close_app = file_menu.addAction("Exit", self.close)
+        
+        # spectrum menu
+        spectrum_menu = menubar.addMenu("Spectrum")
+        phase_correction = spectrum_menu.addAction("Phase Correction", self.phaseCorrectionGui)
+        zero_filling = spectrum_menu.addAction("Zero filling/truncating", self.zeroFillingGui)
+        
+    def phaseCorrectionGui(self):
+        """
+        function which opens a window for phase correction
+
+        Returns
+        -------
+        None.
+
+        """
+        # running gui for phase correction
+        if not (current_tab := self.spectrum_viewer.currentWidget()):
+            return None
+        
+        if hasattr(self, "ph_cor_window"):
+            return None
+        
+        self.ph_cor_window = PhaseCorrectionWindow(current_tab) # this reference is deleted by PhaseCorrectionWindow window itself when it is closed
+        self.ph_cor_window.show()
+
+    def zeroFillingGui(self):
+        """
+        function which opens a window for zero filling and truncating
+
+        Returns
+        -------
+        None.
+
+        """
+        if not (current_tab := self.spectrum_viewer.currentWidget()):
+            return None
+        
+        self.zero_filling_window = ZeroFillingAndTruncatingWindow(current_tab)
+        self.zero_filling_window.show()
+        
+        pass
 
     def toggle_dragging(self, checked):
         current = self.spectrum_viewer.currentWidget()
@@ -420,6 +523,8 @@ class openNMR(QMainWindow):
         
         self.spectrum_viewer.addWidget(painter_widget)
         self.tabs_frame.add_tab(painter_widget)
+
+    
 
 
 if __name__ == "__main__":

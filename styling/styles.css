@@ -1,8 +1,42 @@
 * {
 	font-family: Titillium Web;
 }
+
+QMenuBar {
+    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                      stop:0 lightgray, stop:1 darkgray);
+    spacing: 3px; /* spacing between menu bar items */
+}
+QMenuBar::item {
+    padding: 1px 4px;
+    background: transparent;
+    border-radius: 4px;
+	color: rgb(255, 255, 255);
+}
+QMenuBar::item:selected { /* when selected using mouse or keyboard */
+    background: #a8a8a8;
+}
+QMenuBar::item:pressed {
+    background: #888888;
+}
+
+QMenu {
+    background-color: #ABABAB;   
+    border: 1px solid black;
+    margin: 2px;
+}
+QMenu::item {
+    background-color: transparent;
+	color: rgb(255,255,255);
+}
+QMenu::item:selected { 
+    background-color: #654321;
+    color: rgb(255,255,255);
+}
+
 QWidget {
 	background: #303030;
+	color: white;
 }
 QFrame {
 	background-color: #3d3d3d;

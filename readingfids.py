@@ -285,8 +285,11 @@ def info_agilent(params):
         "operator" : "operator",
         "date" : "time_saved", # string "yyyymmddThhmmss"
         "obs_nucl_freq" : "sfrq", # [MHz]
-        "plot_begin" : "sp", # [Hz] beginning of plot
-        "points_number" : "np"# number of data points
+        # "plot_begin" : "sp", # [Hz] beginning of plot
+        "number_of_data_points" : "np", # number of data points
+        "acquisition_time" : "at", # [s]
+        "frequency_offset" : "tof",
+        "zero_frequency" : "reffrq"
         }
     
     # import of directly stated params
@@ -301,12 +304,20 @@ def info_agilent(params):
     # derived params
     if not info["spectrometer_freq"]:
         info["spectrometer_freq"] = round(info["lock_freq"]/DEUTERIUM_EPSILON)
-        
-    info["plot_end"] = info["plot_begin"] + info["spectral_width"] # [Hz]
+    
+    info["irradiation_frequency"] = info["zero_frequency"] - info["obs_nucl_freq"]
+    info["irradiation_frequency"] *= -1000000
+    info["plot_begin"] = info["irradiation_frequency"] - info["spectral_width"]/2
+    info["plot_end"] = info["irradiation_frequency"] + info["spectral_width"]/2
+    
+    # info["plot_end"] = info["plot_begin"] + info["spectral_width"] # [Hz]
     info["plot_begin_ppm"] = info["plot_begin"] / info["obs_nucl_freq"]
     info["plot_end_ppm"] = info["plot_end"] / info["obs_nucl_freq"]
     info["vendor"] = "agilent"
-    
+    info["number_of_data_points"] = int(info["number_of_data_points"])//2
+    info["dwell_time"] = info["acquisition_time"] / info["number_of_data_points"]
+    info["group_delay"] = 0.0
+    info["frequency_increment"] = info["spectral_width"] / info["number_of_data_points"]
     return info
 
 
@@ -342,7 +353,7 @@ def bruker_wrapper(path):
 
 def read_bruker_fid(fid_content, info):
     big_endian = bool(info["byte_order"])
-    el_number = info["number_of_data_points"]//2
+    el_number = info["number_of_data_points"]
     quadrature = True
 
     if info["data_type"] == 0:
@@ -352,10 +363,9 @@ def read_bruker_fid(fid_content, info):
     else:
         raise NotImplementedError("unknown primary data type")
         
-    # to be done elsewhere more cleanly
     fid = read_fid_1D(fid_content, 0, el_number, primary_type, 
                       quadrature, big_endian, reverse=big_endian)
-    fid = np.roll(fid, -round(info["group_delay"]))
+    fid = np.roll(fid, -int(info["group_delay"]))
     return [fid]
     
 def read_bruker_acqus(acqus_lines):
@@ -385,7 +395,9 @@ def bruker_info(params):
         "number_of_scans" : "$NS",
         "number_of_data_points" : "$TD", # number of complex points = number_of_data_points/2
         "data_type" : "$DTYPA",
-        "group_delay" : "$GRPDLY"
+        "group_delay" : "$GRPDLY",
+        "acquisition_time" : "$AT",
+        "irradiation_freq" : "$SFO1" # [s]
         }
     for i, j in params_keywords.items():
         try:
@@ -395,21 +407,27 @@ def bruker_info(params):
             value = None
         info[i] = value
         
-        
+    # calculation of plot edges x values
     info["plot_end"] = info["spectral_center"] + info["spectral_width"]/2
     info["plot_begin"] = info["spectral_center"] - info["spectral_width"]/2  
-    
     info["plot_begin_ppm"] = info["plot_begin"] / info["obs_nucl_freq"]
     info["plot_end_ppm"] = info["plot_end"] / info["obs_nucl_freq"]
     
-    info["number_of_data_points"] = int(info["number_of_data_points"] )
+    info["number_of_data_points"] = int(info["number_of_data_points"])//2
     info["vendor"] = "bruker"
+    
+    # calculation of acquisition time
+    info["dwell_time"] = 1/(info["spectral_width_ppm"]*info["irradiation_freq"])
+    if not info["acquisition_time"]:
+        info["acquisition_time"] = info["number_of_data_points"]*info["dwell_time"]
+    
+    info["frequency_increment"] = info["spectral_width"] / info["number_of_data_points"]
     
     return info
 
 
 if __name__ == "__main__":
-    info, fid = bruker_wrapper("D:/projekt nmr/open-NMR/example_fids/bruker/1")
+    pass
 
     
     
