@@ -17,25 +17,27 @@ from gui.ph_cor import PhaseCorrectionWindow
 from gui.zero_filling import ZeroFillingAndTruncatingWindow
 
 class spectrum_painter(QWidget):
-    def __init__(self, zoom_button, integrate_button, remove_button, pick_peak, palette2):
+    def __init__(self, bt_zoom, bt_integman, bt_remove, bt_pickman, bt_signalauto, palette2):
         super().__init__()
-        self.zoom_button = zoom_button
-        self.integrate_button = integrate_button
-        self.remove_button = remove_button
-        self.pick_peak = pick_peak
+        self.bt_zoom = bt_zoom
+        self.bt_integman = bt_integman
+        self.bt_remove = bt_remove
+        self.bt_pickman = bt_pickman
+        self.bt_signalauto = bt_signalauto
         self.drawstatus = False
         self.textfont = QFont('Times New Roman', 10)
         self.pen = QPen(QColor("black"))
         self.palette2 = palette2
         self.width_vis = [0, 1]
-        self.int_rangs = []
-        # dragging
+
+        # actions status and info
         self.current_action = None
         self.sel_region = [[0,0], [0,0]]
-        self.selectstart = None
-        self.selectend = None
-        self.range_actions = ['integrating','zooming','pickpeak']
-        self.box_actions = ['removing']
+        self.presspos = None
+        self.currentpos = None
+        self.actions_range = ['integ_man','zooming','peak_man']
+        self.actions_box = ['removing']
+        self.actions_pick_element = ['signal_auto']
 
     def axis_generator(self, painter):
         """
@@ -117,15 +119,19 @@ class spectrum_painter(QWidget):
         # incperppm: multiples - 2 => 0.5 is the minimum increment
 
     def mousePressEvent(self, event=None):
-        self.selectstart = event.pos()
+        self.presspos = event.pos()
         if self.current_action:
-            self.sel_region[0][0] = self.selectstart.x()/self.p_size['w']
+            self.sel_region[0][0] = self.presspos.x()/self.p_size['w']
+        if self.current_action == 'auto_signal':
+            pass
 
     def mouseMoveEvent(self, event):
-        self.selectend = event.pos()
+        self.currentpos = event.pos()
         if self.current_action:
-            self.sel_region[1][0] = self.selectend.x()/self.p_size['w']
+            self.sel_region[1][0] = self.currentpos.x()/self.p_size['w']
             self.update()
+        if self.current_action == 'auto_signal':
+            pass
 
     def mouseReleaseEvent(self, event):
         """
@@ -133,11 +139,20 @@ class spectrum_painter(QWidget):
 
         This function is called when the mouse is released. It performs different actions based on the current action.
         - If the current action is 'zooming', it adjusts the range of the plot by updating the `width_vis` attribute and the `end_ppm` and `begin_ppm` attributes of the `axis_pars` dictionary.
-        - If the current action is 'integrating', it integrates the data within the selected range using the `integrate` method of the `experiment` object.
+        - If the current action is 'integ_man', it integrates the data within the selected range using the `integrate` method of the `experiment` object.
         - If the current action is 'removing', it removes the integrals that fall within the selected range from the `integral_list` attribute of the `experiment` object.
-        - If the current action is 'pickpeak', it calls the `quick_peak` method of the `experiment` object with the selected range as an argument.
-        Finally, it updates the plot, resets the current action, and clears the selection.
+        - If the current action is 'peak_man', it calls the `quick_peak` method of the `experiment` object with the selected range as an argument.
+        - If the current action is 'signal_auto', it does nothing.
+
+        After performing the actions, it updates the plot, resets the current action, and clears the selection.
+
+        Parameters:
+            event (QMouseEvent): The mouse release event.
+
+        Returns:
+            None
         """
+        
 
         # adjusting rang
         width_select = [self.sel_region[0][0], self.sel_region[1][0]]
@@ -155,22 +170,26 @@ class spectrum_painter(QWidget):
             self.axis_pars['begin_ppm'] = self.info['plot_begin_ppm'] + width*(1-self.width_vis[1])
             
 
-        if self.current_action=='integrating':
+        if self.current_action=='integ_man':
             self.experiment.integrate(width_select_abs[0], width_select_abs[1], vtype="fraction")
         
         if self.current_action=='removing':
             self.experiment.integral_list = [el for el in self.experiment.integral_list if el[0]>width_select_abs[1] or el[1]<width_select_abs[0]]
         
-        if self.current_action=='pickpeak':self.experiment.quick_peak(width_select_abs)
+        if self.current_action=='peak_man':self.experiment.quick_peak(width_select_abs)
+
+        if self.current_action=='signal_auto': 
+            pass
 
         self.update()
-        self.integrate_button.setChecked(False)
-        self.zoom_button.setChecked(False)
-        self.remove_button.setChecked(False)
-        self.pick_peak.setChecked(False)
+        self.bt_integman.setChecked(False)
+        self.bt_zoom.setChecked(False)
+        self.bt_remove.setChecked(False)
+        self.bt_pickman.setChecked(False)
+        self.bt_signalauto.setChecked(False)
         self.current_action = None
-        self.selectend = None
-        self.selectstart = None
+        self.currentpos = None
+        self.presspos = None
 
     def paintEvent(self, event=None):
         """
@@ -190,15 +209,22 @@ class spectrum_painter(QWidget):
         painter.setPen(QPen(accent, 0, Qt.SolidLine)) # changing to accent pen (with alpha)
         painter.setBrush(QBrush(accent))
 
-        if any([state==self.current_action for state in self.range_actions]):
-            painter.drawRect(self.selectstart.x(), 0,
-                             self.selectend.x() - self.selectstart.x(),
+        if any([state==self.current_action for state in self.actions_range]):
+            painter.drawRect(self.presspos.x(), 0,
+                             self.currentpos.x() - self.presspos.x(),
                              self.p_size['h'])
 
-        if any([state==self.current_action for state in self.box_actions]):
-            painter.drawRect(self.selectstart.x(), self.selectstart.y(),
-                             self.selectend.x() - self.selectstart.x(),
-                             self.selectend.y() - self.selectstart.y())
+        if any([state==self.current_action for state in self.actions_box]):
+            painter.drawRect(self.presspos.x(), self.presspos.y(),
+                             self.currentpos.x() - self.presspos.x(),
+                             self.currentpos.y() - self.presspos.y())
+            
+        if any([state==self.current_action for state in self.actions_pick_element]):
+            accented, gray = match_peak(self.visible_selectables['peaks'], (self.currentpos.x(), self.current_action.y()))
+            painter.drawRect(accented)
+            painter.setPen(self.pen)
+            for rect in gray:
+                painter.drawRect(rect)
 
         
         painter.setPen(self.pen) # changing to plot pen (no alpha)
@@ -402,7 +428,8 @@ class openNMR(QMainWindow):
     def __init__(self):
         super().__init__()
         self.additional_palette = {'accent' : QColor("#558B6E"),
-                                   'accent-dark': QColor("#3B614D")}
+                                   'accent-dark': QColor("#3B614D"),
+                                   'gray': QColor("#C0C0C0")}
 
         title = "Open NMR"
         self.setWindowTitle(title)
@@ -417,17 +444,21 @@ class openNMR(QMainWindow):
         self.zoom_reset_button = QPushButton("Reset Zoom")
         self.zoom_reset_button.clicked.connect(self.reset_zoom)
 
-        self.integrate_button = QPushButton("Integrate Manually")
-        self.integrate_button.setCheckable(True)
-        self.integrate_button.clicked.connect(self.toggle_integration)
+        self.manual_integ_button = QPushButton("Manual Integration")
+        self.manual_integ_button.setCheckable(True)
+        self.manual_integ_button.clicked.connect(self.toggle_integ_man)
 
         self.remove_buton = QPushButton("Remove Element")
         self.remove_buton.setCheckable(True)
         self.remove_buton.clicked.connect(self.toggle_removing)
 
-        self.pick_peak = QPushButton("Pick Peak")
-        self.pick_peak.setCheckable(True)
-        self.pick_peak.clicked.connect(self.toggle_peaks)
+        self.manual_peak_button = QPushButton("Manual Peaks")
+        self.manual_peak_button.setCheckable(True)
+        self.manual_peak_button.clicked.connect(self.toggle_peaks_man)
+
+        self.auto_peak_button = QPushButton("Auto Signal")
+        self.auto_peak_button.setCheckable(True)
+        self.auto_peak_button.clicked.connect(self.toggle_signal_auto)
 
         # frame with actions buttons on the left of app window
         actions_frame = QFrame()
@@ -437,9 +468,10 @@ class openNMR(QMainWindow):
         actions.addWidget(self.zoom_button)
         actions.addWidget(self.zoom_reset_button)
         actions.addWidget(QLabel('Editing'))
-        actions.addWidget(self.integrate_button)
+        actions.addWidget(self.auto_peak_button)
+        actions.addWidget(self.manual_integ_button)
+        actions.addWidget(self.manual_peak_button)
         actions.addWidget(self.remove_buton)
-        actions.addWidget(self.pick_peak)
         actions.setAlignment(Qt.AlignmentFlag.AlignTop)
         
         # middle area of window
@@ -530,20 +562,25 @@ class openNMR(QMainWindow):
         if current:
             current.current_action = 'zooming'
 
-    def toggle_integration(self, checked):
+    def toggle_integ_man(self, checked):
         current = self.spectrum_viewer.currentWidget()
         if current:
-            current.current_action = 'integrating'
+            current.current_action = 'integ_man'
     
     def toggle_removing(self, checked):
         current = self.spectrum_viewer.currentWidget()
         if current:
             current.current_action = 'removing'
 
-    def toggle_peaks(self, checked):
+    def toggle_peaks_man(self, checked):
         current = self.spectrum_viewer.currentWidget()
         if current:
-            current.current_action = 'pickpeak'
+            current.current_action = 'peak_man'
+
+    def toggle_signal_auto(self, checked):
+        current = self.spectrum_viewer.currentWidget()
+        if current:
+            current.current_action = 'signal_auto'
 
     def reset_zoom(self):
         current = self.spectrum_viewer.currentWidget()
@@ -568,7 +605,7 @@ class openNMR(QMainWindow):
     def add_new_page(self, file):
         page_index = round(self.spectrum_viewer.count())
         painter_widget = spectrum_painter(
-            self.zoom_button, self.integrate_button, self.remove_buton, self.pick_peak, self.additional_palette)
+            self.zoom_button, self.manual_integ_button, self.remove_buton, self.manual_peak_button ,self.auto_peak_button, self.additional_palette)
         painter_widget.data_and_pars(Spectrum_1D.create_from_file(file))
         
         self.spectrum_viewer.addWidget(painter_widget)

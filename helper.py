@@ -49,3 +49,6 @@ def rearrange(boxlis):
                     tempboxlis[i][0] += 0.2*np.sign(diff)*abs(diff)
         boxlis = tempboxlis
     return boxlis
+
+def match_peak(boxes, mouse):
+    pass
