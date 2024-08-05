@@ -1,7 +1,38 @@
 import struct
 import collections
-import numpy as np
 import os
+from dataclasses import dataclass
+import numpy as np
+
+# self.info - guaranteed keys:
+    # "solvent"        : string
+    # "samplename"     : string
+    # "nucleus"        : string - observed nucleus e.g.: H1, C13 etc.
+    # "spectral_width" : float - [Hz] width of spectrum
+    # "obs_nucl_freq"  : float - [MHz] Larmor frequency of observed nucleus
+    # "plot_begin"     : float - [Hz] beginning of plot
+    # "plot_end"       : float - [Hz] end of plot
+    # "plot_ppm"       : float - [ppm] beginning of plot
+    # "plot_ppm"       : float - [ppm] end of plot
+    # "quadrature"     : bool: true - fid as complex numbers
+    # "vendor"         : string - producer of spectrometer
+    # "acquisition_time" : float - [s] time of acquisition (fid recording time for single scan)
+    # "frequency_increment" : float - [Hz] distance in Hz between data points of spectrum   
+    # "dwell_time" : float [s] time between data points of fid
+
+
+
+@dataclass
+class SpectrumInfo:
+    plot_begin : float # [Hz] beginning of spectrum
+    plot_end : float # [Hz] end of spectrum
+    plot_begin_ppm : float # [ppm] beginning of spectrum
+    plot_end_ppm : float # [ppm] end of spectrum
+    spectral_width : float # [Hz] width of spectrum 
+    acquisition_time : float # [s] aquisition time
+    dwell_time : float # [s] time between data points of fid
+    vendor : str # producer of spectrometer
+
 
 class EmptyClass:
     pass

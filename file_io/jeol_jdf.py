@@ -1,5 +1,6 @@
 import struct
 import numpy as np
+
 from general import parse_by_specification, read_value, read_array
 
 spec = """group,position,type,array_size,name
@@ -171,17 +172,17 @@ def parse_jdf_params(file_content, param_number, start, big_endian):
     ptr = start
     params = {}
     for i in range(param_number):
-        print(i, ptr, end=", ")
+        # print(i, ptr, end=", ")
         scaler = read_value(file_content, ptr+4, big_endian, "uint16", 0)
-        print(scaler, end=", ")
+        # print(scaler, end=", ")
         units = get_units(file_content, 5, ptr+6, big_endian)
-        print(units, end=", ")
+        # print(units, end=", ")
         value_type = value_type_table[read_value(file_content, ptr+32, big_endian, "uint32", 0)]
-        print(value_type, end=", ")
+        # print(value_type, end=", ")
         value_name = read_value(file_content, ptr+36, big_endian, "string", 28)
         value_name = value_name[:value_name.find("\x00")]
         value_name = value_name[:value_name.find(" ")]
-        print(value_name, end=", ")
+        # print(value_name, end=", ")
         if value_type == "String":
             value = read_value(file_content, ptr+16, big_endian, "string", 16)
         elif value_type == "Integer":
@@ -194,7 +195,7 @@ def parse_jdf_params(file_content, param_number, start, big_endian):
             value = b+a*1j if big_endian else a+b*1j
         elif value_type == "Infinity":
             value = read_value(file_content, ptr+16, big_endian, "int32", 0)
-        print(value)
+        # print(value)
         params[value_name] = (scaler, units, value)
         ptr += 64
     return params
@@ -215,10 +216,9 @@ def get_units(file_content, number_of_units, start, big_endian):
         unit_list.append((prefix, power, unit))
         ptr += 2
     return unit_list
-    
-    
+        
 if __name__ == "__main__":
-    filepath = ""
+    filepath = "C:/Users/Jan/Desktop/jeolconverter-master/data/Rutin_NMRdata_400MHz_DMSOd6_Jeol/Rutin_3080ug200uL_DMSOd6_qHNMR_400MHz_Jeol.jdf"
     with open(filepath, "rb") as file:
         file_content = file.read()
         
@@ -226,8 +226,10 @@ if __name__ == "__main__":
     params = parse_jdf_params(file_content, header.file_info.param_high_index, 
                               header.file_info.param_start+16, header.file_info.big_endian)
     
+    for i, j in params.items():
+        print(i, j[2])
 
-        
+
         
                 
     

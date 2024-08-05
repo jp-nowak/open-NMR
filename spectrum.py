@@ -10,7 +10,7 @@ import numpy as np
 import scipy.signal as spsig
 import scipy.stats as spstat
 
-import readingfids
+from readingfids import open_experiment
 import processing
 
 @dataclasses.dataclass
@@ -112,17 +112,8 @@ class Spectrum_1D:
         # print(self.phase_correction)
 
     @classmethod
-    def create_from_file(cls, path):
-        #to be considered: open() exceptions 
-        path = os.path.abspath(path)
-        ftype = readingfids.fid_file_type(path)
-        if ftype == "agilent":
-            info, fid = readingfids.agilent_wrapper(path)
-        elif ftype == "bruker":
-            info, fid = readingfids.bruker_wrapper(path)
-        else:
-            raise NotImplementedError(f"not implemented file format: {ftype}")
-        
+    def create_from_file(cls, path):        
+        info, fid = open_experiment(path)
         return cls(fid[0], info, path)
     
     def zero_fill_to_next_power_of_two(self):
@@ -488,7 +479,6 @@ class Spectrum_1D:
     # "plot_ppm"       : float - [ppm] beginning of plot
     # "plot_ppm"       : float - [ppm] end of plot
     # "quadrature"     : bool: true - fid as complex numbers
-    # "vendor"         : string - producer of spectrometer
     # "acquisition_time" : float - [s] time of acquisition (fid recording time for single scan)
     # "frequency_increment" : float - [Hz] distance in Hz between data points of spectrum   
     # "dwell_time" : float [s] time between data points of fid
