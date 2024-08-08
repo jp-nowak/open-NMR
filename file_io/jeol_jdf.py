@@ -1,7 +1,9 @@
 import struct
 import numpy as np
 
-from general import parse_by_specification, read_value, read_array
+from file_io.general import parse_by_specification, read_value, read_array
+from spectrum_classes.spectrum_info import SpectrumInfo
+
 
 spec = """group,position,type,array_size,name
 file_info,0,string,8,filetype
@@ -185,6 +187,8 @@ def parse_jdf_params(file_content, param_number, start, big_endian):
         # print(value_name, end=", ")
         if value_type == "String":
             value = read_value(file_content, ptr+16, big_endian, "string", 16)
+            value = value[:value.find("\x00")]
+            value = value[:value.find("  ")]
         elif value_type == "Integer":
             value = read_value(file_content, ptr+16, big_endian, "int32", 0)
         elif value_type == "Float":
@@ -216,18 +220,36 @@ def get_units(file_content, number_of_units, start, big_endian):
         unit_list.append((prefix, power, unit))
         ptr += 2
     return unit_list
-        
-if __name__ == "__main__":
-    filepath = ""
-    with open(filepath, "rb") as file:
-        file_content = file.read()
-        
-    header = parse_jdf_header(file_content)
-    params = parse_jdf_params(file_content, header.file_info.param_high_index, 
-                              header.file_info.param_start+16, header.file_info.big_endian)
+
+def jdf_info(params, header):
     
-    for i, j in params.items():
-        print(i, j[2])
+    spectrum_center_ppm = params["X_OFFSET"][2]
+    spectrum_center_Hz = params["X_FREQ"][2] * spectrum_center_ppm / 1000000
+    spectral_width = params["X_SWEEP_CLIPPED"][2]
+    plot_end = spectrum_center_Hz - spectral_width / 2
+    plot_begin = spectrum_center_Hz + spectral_width / 2
+    
+    info = SpectrumInfo(
+        plot_begin = plot_begin, 
+        plot_end = plot_end,
+        plot_begin_ppm = plot_begin / params["X_FREQ"][2],
+        plot_end_ppm = plot_end / params["X_FREQ"][2],
+        spectral_width = spectral_width,
+        acquisition_time = params["x_acq_time"][2],
+        obs_nucl_freq = params["X_FREQ"][2],
+        dwell_time = params["x_acq_time"][2] / header.axis_info.element_number[0],
+        frequency_increment = spectral_width / header.axis_info.element_number[0],
+        group_delay = 0, # TO BE DONE
+        vendor = "jeol",
+        solvent = params["solvent"][2],
+        samplename = header.experiment_info.title,
+        nucleus = params["X_DOMAIN"][2],
+        )
+    
+    return info
+
+
+        
 
 
         

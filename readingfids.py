@@ -2,6 +2,7 @@ import os
 
 from file_io.agilent import agilent_wrapper
 from file_io.bruker import bruker_wrapper
+import file_io.jeol_jdf
 
 def fid_file_type(path):
     if not os.path.isfile(os.path.join(path, "fid")):
