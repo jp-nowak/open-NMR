@@ -218,7 +218,7 @@ def get_units(file_content, number_of_units, start, big_endian):
     return unit_list
         
 if __name__ == "__main__":
-    filepath = "C:/Users/Jan/Desktop/jeolconverter-master/data/Rutin_NMRdata_400MHz_DMSOd6_Jeol/Rutin_3080ug200uL_DMSOd6_qHNMR_400MHz_Jeol.jdf"
+    filepath = ""
     with open(filepath, "rb") as file:
         file_content = file.read()
         
