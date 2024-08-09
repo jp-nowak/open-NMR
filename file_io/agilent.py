@@ -71,13 +71,13 @@ def agilent_wrapper(path):
     status_dict, headers, fid, file_header = read_agilent_fid(fid_content)
     return info, fid
 
-def agilent_wrapper_with_header(path):
-    # agilent - file header size 32 bytes, block headers 28 bytes
-    fid_content, procpar_lines = open_experiment_folder_agilent(path)
-    procpar = read_agilent_procpar(procpar_lines)
-    info = info_agilent(procpar)
-    status_dict, headers, fid, file_header = read_agilent_fid(fid_content)
-    return info, fid, headers, file_header
+# def agilent_wrapper_with_header(path):
+#     # agilent - file header size 32 bytes, block headers 28 bytes
+#     fid_content, procpar_lines = open_experiment_folder_agilent(path)
+#     procpar = read_agilent_procpar(procpar_lines)
+#     info = info_agilent(procpar)
+#     status_dict, headers, fid, file_header = read_agilent_fid(fid_content)
+#     return info, fid, headers, file_header
 
 def read_agilent_fid(fid_content):
     ptr = 0

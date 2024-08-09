@@ -434,7 +434,7 @@ class openNMR(QMainWindow):
         title = "Open NMR"
         self.setWindowTitle(title)
 
-        self.file_button = QPushButton("Open Folder")
+        self.file_button = QPushButton("Open File")
         self.file_button.clicked.connect(self.openFile)
 
         self.zoom_button = QPushButton("Zoom")
@@ -513,7 +513,7 @@ class openNMR(QMainWindow):
         
         # file menu
         file_menu = menubar.addMenu("File")
-        open_file = file_menu.addAction("Open experiment folder", self.openFile)
+        open_file = file_menu.addAction("Open file", self.openFile)
         close_app = file_menu.addAction("Exit", self.close)
         
         # spectrum menu
@@ -594,9 +594,9 @@ class openNMR(QMainWindow):
 
     def openFile(self):
         file_dialog = QFileDialog(self)
-        file_dialog.setWindowTitle('Choose a folder')
-        file_dialog.setFileMode(QFileDialog.FileMode.Directory)
-        file_dialog.setOption(QFileDialog.Option.ShowDirsOnly)
+        file_dialog.setWindowTitle('Choose a File')
+        # file_dialog.setFileMode(QFileDialog.FileMode.Directory)
+        # file_dialog.setOption(QFileDialog.Option.ShowDirsOnly)
         selected_file = []
         if file_dialog.exec():
             selected_file = file_dialog.selectedFiles()[0]

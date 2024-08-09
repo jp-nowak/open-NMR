@@ -226,14 +226,14 @@ def jdf_info(params, header):
     spectrum_center_ppm = params["X_OFFSET"][2]
     spectrum_center_Hz = params["X_FREQ"][2] * spectrum_center_ppm / 1000000
     spectral_width = params["X_SWEEP_CLIPPED"][2]
-    plot_end = spectrum_center_Hz - spectral_width / 2
-    plot_begin = spectrum_center_Hz + spectral_width / 2
+    plot_end = spectrum_center_Hz + spectral_width / 2
+    plot_begin = spectrum_center_Hz - spectral_width / 2
     
     info = SpectrumInfo(
         plot_begin = plot_begin, 
         plot_end = plot_end,
-        plot_begin_ppm = plot_begin / params["X_FREQ"][2],
-        plot_end_ppm = plot_end / params["X_FREQ"][2],
+        plot_begin_ppm = plot_begin / params["X_FREQ"][2] * 1000000,
+        plot_end_ppm = plot_end / params["X_FREQ"][2] * 1000000,
         spectral_width = spectral_width,
         acquisition_time = params["x_acq_time"][2],
         obs_nucl_freq = params["X_FREQ"][2],
@@ -248,13 +248,24 @@ def jdf_info(params, header):
     
     return info
 
+def read_fid(file_content, header):
+    fid = read_array(file_content, header.file_info.data_start,
+          header.axis_info.element_number[0], header.file_info.element_type,
+          True, header.file_info.big_endian, header.file_info.big_endian)
 
+    return fid
+
+def jdf_wrapper(path):
+    with open(path, "rb") as file:
+        file_content = file.read()
         
-
-
-        
+    header = parse_jdf_header(file_content)
+    params = parse_jdf_params(file_content, header.file_info.param_high_index, 
+                              header.file_info.param_start+16, header.file_info.big_endian)
+    info = jdf_info(params, header)
+    fid = read_fid(file_content, header)
                 
-    
+    return info, [fid]
         
         
         

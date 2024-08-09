@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 
 
@@ -44,6 +44,9 @@ class SpectrumInfo:
     
     def __getitem__(self, key):
         return getattr(self, key)
+    
+    def copy(self):
+        return replace(self)
     
 if __name__ == "__main__":
     info = SpectrumInfo(0, 0, 0, 0, 0, 0, 0, 0, 0, "", "", "", "")
