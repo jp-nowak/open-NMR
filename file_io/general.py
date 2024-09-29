@@ -227,8 +227,8 @@ def read_array(file_content, ptr, el_number, primary_type, complex_values, big_e
     for i in range(el_number):
         fid[i] = read_element(struct.unpack(el_specifier, file_content[ptr:ptr+el_size]))
         ptr += el_size
-        
-        
+    # print(f"end ptr {ptr}")
+    # print("first elem", fid[0])
     return fid
 
 # primary_type | int16       int32       int64       float32       float64

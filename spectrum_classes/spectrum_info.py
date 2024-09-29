@@ -36,10 +36,13 @@ class SpectrumInfo:
     frequency_increment : float # [Hz] distance between points of spectrum
     
     group_delay : float # [number of points] delayed by technical aspects of aquisition
+    trimmed : float # [% of points] to be cut from edges of ft transformed spectrum
+    # to ensure that it has correct positions in respect to x axis
+    # used in ugly workaround for jeol spectra
     
     vendor : str # producer of spectrometer
     solvent : str # solvent in which spectrum was measured
-    samplename : str #
+    samplename : str # samplename
     nucleus : str # observed nucleus
     
     def __getitem__(self, key):
@@ -49,5 +52,5 @@ class SpectrumInfo:
         return replace(self)
     
 if __name__ == "__main__":
-    info = SpectrumInfo(0, 0, 0, 0, 0, 0, 0, 0, 0, "", "", "", "")
+    info = SpectrumInfo(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "", "", "")
     

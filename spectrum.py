@@ -7,8 +7,8 @@ Created on Fri Mar  1 14:19:35 2024
 import os
 import dataclasses
 import numpy as np
-import scipy.signal as spsig
-import scipy.stats as spstat
+# import scipy.signal as spsig
+# import scipy.stats as spstat
 
 from readingfids import open_experiment
 import processing
@@ -102,9 +102,9 @@ class Spectrum_1D:
         
         self.calc_treshold()
         
-        #self.find_peaks()
+        # self.find_peaks()
         
-        #print(self.info["group_delay"])
+        # print(self.info["group_delay"])
         # print(max(self.spectrum))
         # print(self._signal_treshold)
         # print(len(self._fid))
@@ -146,14 +146,23 @@ class Spectrum_1D:
         self.pow_spectrum = pow_spectr
     
     def generate_spectrum(self):
+        pass
+        # a = np.fft.fft(np.real(self._fid))
+        # b = np.fft.fft(np.imag(self._fid))
+        # spectrum = np.array([i + j for i, j in zip(a,b)])
         # # # 
         ft = np.fft.fft(self._fid)
         left_half = ft[:len(ft)//2][::-1]
         rigth_half = ft[len(ft)//2:][::-1]
         spectrum = np.concatenate((left_half, rigth_half))
+        if self.info["vendor"] == "jeol":
+            spectrum = spectrum[int(self.info["trimmed"]/100*len(spectrum)):
+                                len(spectrum)-int(self.info["trimmed"]/100*len(spectrum))]
         
         self._complex_spectrum = spectrum
+        # # self._complex_spectrum = rigth_half
         self.spectrum = np.real(self._complex_spectrum)
+        
     
     def reset_integrals(self):
         """
@@ -451,17 +460,17 @@ class Spectrum_1D:
         
         self._signal_treshold = treshold
         
-    def find_peaks(self):
-        # to be considered: minimum peak height and distance, low concentration spectra, solvent peaks
-        elem, _ = spsig.find_peaks(self.spectrum, height=50*self._signal_treshold, 
-                                   distance=round((1/self.info["spectral_width"])*len(self.spectrum)))
-        elem = elem/len(self.spectrum)
-        self.auto_peak_list.extend(elem)
+    # def find_peaks(self):
+    #     # to be considered: minimum peak height and distance, low concentration spectra, solvent peaks
+    #     elem, _ = spsig.find_peaks(self.spectrum, height=50*self._signal_treshold, 
+    #                                distance=round((1/self.info["spectral_width"])*len(self.spectrum)))
+    #     elem = elem/len(self.spectrum)
+    #     self.auto_peak_list.extend(elem)
         
-        elem = 1 - (elem / len(self.spectrum))
-        elem = elem*(self.info["plot_end_ppm"] - self.info["plot_begin_ppm"])
-        elem = elem+self.info["plot_begin_ppm"]
-        # print(elem)
+    #     elem = 1 - (elem / len(self.spectrum))
+    #     elem = elem*(self.info["plot_end_ppm"] - self.info["plot_begin_ppm"])
+    #     elem = elem+self.info["plot_begin_ppm"]
+    #     # print(elem)
         
 
 

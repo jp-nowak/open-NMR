@@ -1,7 +1,7 @@
 import struct
 import numpy as np
 
-from file_io.general import parse_by_specification, read_value, read_array
+from file_io.general import parse_by_specification, read_value, read_array, sizes
 from spectrum_classes.spectrum_info import SpectrumInfo
 
 
@@ -226,8 +226,8 @@ def jdf_info(params, header):
     spectrum_center_ppm = params["X_OFFSET"][2]
     spectrum_center_Hz = params["X_FREQ"][2] * spectrum_center_ppm / 1000000
     spectral_width = params["X_SWEEP_CLIPPED"][2]
-    plot_end = spectrum_center_Hz + spectral_width / 2
-    plot_begin = spectrum_center_Hz - spectral_width / 2
+    plot_end = (spectrum_center_Hz + spectral_width / 2)
+    plot_begin = (spectrum_center_Hz - spectral_width / 2)
     
     info = SpectrumInfo(
         plot_begin = plot_begin, 
@@ -239,7 +239,8 @@ def jdf_info(params, header):
         obs_nucl_freq = params["X_FREQ"][2],
         dwell_time = params["x_acq_time"][2] / header.axis_info.element_number[0],
         frequency_increment = spectral_width / header.axis_info.element_number[0],
-        group_delay = 0, # TO BE DONE
+        group_delay = 20, # TO BE DONE
+        trimmed = 10,
         vendor = "jeol",
         solvent = params["solvent"][2],
         samplename = header.experiment_info.title,
@@ -249,11 +250,22 @@ def jdf_info(params, header):
     return info
 
 def read_fid(file_content, header):
-    fid = read_array(file_content, header.file_info.data_start,
+    print("data start", header.file_info.data_start)
+    fid_real = read_array(file_content, header.file_info.data_start,
           header.axis_info.element_number[0], header.file_info.element_type,
-          True, header.file_info.big_endian, header.file_info.big_endian)
-
-    return fid
+          False, header.file_info.big_endian, header.file_info.big_endian)
+    
+    
+    
+    array_size = header.axis_info.element_number[0] * sizes[header.file_info.element_type]
+    print("second part", header.file_info.data_start + array_size)
+    fid_imag = read_array(file_content, header.file_info.data_start + array_size,
+          header.axis_info.element_number[0], header.file_info.element_type,
+          False, header.file_info.big_endian, header.file_info.big_endian)
+    
+    
+    
+    return (fid_real - fid_imag*1j)
 
 def jdf_wrapper(path):
     with open(path, "rb") as file:
@@ -264,9 +276,10 @@ def jdf_wrapper(path):
                               header.file_info.param_start+16, header.file_info.big_endian)
     info = jdf_info(params, header)
     fid = read_fid(file_content, header)
-                
+    fid = np.roll(fid, -int(info.group_delay))
     return info, [fid]
         
+
         
         
         
