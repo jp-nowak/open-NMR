@@ -77,6 +77,8 @@ class Spectrum_1D:
         
         self.generate_spectrum()
         
+
+        
         
         self._integral_rel_one = None
         self.integral_list = []
@@ -130,6 +132,16 @@ class Spectrum_1D:
     
     def zero_to_number(self, number):
         self._fid = processing.zero_fill_to_number(self._fid, number)
+        self.generate_spectrum()
+        
+    def truncate_to_number(self, number):
+        self._fid = self._fid[:number]
+        self.generate_spectrum()
+        
+    def restore_fid(self):
+        _, self._fid = open_experiment(self.path)
+        self._fid = self._fid[0]
+        self.generate_spectrum()
         
     def apodize(self, function_type, *params):
         if function_type == "exponential":

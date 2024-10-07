@@ -37,7 +37,7 @@ def data_prep(data, width, height, rang):
 def rearrange(boxlis):
     """
     rearranges boxlike (position,width) entities on a scale of 0,1 so that they don't overlap
-    fast, unrealiable, cheap and cumbersome, also known as fucc
+    
     """
     for n in range(30):
         tempboxlis = boxlis.copy()

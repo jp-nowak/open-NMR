@@ -306,8 +306,8 @@ class LabeledSlider(QtWidgets.QWidget):
         for v, v_str in self.levels:
             rect = painter.drawText(QRect(), Qt.TextDontPrint, v_str)
             x_loc = QStyle.sliderPositionFromValue(self.slider.minimum(),
-                    self.slider.maximum(), v, available)+length//2
-            left = x_loc-rect.width()//2+self.left_margin
+                    self.slider.maximum(), v, available) + length//2
+            left = x_loc-rect.width() // 2+self.left_margin
             bottom = self.rect().bottom()
             if v == self.slider.minimum():
                 if left <= 0:
@@ -323,7 +323,7 @@ class LabeledSlider(QtWidgets.QWidget):
                 self.layout.setContentsMargins(self.left_margin,
                         self.top_margin, self.right_margin,
                         self.bottom_margin)
-            pos=QPoint(left, bottom)
+            pos = QPoint(left, bottom)
             painter.drawText(pos, v_str)
         return
 

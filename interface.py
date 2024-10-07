@@ -11,7 +11,7 @@ import PyQt5.QtCore as QtCore
 import numpy as np
 from spectrum import Spectrum_1D
 import math
-from helper import *
+from helper import data_prep, rearrange, match_peak
 
 from gui.ph_cor import PhaseCorrectionWindow
 from gui.zero_filling import ZeroFillingAndTruncatingWindow
