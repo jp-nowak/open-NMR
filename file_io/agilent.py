@@ -5,6 +5,7 @@ import os
 import numpy as np
 
 from file_io.general import parse_by_specification, read_value, read_array
+from spectrum_classes.spectrum_info import SpectrumInfo
 
 DEUTERIUM_EPSILON = 0.1535069
 
@@ -151,6 +152,19 @@ def open_experiment_folder_agilent(path):
     
     return fid_content, procpar_lines
 
+# def read_agilent_procpar(procpar_lines):
+#     params = dict()
+#     key = "error"
+#     params[key] = []
+#     for line in procpar_lines:
+#         words = line.split()
+#         if words[0][0].isalpha():
+#             key = words[0]
+#             params[key] = [words[1:]]
+#         else:
+#             params[key].append(words)
+#     return params
+
 def read_agilent_procpar(procpar_lines):
     params = dict()
     key = "error"
@@ -162,54 +176,86 @@ def read_agilent_procpar(procpar_lines):
             params[key] = [words[1:]]
         else:
             params[key].append(words)
-    return params
+    del params["error"]
+
+    return {i : j[1][1] for i,j in params.items()}
+
+# def info_agilent(params):
+#     info = dict()
+#     params_keywords = {
+#         "solvent" : "solvent",
+#         "lock_freq" : "lockfreq_", # [MHz] lock (deuterium) frequency of spectrometer
+#         "samplename" : "samplename",
+#         "spectrometer_freq" : "h1freq", # [MHz] proton frequency of spectrometer
+#         "experiment" : "pslabel",
+#         "experiment_type" : "apptype",
+#         "nucleus" : "tn", # observed nucleus An np H1, C13 etc.
+#         "spectral_width" : "sw", # [Hz]
+#         "studyowner" : "studyowner",
+#         "operator" : "operator",
+#         "date" : "time_saved", # string "yyyymmddThhmmss"
+#         "obs_nucl_freq" : "sfrq", # [MHz]
+#         # "plot_begin" : "sp", # [Hz] beginning of plot
+#         "number_of_data_points" : "np", # number of data points
+#         "acquisition_time" : "at", # [s]
+#         "frequency_offset" : "tof",
+#         "zero_frequency" : "reffrq"
+#         }
+    
+#     # import of directly stated params
+#     for i, j in params_keywords.items():
+#         try:
+#             value = params[j][1][1]
+#             value = float(value) if value.replace('.','',1).replace('-','',1).isdigit() else value[1:-1]
+#         except KeyError:
+#             value = None
+#         info[i] = value
+        
+#     # derived params
+#     if not info["spectrometer_freq"]:
+#         info["spectrometer_freq"] = round(info["lock_freq"]/DEUTERIUM_EPSILON)
+    
+#     info["irradiation_frequency"] = info["zero_frequency"] - info["obs_nucl_freq"]
+#     info["irradiation_frequency"] *= -1000000
+#     info["plot_begin"] = info["irradiation_frequency"] - info["spectral_width"]/2
+#     info["plot_end"] = info["irradiation_frequency"] + info["spectral_width"]/2
+    
+#     # info["plot_end"] = info["plot_begin"] + info["spectral_width"] # [Hz]
+#     info["plot_begin_ppm"] = info["plot_begin"] / info["obs_nucl_freq"]
+#     info["plot_end_ppm"] = info["plot_end"] / info["obs_nucl_freq"]
+#     info["vendor"] = "agilent"
+#     info["number_of_data_points"] = int(info["number_of_data_points"])//2
+#     info["dwell_time"] = info["acquisition_time"] / info["number_of_data_points"]
+#     info["group_delay"] = 0.0
+#     info["frequency_increment"] = info["spectral_width"] / info["number_of_data_points"]
+#     return info
 
 def info_agilent(params):
-    info = dict()
-    params_keywords = {
-        "solvent" : "solvent",
-        "lock_freq" : "lockfreq_", # [MHz] lock (deuterium) frequency of spectrometer
-        "samplename" : "samplename",
-        "spectrometer_freq" : "h1freq", # [MHz] proton frequency of spectrometer
-        "experiment" : "pslabel",
-        "experiment_type" : "apptype",
-        "nucleus" : "tn", # observed nucleus An np H1, C13 etc.
-        "spectral_width" : "sw", # [Hz]
-        "studyowner" : "studyowner",
-        "operator" : "operator",
-        "date" : "time_saved", # string "yyyymmddThhmmss"
-        "obs_nucl_freq" : "sfrq", # [MHz]
-        # "plot_begin" : "sp", # [Hz] beginning of plot
-        "number_of_data_points" : "np", # number of data points
-        "acquisition_time" : "at", # [s]
-        "frequency_offset" : "tof",
-        "zero_frequency" : "reffrq"
-        }
     
-    # import of directly stated params
-    for i, j in params_keywords.items():
-        try:
-            value = params[j][1][1]
-            value = float(value) if value.replace('.','',1).replace('-','',1).isdigit() else value[1:-1]
-        except KeyError:
-            value = None
-        info[i] = value
-        
-    # derived params
-    if not info["spectrometer_freq"]:
-        info["spectrometer_freq"] = round(info["lock_freq"]/DEUTERIUM_EPSILON)
+    zero_frequency = float(params["reffrq"])
+    obs_nucleus_freq = float(params["sfrq"])
+    spectral_width_Hz = float(params["sw"])
+    elements_number = int(params["np"])
+    aquisition_time = float(params["at"])
     
-    info["irradiation_frequency"] = info["zero_frequency"] - info["obs_nucl_freq"]
-    info["irradiation_frequency"] *= -1000000
-    info["plot_begin"] = info["irradiation_frequency"] - info["spectral_width"]/2
-    info["plot_end"] = info["irradiation_frequency"] + info["spectral_width"]/2
+    irradiation_frequency = (zero_frequency - obs_nucleus_freq) * -1000000
+    plot_begin = irradiation_frequency - spectral_width_Hz / 2
+    plot_end = irradiation_frequency + spectral_width_Hz / 2
     
-    # info["plot_end"] = info["plot_begin"] + info["spectral_width"] # [Hz]
-    info["plot_begin_ppm"] = info["plot_begin"] / info["obs_nucl_freq"]
-    info["plot_end_ppm"] = info["plot_end"] / info["obs_nucl_freq"]
-    info["vendor"] = "agilent"
-    info["number_of_data_points"] = int(info["number_of_data_points"])//2
-    info["dwell_time"] = info["acquisition_time"] / info["number_of_data_points"]
-    info["group_delay"] = 0.0
-    info["frequency_increment"] = info["spectral_width"] / info["number_of_data_points"]
-    return info
+    return SpectrumInfo(
+        plot_begin = plot_begin,
+        plot_end = plot_end,
+        plot_begin_ppm = plot_begin / obs_nucleus_freq,
+        plot_end_ppm = plot_end / obs_nucleus_freq,
+        spectral_width = spectral_width_Hz,
+        acquisition_time = aquisition_time,
+        obs_nucl_freq = obs_nucleus_freq,
+        dwell_time = aquisition_time / elements_number,
+        frequency_increment = spectral_width_Hz / elements_number,
+        group_delay = 0.0,
+        trimmed = 0.0,
+        vendor = "agilent",
+        solvent = params["solvent"][1:-1],
+        samplename = params["samplename"][1:-1],
+        nucleus = params["tn"][1:-1]
+        )

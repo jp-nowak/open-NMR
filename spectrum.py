@@ -90,8 +90,8 @@ class Spectrum_1D:
         self.phase = Phase(0.0, 0.0, 0.5)
         
         # to be done somewhere else, why pivot should be in 0.75? test with more spectra
-        if self.info["group_delay"]:
-            self.set_phase(Phase(None, -(self.info["group_delay"]%1), 0.75))
+        if self.info.group_delay:
+            self.set_phase(Phase(None, -(self.info.group_delay%1), 0.75))
         
         self.set_phase(Phase(self.opt_zero_order_phase_corr(0, 1, 0.001), None, None))
         
@@ -145,7 +145,7 @@ class Spectrum_1D:
         
     def apodize(self, function_type, *params):
         if function_type == "exponential":
-            processing.apodize.exponential(self._fid, self.info["dwell_time"], *params)
+            processing.apodize.exponential(self._fid, self.info.dwell_time, *params)
         self.generate_spectrum()
     
     def generate_power_mode_spectrum(self):
@@ -167,9 +167,9 @@ class Spectrum_1D:
         left_half = ft[:len(ft)//2][::-1]
         rigth_half = ft[len(ft)//2:][::-1]
         spectrum = np.concatenate((left_half, rigth_half))
-        if self.info["vendor"] == "jeol":
-            spectrum = spectrum[int(self.info["trimmed"]/100*len(spectrum)):
-                                len(spectrum)-int(self.info["trimmed"]/100*len(spectrum))]
+        if self.info.vendor == "jeol":
+            spectrum = spectrum[int(self.info.trimmed/100*len(spectrum)):
+                                len(spectrum)-int(self.info.trimmed/100*len(spectrum))]
         
         self._complex_spectrum = spectrum
         # # self._complex_spectrum = rigth_half
@@ -252,12 +252,12 @@ class Spectrum_1D:
             if begin < end: 
                 begin, end = end , begin
                 
-            begin = begin - self.info["plot_begin_ppm"]
-            begin = begin/(self.info["plot_end_ppm"] - self.info["plot_begin_ppm"])
+            begin = begin - self.info.plot_begin_ppm
+            begin = begin/(self.info.plot_end_ppm - self.info.plot_begin_ppm)
             begin = 1 - begin
             
-            end = end - self.info["plot_begin_ppm"]
-            end = end/(self.info["plot_end_ppm"] - self.info["plot_begin_ppm"])
+            end = end - self.info.plot_begin_ppm
+            end = end/(self.info.plot_end_ppm - self.info.plot_begin_ppm)
             end = 1 - end
             
         elif vtype == "fraction":
@@ -297,7 +297,7 @@ class Spectrum_1D:
         index = max(range(len(spect_sliced)), key=spect_sliced.__getitem__)
         index+=rang[0]
         x_value = index/len(self.spectrum)
-        peak_ppm = self.info['plot_end_ppm'] - x_value*(self.info["plot_end_ppm"] - self.info['plot_begin_ppm'])
+        peak_ppm = self.info.plot_end_ppm - x_value*(self.info.plot_end_ppm - self.info.plot_begin_ppm)
         self.peak_list.append([x_value, peak_ppm])
         print(self.peak_list)
     
@@ -330,28 +330,28 @@ class Spectrum_1D:
         
         
         if vtype=="ppm":
-            x_value = x_value - self.info["plot_begin_ppm"]
-            x_value = x_value/(self.info["plot_end_ppm"] - self.info["plot_begin_ppm"])
+            x_value = x_value - self.info.plot_begin_ppm
+            x_value = x_value/(self.info.plot_end_ppm - self.info.plot_begin_ppm)
             x_value = 1 - x_value
         elif vtype=="fraction":
             pass
         elif vtype=="Hz":
-            x_value = x_value - self.info["plot_begin"]
-            x_value = x_value/(self.info["plot_end"] - self.info["plot_begin"])
+            x_value = x_value - self.info.plot_begin
+            x_value = x_value/(self.info.plot_end - self.info.plot_begin)
         elif vtype=="data_point":
             x_value = x_value / len(self.spectrum)
         else:
             raise NotImplementedError
             
         if out_type=="ppm":
-            x_value = x_value*(self.info["plot_end_ppm"] - self.info["plot_begin_ppm"])
-            x_value = x_value+self.info["plot_begin_ppm"]
+            x_value = x_value*(self.info.plot_end_ppm - self.info.plot_begin_ppm)
+            x_value = x_value+self.info.plot_begin_ppm
         elif out_type=="fraction":
             pass
         elif out_type=="Hz":
             x_value = 1 - x_value
-            x_value = x_value*(self.info["plot_end"] - self.info["plot_begin"])
-            x_value = x_value + self.info["plot_begin"]
+            x_value = x_value*(self.info.plot_end - self.info.plot_begin)
+            x_value = x_value + self.info.plot_begin
         elif out_type=="data_point":
             x_value = round(x_value*len(self.spectrum))
         
@@ -480,8 +480,8 @@ class Spectrum_1D:
     #     self.auto_peak_list.extend(elem)
         
     #     elem = 1 - (elem / len(self.spectrum))
-    #     elem = elem*(self.info["plot_end_ppm"] - self.info["plot_begin_ppm"])
-    #     elem = elem+self.info["plot_begin_ppm"]
+    #     elem = elem*(self.info.plot_end_ppm - self.info.plot_begin_ppm)
+    #     elem = elem+self.info.plot_begin_ppm
     #     # print(elem)
         
 
