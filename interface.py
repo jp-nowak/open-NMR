@@ -19,6 +19,7 @@ from gui.zero_filling import ZeroFillingAndTruncatingWindow
 class spectrum_painter(QWidget):
     def __init__(self, bt_zoom, bt_integman, bt_remove, bt_pickman, bt_signalauto, palette2):
         super().__init__()
+        print(self)
         self.bt_zoom = bt_zoom
         self.bt_integman = bt_integman
         self.bt_remove = bt_remove
@@ -388,11 +389,26 @@ class TabFrameWidget(QFrame):
         
     
     def add_tab(self, pt_w):
+        """
+        
+
+        Parameters
+        ----------
+        pt_w : spectrum_painter
+            DESCRIPTION.
+
+        Returns
+        -------
+        None.
+
+        """
         sele_btn = QPushButton(pt_w.info['samplename'])
-        sele_btn.setObjectName('selebtn')
+        sele_btn.setObjectName(f"selec_btn_directing_to_spectrum_painter{id(pt_w)}") 
+        # seleClicked is dependent on layout of this string
         sele_btn.clicked.connect(self.seleClicked)
         close_btn = QPushButton('-')
-        close_btn.setObjectName('closebtn')
+        close_btn.setObjectName(f"close_btn_directing_to_spectrum_painter{id(pt_w)}")
+        # seleClicked is dependent on layout of this string
         close_btn.clicked.connect(self.deleClicked)
         num = self.buttongrid.rowCount()
         self.buttongrid.setHorizontalSpacing(0)
@@ -406,13 +422,14 @@ class TabFrameWidget(QFrame):
         sender = self.sender() # sender return widget which sent signal which activated function
         if sender:
             # getting an index of spectrum_painter widget which is to be set as active in sv_w (QStackedWidget)
-            index = [t for t in self.pt_indexlis if t[0]==sender.text()][0][1]
+            index = [t for t in self.pt_indexlis if str(id(t[2])) == (sender.objectName()[39:])][0][1]
             self.sv_w.setCurrentIndex(index)
             active_tab = self.sv_w.currentWidget()
             self.selectedSpectrumSignal.emit(active_tab)
     
     def deleClicked(self):
         sender = self.sender()
+        
         if sender:
             bt_index = self.buttongrid.getItemPosition(self.buttongrid.indexOf(sender))[0]
             self.buttongrid.itemAtPosition(bt_index, 1).widget().deleteLater()
@@ -537,7 +554,7 @@ class openNMR(QMainWindow):
         if hasattr(self, "ph_cor_window"):
             return None
         
-        self.ph_cor_window = PhaseCorrectionWindow(current_tab) # this reference is deleted by PhaseCorrectionWindow window itself when it is closed
+        self.ph_cor_window = PhaseCorrectionWindow(self, current_tab) # this reference is deleted by PhaseCorrectionWindow window itself when it is closed
         self.ph_cor_window.show()
 
     def zeroFillingGui(self):
@@ -552,7 +569,10 @@ class openNMR(QMainWindow):
         if not (current_tab := self.spectrum_viewer.currentWidget()):
             return None
         
-        self.zero_filling_window = ZeroFillingAndTruncatingWindow(current_tab)
+        if hasattr(self, "zero_filling_window"):
+            return None
+        
+        self.zero_filling_window = ZeroFillingAndTruncatingWindow(self, current_tab)
         self.zero_filling_window.show()
         
         pass

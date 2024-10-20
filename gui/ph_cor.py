@@ -20,8 +20,8 @@ class PhaseCorrectionWindow(QWidget):
     """
     separate window for phase correction gui
     """
-    def __init__(self, current_tab):
-        super().__init__()
+    def __init__(self, parent, current_tab):
+        super().__init__(parent, QtCore.Qt.Window)
 
         self.current_tab = current_tab
         

@@ -1,3 +1,4 @@
+from PyQt5 import QtCore
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QListWidget)
 from PyQt5.QtCore import pyqtSlot
 
@@ -39,8 +40,8 @@ POWERS_OF_TWO = (# '1',
 
 class ZeroFillingAndTruncatingWindow(QWidget):
     
-    def __init__(self, current_tab):
-        super().__init__()
+    def __init__(self, parent, current_tab):
+        super().__init__(parent, QtCore.Qt.Window)
         
         current_tab.window().tabs_frame.selectedSpectrumSignal.connect(self.change_active_spectrum)
         
