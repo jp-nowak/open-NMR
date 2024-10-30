@@ -119,6 +119,11 @@ class spectrum_painter(QWidget):
         # deln is a length of delimiter in pixels
         # incperppm: multiples - 2 => 0.5 is the minimum increment
 
+
+# basicaly actions involved mouse are performed on mouseReleaseEvent,
+# mousePressEvent and mouseMoveEvent only store information about cursor position
+
+
     def mousePressEvent(self, event=None):
         self.presspos = event.pos()
         if self.current_action:
@@ -451,51 +456,14 @@ class openNMR(QMainWindow):
         title = "Open NMR"
         self.setWindowTitle(title)
 
-        self.file_button = QPushButton("Open File")
-        self.file_button.clicked.connect(self.openFile)
-
-        self.zoom_button = QPushButton("Zoom")
-        self.zoom_button.setCheckable(True)
-        self.zoom_button.toggled.connect(self.toggle_dragging)
-
-        self.zoom_reset_button = QPushButton("Reset Zoom")
-        self.zoom_reset_button.clicked.connect(self.reset_zoom)
-
-        self.manual_integ_button = QPushButton("Manual Integration")
-        self.manual_integ_button.setCheckable(True)
-        self.manual_integ_button.clicked.connect(self.toggle_integ_man)
-
-        self.remove_buton = QPushButton("Remove Element")
-        self.remove_buton.setCheckable(True)
-        self.remove_buton.clicked.connect(self.toggle_removing)
-
-        self.manual_peak_button = QPushButton("Manual Peaks")
-        self.manual_peak_button.setCheckable(True)
-        self.manual_peak_button.clicked.connect(self.toggle_peaks_man)
-
-        self.auto_peak_button = QPushButton("Auto Signal")
-        self.auto_peak_button.setCheckable(True)
-        self.auto_peak_button.clicked.connect(self.toggle_signal_auto)
-
-        # frame with actions buttons on the left of app window
-        actions_frame = QFrame()
-        actions = QVBoxLayout(actions_frame)
-        actions.addWidget(QLabel('Viewing'))
-        actions.addWidget(self.file_button)
-        actions.addWidget(self.zoom_button)
-        actions.addWidget(self.zoom_reset_button)
-        actions.addWidget(QLabel('Editing'))
-        actions.addWidget(self.auto_peak_button)
-        actions.addWidget(self.manual_integ_button)
-        actions.addWidget(self.manual_peak_button)
-        actions.addWidget(self.remove_buton)
-        actions.setAlignment(Qt.AlignmentFlag.AlignTop)
+        # frame with actions buttons on the right of app window
+        actions_frame = self.createActionFrameWithButtons()
         
         # middle area of window
         self.spectrum_viewer = QStackedWidget()
         self.spectrum_viewer.setObjectName('spectrumviewer')
         
-        # frame on down left storing open spectra
+        # frame on down right storing open spectra
         self.tabs_frame = TabFrameWidget(self.spectrum_viewer)
         
         toolbar = QVBoxLayout()
@@ -521,7 +489,60 @@ class openNMR(QMainWindow):
                 #if filename.endswith('.fid/'):
                     try: self.add_new_page(filename)
                     except: pass
+                
+    def createActionFrameWithButtons(self):
+        
+        self.file_button = QPushButton("Open File")
+        self.file_button.clicked.connect(self.openFile)
 
+        self.zoom_button = QPushButton("Zoom")
+        self.zoom_button.setCheckable(True)
+        self.zoom_button.toggled.connect(self.toggle_dragging)
+
+        self.zoom_reset_button = QPushButton("Reset Zoom")
+        self.zoom_reset_button.clicked.connect(self.reset_zoom)
+
+        self.manual_integ_button = QPushButton("Manual Integration")
+        self.manual_integ_button.setCheckable(True)
+        self.manual_integ_button.clicked.connect(self.toggle_integ_man)
+
+        self.remove_buton = QPushButton("Remove Integral")
+        self.remove_buton.setCheckable(True)
+        self.remove_buton.clicked.connect(self.toggle_removing)
+        
+        self.reset_integrals_button = QPushButton("Reset Inregrals")
+        self.reset_integrals_button.clicked.connect(self.reset_integrals)
+        
+        self.manual_peak_button = QPushButton("Manual Peaks")
+        self.manual_peak_button.setCheckable(True)
+        self.manual_peak_button.clicked.connect(self.toggle_peaks_man)
+
+        self.auto_peak_button = QPushButton("Auto Signal")
+        self.auto_peak_button.setCheckable(True)
+        self.auto_peak_button.clicked.connect(self.toggle_signal_auto)
+        
+        # frame with actions buttons on the right of app window
+        actions_frame = QFrame()
+        actions = QVBoxLayout(actions_frame)
+        
+        actions.addWidget(QLabel('Viewing'))
+        actions.addWidget(self.file_button)
+        actions.addWidget(self.zoom_button)
+        actions.addWidget(self.zoom_reset_button)
+        
+        actions.addWidget(QLabel('Integration'))
+        actions.addWidget(self.manual_integ_button)
+        actions.addWidget(self.remove_buton)
+        actions.addWidget(self.reset_integrals_button)
+        
+        
+        actions.addWidget(QLabel('Other'))
+        actions.addWidget(self.manual_peak_button)
+        actions.addWidget(self.auto_peak_button)
+        actions.setAlignment(Qt.AlignmentFlag.AlignTop)
+        
+        return actions_frame
+    
     def createMenuBar(self):
         """
         Function to create menu bar of app window
@@ -611,7 +632,14 @@ class openNMR(QMainWindow):
             current.axis_pars['begin_ppm'] = current.info['plot_begin_ppm']
             current.axis_pars['end_ppm'] = current.info['plot_end_ppm']
             current.update()
-
+    
+    def reset_integrals(self):
+        current = self.spectrum_viewer.currentWidget()
+        current.experiment.reset_integrals()
+        current.update()
+        
+        
+    
     def openFile(self):
         file_dialog = QFileDialog(self)
         file_dialog.setWindowTitle('Choose a File')
