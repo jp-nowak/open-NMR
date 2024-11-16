@@ -1,16 +1,32 @@
 #include <QtWidgets>
 #include "mainwidget.h"
 
+ActionsWidget::ActionsWidget(QFrame *parent) :
+    QFrame(parent)
+{
+   actions_bt_open = new QPushButton(tr("Open spectra"));
+   
+   QVBoxLayout *actionsLayout = new QVBoxLayout;
+   actionsLayout->addWidget(actions_bt_open);
+   setLayout(actionsLayout);
+}
+
+// Destructor
+ActionsWidget::~ActionsWidget()
+{
+   delete actions_bt_open;
+}
+
 // Constructor for main widget
 MainWidget::MainWidget(QWidget *parent) :
     QWidget(parent)
 {
-   button_ = new QPushButton(tr("Open spectra"));
-   textBrowser_ = new QTextBrowser();
+   frame_ = new ActionsWidget();
+   spectrumViewer_ = new QStackedWidget();
 
-   QGridLayout *mainLayout = new QGridLayout;
-   mainLayout->addWidget(button_,0,0);
-   mainLayout->addWidget(textBrowser_,1,0);
+   QHBoxLayout *mainLayout = new QHBoxLayout;
+   mainLayout->addWidget(spectrumViewer_);
+   mainLayout->addWidget(frame_);
    setLayout(mainLayout);
    setWindowTitle(tr("Open NMR"));
 }
@@ -18,8 +34,8 @@ MainWidget::MainWidget(QWidget *parent) :
 // Destructor
 MainWidget::~MainWidget()
 {
-   delete button_;
-   delete textBrowser_;
+   delete frame_;
+   delete spectrumViewer_;
 }
 
 

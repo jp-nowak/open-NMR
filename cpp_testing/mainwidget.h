@@ -2,9 +2,23 @@
 #define MAINWIDGET_H
 
 #include <QWidget>
+#include <QFrame>
 
+class QFrame;
+class QStackedWidget;
 class QPushButton;
-class QTextBrowser;
+
+class ActionsWidget : public QFrame
+{
+    Q_OBJECT
+
+public:
+    explicit ActionsWidget(QFrame *parent = 0); //Constructor
+    ~ActionsWidget(); // Destructor
+
+private:
+   QPushButton* actions_bt_open;
+};
 
 // This is the declaration of our MainWidget class
 // The definition/implementation is in mainwidget.cpp
@@ -17,9 +31,11 @@ public:
     ~MainWidget(); // Destructor
 
 private:
-   QPushButton* button_;
-   QTextBrowser* textBrowser_;
+   ActionsWidget* frame_;
+   QStackedWidget* spectrumViewer_;
 };
+
+
 
 #endif // MAINWIDGET_H
 
