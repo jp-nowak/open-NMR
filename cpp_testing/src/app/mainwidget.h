@@ -17,16 +17,16 @@ public:
     ~ActionsWidget(); // Destructor
 
 private:
-    QPushButton* file_button;
-    QPushButton* zoom_button;
-    QPushButton* zoom_reset_button;
+    QPushButton* fileButton;
+    QPushButton* zoomButton;
+    QPushButton* zoomResetButton;
 
-    QPushButton* manual_integ_button;
-    QPushButton* remove_button;
-    QPushButton* reset_integrals_button;
+    QPushButton* manualIntegButton;
+    QPushButton* removeButton;
+    QPushButton* resetIntegralsButton;
 
-    QPushButton* manual_peak_button;
-    QPushButton* auto_peak_button;
+    QPushButton* manualPeakButton;
+    QPushButton* autoPeakButton;
 };
 
 // This is the declaration of our MainWidget class
@@ -40,8 +40,8 @@ public:
     ~MainWidget(); // Destructor
 
 private:
-   ActionsWidget* frame_;
-   QStackedWidget* spectrumViewer_;
+   ActionsWidget* actionsFrame;
+   QStackedWidget* spectrumStack;
 };
 
 

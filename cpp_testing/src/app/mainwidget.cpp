@@ -1,43 +1,71 @@
 #include <QtWidgets>
 #include "mainwidget.h"
 
+void onOpenFileClicked() {
+    // Open a file dialog to select a file
+    QString fileName = QFileDialog::getOpenFileName(nullptr, "Open File", "", "Text Files (*.txt);;All Files (*)");
+
+    if (fileName.isEmpty()) {
+        return; // If no file is selected, return
+    }
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QMessageBox::warning(nullptr, "Error", "Could not open the file!");
+        return;
+    }
+
+    // Read the file content
+    QTextStream in(&file);
+    QString fileContent = in.readAll();
+    file.close();
+
+    // Show the file content in a message box
+    QMessageBox::information(nullptr, "File Content", fileContent);
+}
+
 ActionsWidget::ActionsWidget(QFrame *parent) :
     QFrame(parent)
 {
    // Viewing buttons
-   QPushButton *file_button = new QPushButton(tr("Open File"));
-   QPushButton *zoom_button = new QPushButton(tr("Zoom"));
-   zoom_button->setCheckable(true);
-   QPushButton *zoom_reset_button = new QPushButton(tr("Reset Zoom"));
+   QPushButton *fileButton = new QPushButton(tr("Open File"));
+   QPushButton *zoomButton = new QPushButton(tr("Zoom"));
+   QPushButton *zoomResetButton = new QPushButton(tr("Reset Zoom"));
 
    // Integration buttons
-   QPushButton *manual_integ_button = new QPushButton(tr("Manual Integration"));
-   manual_integ_button->setCheckable(true);
-   QPushButton *remove_button = new QPushButton(tr("Remove Integral"));
-   remove_button->setCheckable(true);
-   QPushButton *reset_integrals_button = new QPushButton(tr("Reset Integrals"));
+   QPushButton *manualIntegButton = new QPushButton(tr("Manual Integration"));
+   QPushButton *removeButton = new QPushButton(tr("Remove Integral"));
+   QPushButton *resetIntegralsButton = new QPushButton(tr("Reset Integrals"));
 
    // Other buttons
-   QPushButton *manual_peak_button = new QPushButton(tr("Manual Peaks"));
-   manual_peak_button->setCheckable(true);
-   QPushButton *auto_peak_button = new QPushButton(tr("Auto Signal"));
-   auto_peak_button->setCheckable(true);
+   QPushButton *manualPeakButton = new QPushButton(tr("Manual Peaks"));
+   QPushButton *autoPeakButton = new QPushButton(tr("Auto Signal"));
+
+   // Set checkable properties
+   zoomButton->setCheckable(true);
+   manualIntegButton->setCheckable(true);
+   removeButton->setCheckable(true);
+   manualPeakButton->setCheckable(true);
+   autoPeakButton->setCheckable(true);
+
+   // Button connections
+   QObject::connect(fileButton, &QPushButton::clicked, &onOpenFileClicked);
 
    // Layout setup
    QVBoxLayout *actionsLayout = new QVBoxLayout;
    actionsLayout->addWidget(new QLabel(tr("Viewing")));
-   actionsLayout->addWidget(file_button);
-   actionsLayout->addWidget(zoom_button);
-   actionsLayout->addWidget(zoom_reset_button);
+   actionsLayout->addWidget(fileButton);
+   actionsLayout->addWidget(zoomButton);
+   actionsLayout->addWidget(zoomResetButton);
 
    actionsLayout->addWidget(new QLabel(tr("Integration")));
-   actionsLayout->addWidget(manual_integ_button);
-   actionsLayout->addWidget(remove_button);
-   actionsLayout->addWidget(reset_integrals_button);
+   actionsLayout->addWidget(manualIntegButton);
+   actionsLayout->addWidget(removeButton);
+   actionsLayout->addWidget(resetIntegralsButton);
 
    actionsLayout->addWidget(new QLabel(tr("Other")));
-   actionsLayout->addWidget(manual_peak_button);
-   actionsLayout->addWidget(auto_peak_button);
+   actionsLayout->addWidget(manualPeakButton);
+   actionsLayout->addWidget(autoPeakButton);
    actionsLayout->setAlignment(Qt::AlignTop);
 
    // Set layout
@@ -47,28 +75,29 @@ ActionsWidget::ActionsWidget(QFrame *parent) :
 // Destructor
 ActionsWidget::~ActionsWidget()
 {
-   delete file_button;
-   delete zoom_button;
-   delete zoom_reset_button;
+   delete fileButton;
+   delete zoomButton;
+   delete zoomResetButton;
 
-   delete manual_integ_button;
-   delete remove_button;
-   delete reset_integrals_button;
+   delete manualIntegButton;
+   delete removeButton;
+   delete resetIntegralsButton;
 
-   delete manual_peak_button;
-   delete auto_peak_button;
+   delete manualPeakButton;
+   delete autoPeakButton;
 }
+
 
 // Constructor for main widget
 MainWidget::MainWidget(QWidget *parent) :
     QWidget(parent)
 {
-   frame_ = new ActionsWidget();
-   spectrumViewer_ = new QStackedWidget();
+   actionsFrame = new ActionsWidget();
+   spectrumStack = new QStackedWidget();
 
    QHBoxLayout *mainLayout = new QHBoxLayout;
-   mainLayout->addWidget(spectrumViewer_);
-   mainLayout->addWidget(frame_);
+   mainLayout->addWidget(spectrumStack);
+   mainLayout->addWidget(actionsFrame);
    setLayout(mainLayout);
    setWindowTitle(tr("Open NMR"));
 }
@@ -76,8 +105,8 @@ MainWidget::MainWidget(QWidget *parent) :
 // Destructor
 MainWidget::~MainWidget()
 {
-   delete frame_;
-   delete spectrumViewer_;
+   delete actionsFrame;
+   delete spectrumStack;
 }
 
 
