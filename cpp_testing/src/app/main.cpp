@@ -8,6 +8,7 @@ int main(int argc, char *argv[])
 
     // This is our MainWidget class containing our GUI and functionality
     MainWidget w;
+    w.resize(800, 300);
     w.show(); // Show main window
 
     // run the application and return execs() return value/code
