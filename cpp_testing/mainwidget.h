@@ -17,7 +17,16 @@ public:
     ~ActionsWidget(); // Destructor
 
 private:
-   QPushButton* actions_bt_open;
+    QPushButton* file_button;
+    QPushButton* zoom_button;
+    QPushButton* zoom_reset_button;
+
+    QPushButton* manual_integ_button;
+    QPushButton* remove_button;
+    QPushButton* reset_integrals_button;
+
+    QPushButton* manual_peak_button;
+    QPushButton* auto_peak_button;
 };
 
 // This is the declaration of our MainWidget class
