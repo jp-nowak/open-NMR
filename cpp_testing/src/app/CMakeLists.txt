@@ -1,6 +1,6 @@
 qt_add_executable(open-nmr
-    mainwindow.h
-    mainwindow.cpp
+    mainwidget.h
+    mainwidget.cpp
     main.cpp
 )
 
